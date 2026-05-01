@@ -77,7 +77,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
 import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 import { getFirestore, doc, setDoc, getDoc, collection, addDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-// NEW: Import Official Vertex AI Firebase SDK
+// Import Official Vertex AI Firebase SDK
 import { getVertexAI, getGenerativeModel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-vertexai.js";
 
 let app = null;
@@ -151,9 +151,12 @@ async function saveRoundToFirebase(roundData) {
     }
 }
 
-// SECURE Vertex AI / Gemini integration (Uses Firebase Auth, No Bare API Key)
+// SECURE Vertex AI / Gemini integration with heavy error output
 async function getAIAdvice(promptText, requiresJson = false) {
-    if (!vertexAI) return requiresJson ? "{}" : "Coach is offline.";
+    if (!vertexAI) {
+        console.error("Vertex AI SDK failed to initialize.");
+        return requiresJson ? "{}" : "Coach is offline. Vertex SDK not initialized.";
+    }
 
     const instruction = requiresJson 
         ? "You are a golf data analyst. Return ONLY raw, valid JSON. Do not use markdown wrappers like ```json."
@@ -170,8 +173,14 @@ async function getAIAdvice(promptText, requiresJson = false) {
         return result.response.text();
         
     } catch (err) {
-        console.error("Vertex AI Error:", err);
-        return requiresJson ? "{}" : "Coach is reviewing the tape. Keep your head down, trust your swing, and play smart to your yardages.";
+        console.error("==== VERTEX AI CRASH ====");
+        console.error("Error Message:", err.message);
+        console.error("Error Name/Code:", err.name, err.code);
+        console.error("Full Error Object:", err);
+        console.error("=========================");
+        
+        // Instead of silencing the error, return the EXACT error message to the UI
+        return requiresJson ? "{}" : `AI ERROR: ${err.message}. (Open browser console for more details)`;
     }
 }
 
