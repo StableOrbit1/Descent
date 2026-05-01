@@ -6,7 +6,7 @@
     <title>Descent — Golf Performance</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #000; color: #F4F4F0; }
         .font-serif { font-family: Georgia, serif; }
@@ -16,11 +16,10 @@
         .animate-fade-in { animation: fadeIn 0.4s ease-out forwards; }
         .animate-fade-out { animation: fadeOut 0.4s ease-in forwards; pointer-events: none; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes fadeOut { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-15px); } }
 
-        /* Custom Range Slider */
-        input[type="range"] { -webkit-appearance: none; background: #404060; height: 6px; border-radius: 3px; outline: none; }
-        input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 24px; height: 24px; border-radius: 50%; background: #2DCB8A; cursor: pointer; box-shadow: 0 0 0 4px rgba(45,203,138,0.2); }
+        /* Custom Large Range Slider */
+        input[type="range"] { -webkit-appearance: none; background: #1A1A3A; height: 12px; border-radius: 6px; outline: none; border: 1px solid rgba(255,255,255,0.1); }
+        input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 32px; height: 32px; border-radius: 50%; background: #2DCB8A; cursor: pointer; box-shadow: 0 0 15px rgba(45,203,138,0.4); border: 2px solid white; }
         
         /* Chat Typing Indicator */
         .typing-dot { animation: typingBounce 1.2s ease-in-out infinite; }
@@ -32,15 +31,22 @@
         @keyframes pulseSlow { 0%, 100% { opacity: 1; transform: translateY(0); } 50% { opacity: .5; transform: translateY(6px); } }
         
         .task-completed { text-decoration: line-through; color: #404060; transition: all 0.3s ease; }
+        
+        /* Summary Grid Styling */
+        .stat-grid-box { background: #1A1A3A; border: 1px solid rgba(255,255,255,0.05); aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 8px; }
+        .stat-grid-label { font-size: 8px; font-weight: 800; color: #404060; text-transform: uppercase; margin-bottom: 2px; }
+        .stat-grid-value { font-size: 14px; font-weight: 900; color: #F4F4F0; }
+        .stat-grid-active { border-color: #2DCB8A; background: rgba(45,203,138,0.1); }
+
+        /* Proficiency Bars */
+        .prof-bar-bg { height: 4px; background: #1A1A3A; border-radius: 2px; width: 100%; overflow: hidden; }
+        .prof-bar-fill { height: 100%; background: #2DCB8A; transition: width 1s ease-out; }
     </style>
 </head>
 <body class="h-screen w-full flex justify-center overflow-hidden">
 
     <div class="w-full max-w-md h-full bg-[#0D0D1E] relative flex flex-col shadow-2xl overflow-hidden border-x border-[#1A1A3A]">
-        
-        <div id="app-root" class="flex-1 overflow-y-auto overflow-x-hidden hide-scrollbar relative pb-24">
-            <!-- Content injected by JS -->
-        </div>
+        <div id="app-root" class="flex-1 overflow-y-auto overflow-x-hidden hide-scrollbar relative pb-24"></div>
 
         <nav id="bottom-nav" class="hidden absolute bottom-0 w-full bg-[#14142E] border-t border-white/10 flex justify-between items-center px-2 py-3 pb-6 z-50">
             <button class="nav-btn flex flex-col items-center gap-1 transition-colors flex-1 text-[#404060] hover:text-[#8890A0]" data-tab="learn">
@@ -72,13 +78,12 @@
 
 <script type="module">
 // ============================================================================
-// 1. FIREBASE INITIALIZATION & STATE MANAGEMENT
+// 1. FIREBASE INITIALIZATION
 // ============================================================================
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
 import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 import { getFirestore, doc, setDoc, getDoc, collection, addDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 import { getVertexAI, getGenerativeModel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-vertexai.js";
-// Import App Check to secure the Vertex AI API
 import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app-check.js";
 
 let app = null;
@@ -101,22 +106,16 @@ async function initFirebase() {
         };
         
         app = initializeApp(firebaseConfig);
-
-        // --- FIREBASE APP CHECK ---
-        // Reactivating Debug Token to bypass ReCaptcha domain mismatch temporarily.
-        // Copy the token from your browser console and paste it into Firebase > App Check > Apps > Manage debug tokens
-        self.FIREBASE_APPCHECK_DEBUG_TOKEN = true; 
         
+        // --- FIREBASE APP CHECK ---
+        self.FIREBASE_APPCHECK_DEBUG_TOKEN = true; 
         initializeAppCheck(app, {
             provider: new ReCaptchaV3Provider('6LfpHNMsAAAAANOgLk1nGJ-Ir9fpG5mD2xG7tl3X'), 
             isTokenAutoRefreshEnabled: true
         });
-        // --------------------------
 
         auth = getAuth(app);
         db = getFirestore(app);
-        
-        // Initialize Vertex AI
         vertexAI = getVertexAI(app);
 
         if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
@@ -125,9 +124,7 @@ async function initFirebase() {
             await signInAnonymously(auth);
         }
 
-        onAuthStateChanged(auth, (user) => {
-            currentUser = user;
-        });
+        onAuthStateChanged(auth, (user) => { currentUser = user; });
     } catch (error) {
         console.warn("Firebase running in local memory mode.", error);
     }
@@ -147,58 +144,38 @@ async function saveRoundToFirebase(roundData) {
     if (!db || !STATE.player.phone) return;
     try {
         const roundsCol = collection(db, 'artifacts', appId, 'public', 'data', `rounds_${STATE.player.phone}`);
-        await addDoc(roundsCol, {
-            ...roundData,
-            timestamp: new Date().toISOString()
-        });
+        await addDoc(roundsCol, { ...roundData, timestamp: new Date().toISOString() });
         
         STATE.player.hasPlayedRound = true;
         STATE.player.roundCount++;
-        
-        // Generate Achievements
         window.checkAchievements(roundData);
-        
         await syncProfileToFirebase();
     } catch (e) {
         console.error("Failed to save round:", e);
     }
 }
 
-// SECURE Vertex AI / Gemini integration with heavy error output
 async function getAIAdvice(promptText, requiresJson = false) {
-    if (!vertexAI) {
-        console.error("Vertex AI SDK failed to initialize.");
-        return requiresJson ? "{}" : "Coach is offline. Vertex SDK not initialized.";
-    }
-
+    if (!vertexAI) return requiresJson ? "{}" : "Coach is offline.";
     const instruction = requiresJson 
-        ? "You are a golf data analyst. Return ONLY raw, valid JSON. Do not use markdown wrappers like ```json."
-        : "You are a gritty, encouraging golf coach (think boxing coach in the corner between rounds). Keep it to 2-3 short, punchy sentences. Offer real strategic advice based on the data provided, and give a strong pep talk.";
+        ? "You are a professional golf data analyst. Return ONLY raw, valid JSON. Do not include markdown formatting or backticks."
+        : "You are a professional golf 'Corner Man'. Give SALIENT, CRISP coaching advice. End with - 'single thought for the next three holes:'";
 
     try {
-        // Initialize the Gemini 2.5 Flash model via Firebase Vertex AI
         const model = getGenerativeModel(vertexAI, { 
             model: "gemini-2.5-flash",
             systemInstruction: instruction
         });
-        
         const result = await model.generateContent(promptText);
         return result.response.text();
-        
     } catch (err) {
-        console.error("==== VERTEX AI CRASH ====");
-        console.error("Error Message:", err.message);
-        console.error("Error Name/Code:", err.name, err.code);
-        console.error("Full Error Object:", err);
-        console.error("=========================");
-        
-        // Instead of silencing the error, return the EXACT error message to the UI
-        return requiresJson ? "{}" : `AI ERROR: ${err.message}. (Open browser console for more details)`;
+        console.error("Vertex AI Error:", err);
+        return requiresJson ? "{}" : `AI Error.`;
     }
 }
 
 // ============================================================================
-// 2. CONSTANTS & INITIAL DATA
+// 2. CONSTANTS & RESTORED DATA
 // ============================================================================
 const DEFAULT_TARGET_DATE = new Date();
 DEFAULT_TARGET_DATE.setMonth(DEFAULT_TARGET_DATE.getMonth() + 6);
@@ -231,71 +208,65 @@ const COURSE_DATABASE = [
     }
 ];
 
-const PRACTICE_DRILLS = {
-    driving: {
-        home: "Mirror work: Practice slow-motion takeaways focusing strictly on clubface control and maintaining spine angle.",
-        range: "Hit 10 drives focusing solely on holding a balanced finish until the ball lands. Ignore distance.",
-        video: "[https://www.youtube.com/results?search_query=golf+driving+accuracy+drill+beginner](https://www.youtube.com/results?search_query=golf+driving+accuracy+drill+beginner)"
-    },
-    longIrons: {
-        home: "Core rotations: Use a medicine ball or resistance band to build rotational speed.",
-        range: "Tee up long irons slightly. Focus on sweeping the ball to build confidence with the strike.",
-        video: "[https://www.youtube.com/results?search_query=golf+long+iron+drills+beginner](https://www.youtube.com/results?search_query=golf+long+iron+drills+beginner)"
-    },
-    approach: {
-        home: "Carpet chipping: Practice putting-stroke chips with an 8-iron to feel low-point control.",
-        range: "Clock system: Hit 10 shots mapping exactly how far your 9:00 swing goes.",
-        video: "[https://www.youtube.com/results?search_query=golf+wedge+clock+system](https://www.youtube.com/results?search_query=golf+wedge+clock+system)"
-    },
-    aroundGreen: {
-        home: "Coin drill: Place a coin under the ball and practice clipping it without digging.",
-        range: "Bump and run: Practice exclusively with a 7 or 8 iron from off the fringe to understand rollout.",
-        video: "[https://www.youtube.com/results?search_query=golf+chipping+drills+beginner](https://www.youtube.com/results?search_query=golf+chipping+drills+beginner)"
-    },
-    putting: {
-        home: "Gate drill: Putt through two heavy books set 1-putter head apart. Forces a square face.",
-        range: "Lag putting: Hit 10 putts from 40 feet to within a 3-foot circle.",
-        video: "[https://www.youtube.com/results?search_query=golf+putting+drills+beginner](https://www.youtube.com/results?search_query=golf+putting+drills+beginner)"
-    },
-    recovery: {
-        home: "Visualize punch shots: Take stance in front of mirror, practice abbreviated follow-throughs.",
-        range: "Hit 5-iron punch shots keeping the ball below the height of the range picker.",
-        video: "[https://www.youtube.com/results?search_query=golf+punch+shot+drills](https://www.youtube.com/results?search_query=golf+punch+shot+drills)"
-    }
-};
-
 const SHOT_TYPES = ['Full', '3/4', 'Half', 'Knock Down', 'Draw', 'Fade'];
+
 const CORE_AREA_INFO = {
     driving: "Accuracy and distance off the tee.", longIrons: "Approach shots from 175+ yards.",
     approach: "Mid/short irons and wedges (100-175y).", aroundGreen: "Chipping, pitching, and bunkers (<30y).",
     putting: "Distance control and green reading.", recovery: "Scrambling and escaping trouble."
 };
 
-window.getRatingLabel = function(rating, handicap) {
-    const hdcp = Math.round(handicap);
-    switch(parseInt(rating)) {
-        case 1: return `Much worse than other ${hdcp}s I play with`;
-        case 2: return `Worse than other ${hdcp}s I play with`;
-        case 3: return `About the same as other ${hdcp}s I play with`;
-        case 4: return `Better than other ${hdcp}s I play with`;
-        case 5: return `Much better than other ${hdcp}s I play with`;
-        default: return "";
+const PRACTICE_DRILLS = {
+    driving: { 
+        home: "Mirror work: Practice slow-motion takeaways focusing strictly on clubface control and maintaining spine angle.",
+        range: "Hit 10 drives focusing solely on holding a balanced finish until the ball lands. Ignore distance.",
+        video: "https://www.youtube.com/results?search_query=golf+driving+accuracy+drill+beginner"
+    },
+    longIrons: { 
+        home: "Core rotations: Use a medicine ball or resistance band to build rotational speed.",
+        range: "Tee up long irons slightly. Focus on sweeping the ball to build confidence with the strike.",
+        video: "https://www.youtube.com/results?search_query=golf+long+iron+drills+beginner"
+    },
+    approach: { 
+        home: "Carpet chipping: Practice putting-stroke chips with an 8-iron to feel low-point control.",
+        range: "Clock system: Hit 10 shots mapping exactly how far your 9:00 swing goes.",
+        video: "https://www.youtube.com/results?search_query=golf+wedge+clock+system"
+    },
+    aroundGreen: { 
+        home: "Coin drill: Place a coin under the ball and practice clipping it without digging.",
+        range: "Bump and run: Practice exclusively with a 7 or 8 iron from off the fringe to understand rollout.",
+        video: "https://www.youtube.com/results?search_query=golf+chipping+drills+beginner"
+    },
+    putting: { 
+        home: "Gate drill: Putt through two heavy books set 1-putter head apart. Forces a square face.",
+        range: "Lag putting: Hit 10 putts from 40 feet to within a 3-foot circle.",
+        video: "https://www.youtube.com/results?search_query=golf+putting+drills+beginner"
+    },
+    recovery: { 
+        home: "Visualize punch shots: Take stance in front of mirror, practice abbreviated follow-throughs.",
+        range: "Hit 5-iron punch shots keeping the ball below the height of the range picker.",
+        video: "https://www.youtube.com/results?search_query=golf+punch+shot+drills"
     }
 };
 
-function getTier(score) {
-    if (score <= 2) return 'beginner';
-    if (score === 3) return 'intermediate';
-    return 'advanced';
-}
+window.getRatingLabel = function(rating, handicap) {
+    const hdcp = Math.round(handicap);
+    switch(parseInt(rating)) {
+        case 1: return `Much worse than other ${hdcp}s`;
+        case 2: return `Worse than other ${hdcp}s`;
+        case 3: return `About the same as other ${hdcp}s`;
+        case 4: return `Better than other ${hdcp}s`;
+        case 5: return `Much better than other ${hdcp}s`;
+        default: return "";
+    }
+};
 
 // ============================================================================
 // 3. APPLICATION STATE
 // ============================================================================
 function resetPlayerState() {
     return {
-        name: '', phone: '',
-        currentHandicap: 14.0, targetHandicap: 8.0,
+        name: '', phone: '', currentHandicap: 14.0, targetHandicap: 8.0,
         targetDate: DEFAULT_TARGET_DATE.toISOString().split('T')[0],
         hasPlayedRound: false, roundCount: 0,
         coreAreas: { driving: 3, longIrons: 3, approach: 3, aroundGreen: 3, putting: 3, recovery: 3 },
@@ -304,31 +275,22 @@ function resetPlayerState() {
         courseHoles: JSON.parse(JSON.stringify(COURSE_DATABASE[0].holes)),
         customPlan: { learn: [], practice: [] },
         drillsPassed: 0, sessionsCount: 0, completedTasksSet: {},
-        achievements: [],
-        settings: { silenceCoach: false },
-        clubInsights: {}
+        achievements: [], settings: { silenceCoach: false }, clubInsights: {}
     };
 }
 
 window.STATE = {
-    currentView: 'welcome',
-    onboardingStep: 1, welcomeStep: 1,
-    activeInfo: null,
-    player: resetPlayerState(),
-    activeRound: null,
+    currentView: 'welcome', onboardingStep: 1, welcomeStep: 1,
+    activeInfo: null, player: resetPlayerState(), activeRound: null,
     coachMode: 'accountability', isTyping: false,
-    chatMessages: [
-        { role: 'coach', text: "Welcome to Descent. Your custom plan will build here as you play and interact." }
-    ]
+    chatMessages: [{ role: 'coach', text: "Welcome to Descent. Let's get to work." }]
 };
 
 function getDescentNumber() { return (STATE.player.currentHandicap - STATE.player.targetHandicap).toFixed(1); }
 function getWeeksRemaining() {
     const target = new Date(STATE.player.targetDate);
     const now = new Date();
-    const diffTime = target - now;
-    if (diffTime <= 0) return 1;
-    return Math.max(1, Math.ceil((diffTime / (1000 * 60 * 60 * 24)) / 7));
+    return Math.max(1, Math.ceil(((target - now) / (1000 * 60 * 60 * 24)) / 7));
 }
 
 // ============================================================================
@@ -340,26 +302,22 @@ const nav = document.getElementById('bottom-nav');
 window.switchView = function(viewName) {
     STATE.currentView = viewName;
     render();
-    
     const hiddenViews = ['welcome', 'onboarding', 'welcome_sequence', 'play_active', 'post_round', 'coach_corner'];
-    if (hiddenViews.includes(viewName)) {
-        nav.classList.add('hidden');
-    } else {
+    if (hiddenViews.includes(viewName)) nav.classList.add('hidden');
+    else {
         nav.classList.remove('hidden');
         document.querySelectorAll('.nav-btn').forEach(btn => {
             if(btn.dataset.tab === viewName) {
-                btn.classList.remove('text-[#404060]');
-                btn.classList.add('text-[#2DCB8A]');
+                btn.classList.remove('text-[#404060]'); btn.classList.add('text-[#2DCB8A]');
             } else {
-                btn.classList.add('text-[#404060]');
-                btn.classList.remove('text-[#2DCB8A]');
+                btn.classList.add('text-[#404060]'); btn.classList.remove('text-[#2DCB8A]');
             }
         });
     }
-
+    
     if (viewName === 'coach' || viewName === 'coach_corner') {
         setTimeout(() => {
-            const chatBox = document.getElementById('chat-scroll-area');
+            const chatBox = document.getElementById(viewName === 'coach' ? 'chat-scroll-area' : 'corner-chat-area');
             if(chatBox) chatBox.scrollTop = chatBox.scrollHeight;
         }, 50);
     }
@@ -390,31 +348,21 @@ function render() {
 
 function renderWelcome() {
     return `
-    <div class="flex flex-col items-center justify-center h-full p-8 text-center animate-fade-in" id="welcome-container">
+    <div class="flex flex-col items-center justify-center h-full p-8 text-center animate-fade-in">
         <div class="text-[#2DCB8A] mb-8 animate-pulse-slow">
             <svg width="72" height="72" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="22 17 13.5 8.5 8.5 13.5 2 7" />
-                <polyline points="16 17 22 17 22 11" />
+                <polyline points="22 17 13.5 8.5 8.5 13.5 2 7" /><polyline points="16 17 22 17 22 11" />
             </svg>
         </div>
         <h1 class="text-5xl font-black tracking-widest text-[#F4F4F0] mb-4">DESCENT</h1>
-        <p class="text-[#8890A0] text-sm mb-10 max-w-xs">
-            The <strong class="text-[#F4F4F0]">science-backed</strong> path to lowering your handicap, built around your game.
-        </p>
-
+        <p class="text-[#8890A0] text-sm mb-10 max-w-xs">The science-backed path to lowering your handicap.</p>
         <div id="welcome-step-1" class="w-full max-w-xs space-y-3 mb-8 text-left animate-fade-in">
-            <input type="tel" id="welcome-phone" placeholder="Phone Number" oninput="checkWelcomePhone()" class="w-full bg-[#1A1A3A] border border-white/10 rounded-xl p-4 text-[#F4F4F0] font-semibold outline-none focus:border-[#2DCB8A] transition-colors">
-            <button id="welcome-next-btn" disabled onclick="verifyPhone()" class="w-full bg-[#2DCB8A] disabled:opacity-50 hover:bg-[#34e09a] text-[#0D1A12] font-bold py-4 rounded-xl transition-transform active:scale-95 shadow-[0_0_20px_rgba(45,203,138,0.2)]">
-                Next &rarr;
-            </button>
+            <input type="tel" id="welcome-phone" placeholder="Phone Number" oninput="checkWelcomePhone()" class="w-full bg-[#1A1A3A] border border-white/10 rounded-xl p-4 text-[#F4F4F0] font-semibold outline-none focus:border-[#2DCB8A]">
+            <button id="welcome-next-btn" disabled onclick="verifyPhone()" class="w-full bg-[#2DCB8A] disabled:opacity-50 text-[#0D1A12] font-bold py-4 rounded-xl shadow-[0_0_20px_rgba(45,203,138,0.2)]">Next &rarr;</button>
         </div>
-
         <div id="welcome-step-2" class="w-full max-w-xs space-y-3 mb-8 text-left hidden animate-fade-in">
-            <p class="text-sm text-[#8890A0] text-center mb-2">New number! What should we call you?</p>
-            <input type="text" id="welcome-name" placeholder="Your Name" oninput="checkWelcomeName()" class="w-full bg-[#1A1A3A] border border-white/10 rounded-xl p-4 text-[#F4F4F0] font-semibold outline-none focus:border-[#2DCB8A] transition-colors">
-            <button id="welcome-start-btn" disabled onclick="startNewProfile()" class="w-full bg-[#2DCB8A] disabled:opacity-50 hover:bg-[#34e09a] text-[#0D1A12] font-bold py-4 rounded-xl transition-transform active:scale-95 shadow-[0_0_20px_rgba(45,203,138,0.2)]">
-                Begin Setup &rarr;
-            </button>
+            <input type="text" id="welcome-name" placeholder="Your Name" oninput="checkWelcomeName()" class="w-full bg-[#1A1A3A] border border-white/10 rounded-xl p-4 text-[#F4F4F0] font-semibold outline-none focus:border-[#2DCB8A]">
+            <button id="welcome-start-btn" disabled onclick="startNewProfile()" class="w-full bg-[#2DCB8A] text-[#0D1A12] font-bold py-4 rounded-xl shadow-[0_0_20px_rgba(45,203,138,0.2)]">Begin Setup &rarr;</button>
         </div>
     </div>`;
 }
@@ -422,136 +370,43 @@ function renderWelcome() {
 function renderOnboarding() {
     const step = STATE.onboardingStep;
     const pct = ((step - 1) / 4) * 100;
-    
     let content = '';
-    if (step === 1) {
-        content = `
+    if (step === 1) content = `
         <div class="animate-fade-in space-y-8">
-            <div>
-                <h2 class="text-2xl font-serif font-bold mb-2">Your Goals</h2>
-                <p class="text-[#8890A0] mb-6">Set your current and target handicap, along with your goal date to begin.</p>
-                <div class="bg-[#1A1A3A] p-4 rounded-xl border border-white/10 mb-4">
-                    <h3 class="text-xs font-bold uppercase tracking-widest text-[#8890A0] mb-2">Current Handicap</h3>
-                    <div class="text-4xl font-serif font-bold text-[#E8A930] mb-2" id="ob-hdcp-val">${STATE.player.currentHandicap.toFixed(1)}</div>
-                    <input type="range" min="0" max="36" step="0.1" value="${STATE.player.currentHandicap}" oninput="STATE.player.currentHandicap = parseFloat(this.value); document.getElementById('ob-hdcp-val').innerText = parseFloat(this.value).toFixed(1); updateAllRatingLabels();" onchange="syncProfileToFirebase()" class="w-full">
-                </div>
-                <div class="bg-[#1A1A3A] p-4 rounded-xl border border-white/10 mb-6">
-                    <h3 class="text-xs font-bold uppercase tracking-widest text-[#8890A0] mb-2">Goal Handicap & Date</h3>
-                    <div class="text-4xl font-serif font-bold text-[#2DCB8A] mb-2" id="ob-target-val">${STATE.player.targetHandicap.toFixed(1)}</div>
-                    <input type="range" min="0" max="36" step="0.1" value="${STATE.player.targetHandicap}" oninput="STATE.player.targetHandicap = parseFloat(this.value); document.getElementById('ob-target-val').innerText = parseFloat(this.value).toFixed(1);" onchange="syncProfileToFirebase()" class="w-full mb-4">
-                    <input type="date" value="${STATE.player.targetDate}" onchange="STATE.player.targetDate = this.value; syncProfileToFirebase();" class="w-full bg-[#0D0D1E] border border-white/10 rounded-lg p-3 text-[#F4F4F0] outline-none focus:border-[#2DCB8A]">
-                </div>
+            <h2 class="text-2xl font-serif font-bold">Your Goals</h2>
+            <div class="bg-[#1A1A3A] p-4 rounded-xl border border-white/10">
+                <h3 class="text-xs font-bold uppercase tracking-widest text-[#8890A0] mb-2">Current Handicap</h3>
+                <div class="text-4xl font-serif font-bold text-[#E8A930] mb-2" id="ob-hdcp-val">${STATE.player.currentHandicap.toFixed(1)}</div>
+                <input type="range" min="0" max="36" step="0.1" value="${STATE.player.currentHandicap}" oninput="STATE.player.currentHandicap = parseFloat(this.value); document.getElementById('ob-hdcp-val').innerText = parseFloat(this.value).toFixed(1);" class="w-full">
+            </div>
+            <div class="bg-[#1A1A3A] p-4 rounded-xl border border-white/10">
+                <h3 class="text-xs font-bold uppercase tracking-widest text-[#8890A0] mb-2">Goal Handicap</h3>
+                <div class="text-4xl font-serif font-bold text-[#2DCB8A] mb-2" id="ob-target-val">${STATE.player.targetHandicap.toFixed(1)}</div>
+                <input type="range" min="0" max="36" step="0.1" value="${STATE.player.targetHandicap}" oninput="STATE.player.targetHandicap = parseFloat(this.value); document.getElementById('ob-target-val').innerText = parseFloat(this.value).toFixed(1);" class="w-full">
             </div>
         </div>`;
-    } else if (step === 2) {
-        content = `
+    else if (step === 2) content = `
         <div class="animate-fade-in space-y-8">
-            <div>
-                <h2 class="text-2xl font-serif font-bold mb-2">Assess Yourself</h2>
-                <p class="text-[#8890A0] mb-6">Rate yourself on core areas from 1 to 5 to establish your baseline.</p>
-                <div class="grid grid-cols-2 gap-3">
-                    ${Object.keys(STATE.player.coreAreas).map(area => `
-                        <div class="bg-[#1A1A3A] p-3 rounded-xl border border-white/10">
-                            <div class="flex items-center justify-between mb-1">
-                                <div class="text-xs text-[#8890A0] capitalize">${area.replace(/([A-Z])/g, ' $1').trim()}</div>
-                                <button onclick="toggleInfo('${area}')">
-                                    <svg class="${STATE.activeInfo === area ? 'text-[#2DCB8A]' : 'text-[#404060]'} w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-                                </button>
-                            </div>
-                            ${STATE.activeInfo === area ? `<div class="text-[10px] text-[#2DCB8A] mb-2 leading-tight">${CORE_AREA_INFO[area]}</div>` : ''}
-                            <div class="flex items-center gap-2 mb-1">
-                                <input type="range" min="1" max="5" value="${STATE.player.coreAreas[area]}" oninput="STATE.player.coreAreas['${area}'] = parseInt(this.value); document.getElementById('val-${area}').innerText = this.value; document.getElementById('lbl-${area}').innerText = getRatingLabel(this.value, STATE.player.currentHandicap);" onchange="syncProfileToFirebase()" class="w-full">
-                                <div id="val-${area}" class="text-right text-[#2DCB8A] font-bold text-sm w-4">${STATE.player.coreAreas[area]}</div>
-                            </div>
-                            <div id="lbl-${area}" class="rating-label text-[9px] text-[#8890A0] text-center uppercase tracking-wider font-semibold mt-1 leading-tight">
-                                ${getRatingLabel(STATE.player.coreAreas[area], STATE.player.currentHandicap)}
-                            </div>
-                        </div>
-                    `).join('')}
-                </div>
+            <h2 class="text-2xl font-serif font-bold">Assess Yourself</h2>
+            <div class="grid grid-cols-2 gap-3">
+                ${Object.keys(STATE.player.coreAreas).map(area => `
+                    <div class="bg-[#1A1A3A] p-3 rounded-xl border border-white/10 text-center relative">
+                        <button onclick="toggleInfo('${area}')" class="absolute top-2 right-2 text-[#8890A0] hover:text-[#2DCB8A]">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                        </button>
+                        <div class="text-xs text-[#8890A0] capitalize mb-2">${area.replace(/([A-Z])/g, ' $1').trim()}</div>
+                        ${STATE.activeInfo === area ? `<div class="text-[9px] text-[#2DCB8A] mb-2 leading-tight px-1">${CORE_AREA_INFO[area]}</div>` : ''}
+                        <input type="range" min="1" max="5" value="${STATE.player.coreAreas[area]}" oninput="STATE.player.coreAreas['${area}'] = parseInt(this.value); document.getElementById('v-${area}').innerText = this.value; document.getElementById('l-${area}').innerText = getRatingLabel(this.value, STATE.player.currentHandicap);" class="w-full">
+                        <div id="v-${area}" class="text-[#2DCB8A] font-bold text-lg mt-1">${STATE.player.coreAreas[area]}</div>
+                        <div id="l-${area}" class="text-[8px] text-[#8890A0] uppercase tracking-wider font-bold mt-1">${getRatingLabel(STATE.player.coreAreas[area], STATE.player.currentHandicap)}</div>
+                    </div>`).join('')}
             </div>
         </div>`;
-    } else if (step === 3) {
-        content = `
-        <div class="animate-fade-in space-y-6">
-            <h2 class="text-2xl font-serif font-bold mb-2">Home Course Setup</h2>
-            <p class="text-[#8890A0]">We'll track your real rounds here to monitor strokes gained over time.</p>
-            <div class="relative">
-                <select onchange="updateCourseSelection(this.value)" class="w-full bg-[#1A1A3A] border border-white/10 rounded-xl p-4 pr-10 text-lg font-bold focus:border-[#2DCB8A] outline-none text-[#F4F4F0] appearance-none">
-                    ${COURSE_DATABASE.map(c => `<option value="${c.name}" ${STATE.player.courseName === c.name ? 'selected' : ''}>${c.name}</option>`).join('')}
-                </select>
-                <svg class="w-5 h-5 absolute right-4 top-1/2 -translate-y-1/2 text-[#8890A0] pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
-            </div>
-            <div class="space-y-2 pt-2">
-                ${STATE.player.courseHoles.map((hole, idx) => `
-                    <div class="flex items-center gap-3 bg-[#1A1A3A] p-2 rounded-xl">
-                        <div class="w-8 text-center font-bold text-[#8890A0]">${hole.number}</div>
-                        <select onchange="STATE.player.courseHoles[${idx}].par = parseInt(this.value); syncProfileToFirebase();" class="bg-[#0D0D1E] border border-white/10 rounded-lg p-2 text-center outline-none text-[#F4F4F0]">
-                            <option value="3" ${hole.par===3?'selected':''}>Par 3</option>
-                            <option value="4" ${hole.par===4?'selected':''}>Par 4</option>
-                            <option value="5" ${hole.par===5?'selected':''}>Par 5</option>
-                        </select>
-                        <input type="number" value="${hole.distance}" onchange="STATE.player.courseHoles[${idx}].distance = parseInt(this.value) || 0; syncProfileToFirebase();" class="flex-1 bg-[#0D0D1E] border border-white/10 rounded-lg p-2 text-right outline-none text-[#2DCB8A] font-bold">
-                    </div>
-                `).join('')}
-            </div>
-        </div>`;
-    } else if (step === 4) {
-        content = `
-        <div class="animate-fade-in space-y-6">
-            <h2 class="text-2xl font-serif font-bold mb-2">Your Bag Map</h2>
-            <p class="text-[#8890A0]">Enter expected distances on a good strike to calibrate your AI caddie.</p>
-            <div class="space-y-2">
-                ${STATE.player.bag.map((club, idx) => `
-                    <div class="flex items-center gap-4 bg-[#1A1A3A] p-3 rounded-xl border border-white/10">
-                        <span class="flex-1 font-semibold text-[#8890A0]">${club.name}</span>
-                        <input type="number" value="${club.distance}" onchange="STATE.player.bag[${idx}].distance = parseInt(this.value) || 0; syncProfileToFirebase();" class="w-20 bg-[#0D0D1E] border border-white/10 rounded-lg p-2 text-center text-[#2DCB8A] font-bold outline-none focus:border-[#2DCB8A]">
-                        <span class="text-[#404060] text-sm">yds</span>
-                    </div>
-                `).join('')}
-            </div>
-        </div>`;
-    } else if (step === 5) {
-        const weeks = getWeeksRemaining();
-        content = `
-        <div class="animate-fade-in flex flex-col justify-center h-full text-center">
-            <div class="w-16 h-16 rounded-full bg-[#2DCB8A]/10 border-2 border-[#2DCB8A] text-[#2DCB8A] flex items-center justify-center mx-auto mb-6">
-                 <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 8 22 22 8 22"/><polyline points="2 2 22 22"/></svg>
-            </div>
-            <h2 class="text-3xl font-serif font-bold mb-2">Your plan is ready.</h2>
-            <p class="text-[#8890A0] mb-6">Dropping ${getDescentNumber()} strokes over ${weeks} weeks.</p>
-            
-            <div class="grid grid-cols-2 gap-3 mb-6">
-                <div class="bg-[#1A1A3A] p-4 rounded-xl border border-[#2DCB8A]/30">
-                    <div class="text-[10px] font-bold text-[#8890A0] uppercase tracking-wider mb-1">Current</div>
-                    <div class="text-2xl font-bold text-[#F4F4F0]">${STATE.player.currentHandicap.toFixed(1)}</div>
-                </div>
-                <div class="bg-[#1A1A3A] p-4 rounded-xl border border-[#2DCB8A]/30">
-                    <div class="text-[10px] font-bold text-[#8890A0] uppercase tracking-wider mb-1">Goal</div>
-                    <div class="text-2xl font-bold text-[#2DCB8A]">${STATE.player.targetHandicap.toFixed(1)}</div>
-                </div>
-            </div>
-        </div>`;
-    }
+    else if (step === 3) content = `<div class="animate-fade-in space-y-6"><h2 class="text-2xl font-serif font-bold">Course Setup</h2><select onchange="window.updateCourseSelection(this.value)" class="w-full bg-[#1A1A3A] border border-white/10 rounded-xl p-4 text-lg font-bold outline-none text-[#F4F4F0]">${COURSE_DATABASE.map(c => `<option value="${c.name}">${c.name}</option>`).join('')}</select></div>`;
+    else if (step === 4) content = `<div class="animate-fade-in space-y-6"><h2 class="text-2xl font-serif font-bold">Bag Map</h2>${STATE.player.bag.map((club, idx) => `<div class="flex items-center gap-4 bg-[#1A1A3A] p-3 rounded-xl border border-white/10"><span class="flex-1 text-[#8890A0] font-semibold">${club.name}</span><input type="number" value="${club.distance}" onchange="window.updateBagDistance('${club.name}', parseInt(this.value)||0);" class="w-20 bg-[#0D0D1E] border border-white/10 rounded p-2 text-center text-[#2DCB8A] font-bold outline-none"></div>`).join('')}</div>`;
+    else if (step === 5) content = `<div class="animate-fade-in flex flex-col justify-center h-full text-center"><h2 class="text-3xl font-serif font-bold mb-2">Plan Ready.</h2><p class="text-[#8890A0]">Targeting ${getDescentNumber()} strokes down over ${getWeeksRemaining()} weeks.</p></div>`;
 
-    return `
-    <div class="flex flex-col h-full p-6 pb-0">
-        <div class="shrink-0">
-            <div class="h-1 bg-[#404060] rounded-full overflow-hidden mb-4">
-                <div class="h-full bg-[#2DCB8A] transition-all duration-500" style="width: ${pct}%"></div>
-            </div>
-            <div class="flex justify-between items-center text-xs font-bold text-[#8890A0] uppercase tracking-wider">
-                ${step > 1 ? `<button onclick="setOBStep(${step - 1})" class="hover:text-white">&larr; Back</button>` : '<span></span>'}
-                <span>Step ${step} of 5</span>
-            </div>
-        </div>
-        <div class="flex-1 overflow-y-auto pt-6 hide-scrollbar">${content}</div>
-        <div class="shrink-0 py-6 bg-[#0D0D1E] sticky bottom-0">
-            <button onclick="nextOBStep()" class="w-full bg-[#2DCB8A] hover:bg-[#34e09a] text-[#0D1A12] font-bold py-4 rounded-xl transition-transform active:scale-95 shadow-[0_0_15px_rgba(45,203,138,0.2)]">
-                ${step === 5 ? 'Enter Descent &rarr;' : 'Continue &rarr;'}
-            </button>
-        </div>
-    </div>`;
+    return `<div class="flex flex-col h-full p-6"><div class="h-1 bg-[#404060] rounded-full overflow-hidden mb-4"><div class="h-full bg-[#2DCB8A] transition-all" style="width: ${pct}%"></div></div><div class="flex-1 overflow-y-auto hide-scrollbar">${content}</div><div class="shrink-0 py-6"><button onclick="nextOBStep()" class="w-full bg-[#2DCB8A] text-[#0D1A12] font-bold py-4 rounded-xl shadow-[0_0_15px_rgba(45,203,138,0.2)]">${step === 5 ? 'Enter Descent' : 'Continue'}</button></div></div>`;
 }
 
 function renderWelcomeSequence() {
@@ -603,7 +458,7 @@ function renderLearn() {
         tasksHTML = STATE.player.customPlan.learn.map((task, idx) => {
             const isDone = STATE.player.completedTasksSet[`learn_${idx}`];
             return `
-            <div class="bg-[#1A1A3A] p-4 rounded-xl border border-white/10 flex gap-4 items-start shadow-sm transition-all" onclick="toggleTask('learn', ${idx})">
+            <div class="bg-[#1A1A3A] p-4 rounded-xl border border-white/10 flex gap-4 items-start cursor-pointer shadow-sm transition-all" onclick="toggleTask('learn', ${idx})">
                 <div class="mt-1 flex-shrink-0">
                     ${isDone ? `<svg class="text-[#2DCB8A]" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>` 
                              : `<div class="w-6 h-6 rounded-full border-2 border-white/20"></div>`}
@@ -667,12 +522,6 @@ function renderLearn() {
                 ${tasksHTML}
             </div>
         </section>
-
-        <section class="mt-8 space-y-3 pb-8">
-            <button onclick="switchView('practice')" class="w-full bg-[#1A1A3A] hover:bg-[#14142E] text-[#F4F4F0] font-bold py-4 rounded-2xl flex justify-center items-center gap-3 transition-transform active:scale-95 shadow-lg border border-white/10">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg> GO TO PRACTICE
-            </button>
-        </section>
     </div>`;
 }
 
@@ -690,7 +539,7 @@ function renderPractice() {
             ${STATE.player.customPlan.practice.map((task, idx) => {
                 const isDone = STATE.player.completedTasksSet[`practice_${idx}`];
                 return `
-                <div class="bg-[#1A1A3A] p-4 rounded-xl border border-white/10 flex gap-4 items-start shadow-sm transition-all cursor-pointer" onclick="toggleTask('practice', ${idx})">
+                <div class="bg-[#1A1A3A] p-4 rounded-xl border border-white/10 flex gap-4 items-start cursor-pointer shadow-sm transition-all" onclick="toggleTask('practice', ${idx})">
                     <div class="mt-1 flex-shrink-0">
                         ${isDone ? `<svg class="text-[#2DCB8A]" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>` 
                                  : `<div class="w-6 h-6 rounded-full border-2 border-white/20"></div>`}
@@ -746,435 +595,318 @@ function renderPractice() {
     </div>`;
 }
 
-function renderCheckIn() {
-    return `
-    <div class="flex flex-col h-full p-6 animate-fade-in">
-        <header class="mb-6">
-            <h1 class="text-2xl font-serif font-bold text-[#F4F4F0] flex items-center gap-2 tracking-widest">
-                <svg class="text-[#2DCB8A] w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg> CHECK-IN
-            </h1>
-            <p class="text-[#8890A0] text-sm mt-1">Update your skills and bag map as you improve.</p>
-        </header>
-
-        <div class="flex-1 overflow-y-auto hide-scrollbar space-y-8 pb-8">
-            <section>
-                <div class="flex justify-between items-end mb-4">
-                    <h2 class="text-lg font-bold">Core Proficiency</h2>
-                    <span class="text-[10px] uppercase tracking-wider text-[#404060]">Tap to update</span>
-                </div>
-                <div class="grid grid-cols-2 gap-3">
-                    ${Object.keys(STATE.player.coreAreas).map(area => `
-                        <div class="bg-[#1A1A3A] p-3 rounded-xl border border-white/10">
-                            <div class="text-xs font-semibold text-[#8890A0] capitalize mb-2">${area.replace(/([A-Z])/g, ' $1').trim()}</div>
-                            <div class="flex justify-between items-center mb-1">
-                                <input type="range" min="1" max="5" value="${STATE.player.coreAreas[area]}" oninput="STATE.player.coreAreas['${area}'] = parseInt(this.value); document.getElementById('ci-val-${area}').innerText = this.value; document.getElementById('ci-lbl-${area}').innerText = getRatingLabel(this.value, STATE.player.currentHandicap);" onchange="syncProfileToFirebase()" class="w-2/3 accent-[#2DCB8A]">
-                                <span id="ci-val-${area}" class="text-[#2DCB8A] font-bold bg-[#0D0D1E] px-2 py-1 rounded-md text-sm border border-white/5">${STATE.player.coreAreas[area]}</span>
-                            </div>
-                            <div id="ci-lbl-${area}" class="text-[9px] text-[#8890A0] text-center uppercase tracking-wider font-semibold mt-2 leading-tight">
-                                ${getRatingLabel(STATE.player.coreAreas[area], STATE.player.currentHandicap)}
-                            </div>
-                        </div>
-                    `).join('')}
-                </div>
-            </section>
-
-            <section>
-                <div class="flex justify-between items-end mb-4">
-                    <h2 class="text-lg font-bold">Bag Map & Insights</h2>
-                    <span class="text-[10px] uppercase tracking-wider text-[#404060]">Yards</span>
-                </div>
-                <div class="bg-[#1A1A3A] rounded-xl border border-white/10 p-2 space-y-1">
-                    ${STATE.player.bag.map((club, idx) => `
-                        <div class="flex flex-col gap-1 hover:bg-[#14142E] p-2 rounded-lg transition-colors border border-transparent ${STATE.player.clubInsights && STATE.player.clubInsights[club.name] ? 'border-white/5' : ''}">
-                            <div class="flex items-center gap-4">
-                                <span class="flex-1 text-sm font-semibold text-[#8890A0]">${club.name}</span>
-                                <input type="number" id="bag-club-${club.name}" value="${club.distance}" onchange="STATE.player.bag[${idx}].distance = parseInt(this.value) || 0; syncProfileToFirebase();" class="w-16 bg-[#0D0D1E] border border-white/10 rounded p-1 text-center text-[#2DCB8A] font-bold outline-none focus:border-[#2DCB8A]">
-                            </div>
-                            ${STATE.player.clubInsights && STATE.player.clubInsights[club.name] ? `
-                                <p class="text-[10px] text-[#E8A930] bg-[#E8A930]/10 p-1.5 rounded inline-block mt-1">💡 ${STATE.player.clubInsights[club.name]}</p>
-                            ` : ''}
-                        </div>
-                    `).join('')}
-                </div>
-            </section>
-
-            <section class="mt-8 pt-6 border-t border-white/10">
-                <button onclick="logout()" class="w-full bg-[#1A1A3A] hover:bg-[#2a1a2a] text-[#E85030] font-bold py-4 rounded-xl border border-[#E85030]/20 transition-colors">
-                    Log Out / Forget Me
-                </button>
-            </section>
-        </div>
-    </div>`;
-}
-
 function renderPlayIntro() {
-    return `
-    <div class="flex flex-col h-full p-6 animate-fade-in">
-        <h1 class="text-2xl font-serif font-bold mb-2">Track Round</h1>
-        <p class="text-[#8890A0] mb-6">Play ${STATE.player.courseName} and gather Strokes Gained data.</p>
-        
-        <div class="mb-8 bg-[#1A1A3A] border border-white/10 p-4 rounded-xl flex justify-between items-center">
-            <div>
-                <h3 class="font-bold text-[#F4F4F0] text-sm">Corner Man Coach</h3>
-                <p class="text-[10px] text-[#8890A0] mt-1">Get AI strategy every 3 holes</p>
-            </div>
-            <label class="relative inline-flex items-center cursor-pointer">
-                <input type="checkbox" onchange="STATE.player.settings.silenceCoach = !this.checked; syncProfileToFirebase();" ${!STATE.player.settings.silenceCoach ? 'checked' : ''} class="sr-only peer">
-                <div class="w-11 h-6 bg-[#404060] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#2DCB8A]"></div>
-            </label>
-        </div>
-
-        <button onclick="startRoundFlow()" class="w-full bg-[#2DCB8A] hover:bg-[#34e09a] text-[#0D1A12] font-bold py-5 rounded-xl flex justify-center items-center gap-3 transition-transform active:scale-95 shadow-[0_0_20px_rgba(45,203,138,0.15)]">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg> TEE OFF
-        </button>
-    </div>`;
+    return `<div class="flex flex-col h-full p-6 animate-fade-in"><h1 class="text-2xl font-serif font-bold mb-2">Track Round</h1><p class="text-[#8890A0] mb-8">Play ${STATE.player.courseName} to gather Strokes Gained data.</p><button onclick="startRoundFlow()" class="w-full bg-[#2DCB8A] text-[#0D1A12] font-bold py-5 rounded-xl shadow-[0_0_20px_rgba(45,203,138,0.15)]">TEE OFF</button></div>`;
 }
 
 function renderPlayActive() {
     const round = STATE.activeRound;
     if (!round) return '';
     const hole = STATE.player.courseHoles[round.holeIndex];
-    const totalHoleStrokes = round.currentHoleShots.length + round.penaltyStrokes;
+    const club = STATE.player.bag[round.selectedClubIndex];
     const outs = round.shotOutcomes;
-    const selectedClubObj = STATE.player.bag[round.selectedClubIndex];
+
+    const completedHoles = round.holesLog.length;
+    const currentTotalStrokes = round.holesLog.reduce((s, h) => s + h.totalStrokes, 0) + round.currentHoleShots.length + round.penaltyStrokes + (round.tempPuttCount || 0);
+    const scoreToPar = round.holesLog.reduce((s, h) => s + (h.totalStrokes - h.par), 0);
+    const scoreToParStr = scoreToPar > 0 ? `+${scoreToPar}` : scoreToPar === 0 ? 'E' : scoreToPar;
+    const totalPutts = round.holesLog.reduce((s, h) => s + h.putts, 0);
+    const ppg = completedHoles > 0 ? (totalPutts / completedHoles).toFixed(1) : '0.0';
+    const totalGir = round.holesLog.filter(h => h.isGir).length;
+    const girPct = completedHoles > 0 ? Math.round((totalGir / completedHoles) * 100) : '0';
 
     let interactions = '';
     if (round.holeState === 'fairway') {
         interactions = `
-            <p class="text-center text-[#2DCB8A] font-bold text-[10px] uppercase tracking-widest mb-6">Enter data AFTER your shot</p>
-
-            <div class="text-center mb-6">
-                <label class="text-[#8890A0] font-bold uppercase tracking-widest text-[10px] mb-2 block">Distance to Pin</label>
-                <div class="flex justify-center items-baseline gap-2">
-                    <input type="number" id="shot-distance" value="${round.currentShotDistance}" onchange="STATE.activeRound.currentShotDistance = parseInt(this.value)||0; render();" class="bg-transparent text-6xl font-serif font-bold text-center text-[#F4F4F0] w-40 outline-none border-b border-[#404060] focus:border-[#2DCB8A] transition-colors">
-                    <span class="text-xl text-[#404060] font-bold">yds</span>
+            <div class="mb-10 text-center">
+                <div class="text-[#8890A0] font-bold uppercase tracking-widest text-[11px] mb-4">Choose Club</div>
+                <div class="text-4xl font-serif font-bold text-[#2DCB8A] mb-8">${club.name}</div>
+                <div class="px-4">
+                    <input type="range" min="0" max="${STATE.player.bag.length - 2}" value="${round.selectedClubIndex}" oninput="updateClubSlider(this.value)" class="w-full">
+                    <div class="flex justify-between mt-4 text-[10px] font-bold text-[#404060] uppercase tracking-wider">
+                        <span>${STATE.player.bag[0].name}</span>
+                        <span>${STATE.player.bag[STATE.player.bag.length-2].name}</span>
+                    </div>
                 </div>
             </div>
 
-            <div class="bg-[#1A1A3A] p-4 rounded-xl border border-white/10 mb-6">
-                <div class="flex justify-between items-center mb-3">
-                    <span class="text-[#8890A0] font-bold text-[10px] uppercase tracking-widest">Club Used</span>
-                    <span class="text-[#F4F4F0] font-bold text-sm">${selectedClubObj.name} <span class="text-[#2DCB8A] text-xs ml-1">(${selectedClubObj.distance}y)</span></span>
+            <div class="space-y-3 mb-10">
+                <div class="flex gap-2">
+                    <button onclick="setOutcome('dir', 'Left')" class="flex-1 py-3 text-[10px] uppercase font-bold rounded-lg border ${outs.dir==='Left'?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#8890A0] border-transparent'}">Left</button>
+                    <button onclick="setOutcome('dir', 'Straight')" class="flex-1 py-3 text-[10px] uppercase font-bold rounded-lg border ${outs.dir==='Straight'?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#8890A0] border-transparent'}">Straight</button>
+                    <button onclick="setOutcome('dir', 'Right')" class="flex-1 py-3 text-[10px] uppercase font-bold rounded-lg border ${outs.dir==='Right'?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#8890A0] border-transparent'}">Right</button>
                 </div>
-                <input type="range" min="0" max="${STATE.player.bag.length - 1}" value="${round.selectedClubIndex}" oninput="updateClubSlider(this.value)" class="w-full">
+                <div class="flex gap-2">
+                    <button onclick="setOutcome('dist', 'Short')" class="flex-1 py-3 text-[10px] uppercase font-bold rounded-lg border ${outs.dist==='Short'?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#8890A0] border-transparent'}">Short</button>
+                    <button onclick="setOutcome('dist', 'At Dist')" class="flex-1 py-3 text-[10px] uppercase font-bold rounded-lg border ${outs.dist==='At Dist'?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#8890A0] border-transparent'}">At Dist</button>
+                    <button onclick="setOutcome('dist', 'Long')" class="flex-1 py-3 text-[10px] uppercase font-bold rounded-lg border ${outs.dist==='Long'?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#8890A0] border-transparent'}">Long</button>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="setOutcome('lie', 'Rough')" class="flex-1 py-3 text-[10px] uppercase font-bold rounded-lg border ${outs.lie==='Rough'?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#8890A0] border-transparent'}">Rough</button>
+                    <button onclick="setOutcome('lie', 'Fairway')" class="flex-1 py-3 text-[10px] uppercase font-bold rounded-lg border ${outs.lie==='Fairway'?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#8890A0] border-transparent'}">Fairway</button>
+                    <button onclick="setOutcome('lie', 'Green')" class="flex-1 py-3 text-[10px] uppercase font-bold rounded-lg border ${outs.lie==='Green'?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#8890A0] border-transparent'}">Green</button>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="setOutcome('cont', 'Miss-hit')" class="flex-1 py-3 text-[10px] uppercase font-bold rounded-lg border ${outs.cont==='Miss-hit'?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#8890A0] border-transparent'}">Miss-hit</button>
+                    <button onclick="setOutcome('cont', 'Good Strike')" class="flex-1 py-3 text-[10px] uppercase font-bold rounded-lg border ${outs.cont==='Good Strike'?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#8890A0] border-transparent'}">Good Strike</button>
+                    <button onclick="setOutcome('cont', 'Dreamy')" class="flex-1 py-3 text-[10px] uppercase font-bold rounded-lg border ${outs.cont==='Dreamy'?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#8890A0] border-transparent'}">Dreamy</button>
+                </div>
+                <button onclick="setOutcome('ob', ${!outs.ob})" class="w-full py-3 text-[10px] uppercase font-bold rounded-lg border ${outs.ob?'bg-[#E85030] text-white border-[#E85030]':'bg-[#1A1A3A] text-[#8890A0] border-transparent'}">${outs.ob ? 'OB (Penalty Added)' : 'Mark as OB'}</button>
             </div>
 
-            <div class="space-y-3 mb-8 animate-fade-in">
-                <div class="flex justify-between items-center bg-[#1A1A3A] border border-white/10 rounded-lg p-2 px-3 mb-2">
-                    <span class="text-[#8890A0] font-bold text-[10px] uppercase tracking-widest">Shot Type</span>
-                    <select id="shot-type" class="bg-transparent font-bold text-[#F4F4F0] outline-none text-sm text-right">
-                        ${SHOT_TYPES.map(t => `<option value="${t}">${t}</option>`).join('')}
-                    </select>
-                </div>
-                <div class="flex gap-2">
-                    <button onclick="setOutcome('dist', 'Short')" class="flex-1 py-2.5 text-[10px] uppercase tracking-widest font-bold rounded-lg border ${outs.dist==='Short'?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#0D0D1E] text-[#8890A0] border-white/10'} transition-colors">Short</button>
-                    <button onclick="setOutcome('dist', 'At Dist')" class="flex-1 py-2.5 text-[10px] uppercase tracking-widest font-bold rounded-lg border ${outs.dist==='At Dist'?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#0D0D1E] text-[#8890A0] border-white/10'} transition-colors">At Dist</button>
-                    <button onclick="setOutcome('dist', 'Long')" class="flex-1 py-2.5 text-[10px] uppercase tracking-widest font-bold rounded-lg border ${outs.dist==='Long'?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#0D0D1E] text-[#8890A0] border-white/10'} transition-colors">Long</button>
-                </div>
-                <div class="flex gap-2">
-                    <button onclick="setOutcome('dir', 'Left')" class="flex-1 py-2.5 text-[10px] uppercase tracking-widest font-bold rounded-lg border ${outs.dir==='Left'?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#0D0D1E] text-[#8890A0] border-white/10'} transition-colors">Left</button>
-                    <button onclick="setOutcome('dir', 'Straight')" class="flex-1 py-2.5 text-[10px] uppercase tracking-widest font-bold rounded-lg border ${outs.dir==='Straight'?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#0D0D1E] text-[#8890A0] border-white/10'} transition-colors">Straight</button>
-                    <button onclick="setOutcome('dir', 'Right')" class="flex-1 py-2.5 text-[10px] uppercase tracking-widest font-bold rounded-lg border ${outs.dir==='Right'?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#0D0D1E] text-[#8890A0] border-white/10'} transition-colors">Right</button>
-                </div>
-                <div class="flex gap-2">
-                    <button onclick="setOutcome('lie', 'Rough')" class="flex-1 py-2.5 text-[10px] uppercase tracking-widest font-bold rounded-lg border ${outs.lie==='Rough'?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#0D0D1E] text-[#8890A0] border-white/10'} transition-colors">Rough</button>
-                    <button onclick="setOutcome('lie', 'Fairway')" class="flex-1 py-2.5 text-[10px] uppercase tracking-widest font-bold rounded-lg border ${outs.lie==='Fairway'?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#0D0D1E] text-[#8890A0] border-white/10'} transition-colors">Fairway</button>
-                    <button onclick="setOutcome('lie', 'Green')" class="flex-1 py-2.5 text-[10px] uppercase tracking-widest font-bold rounded-lg border ${outs.lie==='Green'?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#0D0D1E] text-[#8890A0] border-white/10'} transition-colors">Green</button>
-                </div>
-                <div class="flex gap-2">
-                    <button onclick="setOutcome('cont', 'Miss-hit')" class="flex-1 py-2.5 text-[10px] uppercase tracking-widest font-bold rounded-lg border ${outs.cont==='Miss-hit'?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#0D0D1E] text-[#8890A0] border-white/10'} transition-colors">Miss-hit</button>
-                    <button onclick="setOutcome('cont', 'Good Strike')" class="flex-1 py-2.5 text-[10px] uppercase tracking-widest font-bold rounded-lg border ${outs.cont==='Good Strike'?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#0D0D1E] text-[#8890A0] border-white/10'} transition-colors">Good Strike</button>
-                    <button onclick="setOutcome('cont', 'Dreamy')" class="flex-1 py-2.5 text-[10px] uppercase tracking-widest font-bold rounded-lg border ${outs.cont==='Dreamy'?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#0D0D1E] text-[#8890A0] border-white/10'} transition-colors">Dreamy</button>
-                </div>
-                <button onclick="setOutcome('ob', ${!outs.ob})" class="w-full py-2.5 text-[10px] uppercase tracking-widest font-bold rounded-lg border ${outs.ob?'bg-[#E85030] text-white border-[#E85030]':'bg-[#0D0D1E] text-[#8890A0] border-white/10 hover:border-[#E85030]/50 hover:text-[#E85030]'} transition-colors">
-                    ${outs.ob ? 'OB (Penalty Added)' : 'Mark as OB (Penalty)'}
-                </button>
-            </div>
-
-            <div class="flex flex-col gap-3 mt-auto pb-4">
-                <button onclick="recordFairwayShot()" class="w-full bg-[#2DCB8A] hover:bg-[#34e09a] text-[#0D1A12] font-bold py-4 rounded-xl flex justify-center items-center gap-2 transition-transform active:scale-95 shadow-[0_0_15px_rgba(45,203,138,0.2)]">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg> Record Shot
-                </button>
-            </div>
+            <button onclick="recordFairwayShot()" class="w-full bg-[#2DCB8A] text-[#0D1A12] font-bold py-5 rounded-xl transition-transform active:scale-95 shadow-lg mt-auto uppercase tracking-widest">Record Shot</button>
         `;
     } else {
         interactions = `
-            <div class="text-center mb-6 animate-fade-in mt-4">
-                <div class="w-16 h-16 rounded-full bg-[#2DCB8A]/10 border border-[#2DCB8A] text-[#2DCB8A] flex items-center justify-center mx-auto mb-4">
-                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+            <div class="text-center mb-10 mt-4">
+                <div class="text-[#2DCB8A] text-xs font-bold uppercase tracking-widest mb-10">On the Green</div>
+                <div class="grid grid-cols-2 gap-3 mb-10">
+                    <button onclick="finishHoleWithPutts(0)" class="col-span-2 py-6 text-sm font-bold uppercase tracking-widest rounded-2xl border-2 ${round.tempPuttCount===0?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#F4F4F0] border-white/5'}">Hole Out (0 Putts)</button>
+                    <button onclick="finishHoleWithPutts(1)" class="py-5 text-xl font-bold rounded-2xl border-2 ${round.tempPuttCount===1?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#F4F4F0] border-white/5'}">1</button>
+                    <button onclick="finishHoleWithPutts(2)" class="py-5 text-xl font-bold rounded-2xl border-2 ${round.tempPuttCount===2?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#F4F4F0] border-white/5'}">2</button>
+                    <button onclick="finishHoleWithPutts(3)" class="py-5 text-xl font-bold rounded-2xl border-2 ${round.tempPuttCount===3?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#F4F4F0] border-white/5'}">3</button>
+                    <button onclick="finishHoleWithPutts(4)" class="py-5 text-xl font-bold rounded-2xl border-2 ${round.tempPuttCount===4?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#F4F4F0] border-white/5'}">4+</button>
                 </div>
-                <h3 class="text-[#F4F4F0] font-serif font-bold text-xl mb-6">On the Green</h3>
-                
-                <label class="text-[#8890A0] font-bold uppercase tracking-widest text-[10px] mb-2 block">Total Putts</label>
-                <div class="flex justify-center items-center gap-6">
-                    <button onclick="const el=document.getElementById('putt-count'); el.value = Math.max(0, parseInt(el.value)-1);" class="w-12 h-12 rounded-full bg-[#1A1A3A] text-2xl border border-white/10 hover:border-[#2DCB8A] text-white">-</button>
-                    <input type="number" id="putt-count" value="2" class="bg-transparent text-6xl font-serif font-bold text-center text-[#2DCB8A] w-20 outline-none">
-                    <button onclick="const el=document.getElementById('putt-count'); el.value = parseInt(el.value)+1;" class="w-12 h-12 rounded-full bg-[#1A1A3A] text-2xl border border-white/10 hover:border-[#2DCB8A] text-white">+</button>
-                </div>
-            </div>
-
-            <div class="mb-8">
-                <label class="text-[#8890A0] font-bold uppercase tracking-widest text-[10px] mb-2 block">Hole Comments (Optional)</label>
-                <textarea id="hole-comment" rows="3" placeholder="Pushed the drive, chunked an iron, 3-putted..." class="w-full bg-[#1A1A3A] border border-white/10 rounded-xl p-3 text-sm text-[#F4F4F0] outline-none focus:border-[#2DCB8A] resize-none"></textarea>
-            </div>
-
-            <div class="mt-auto pb-4">
-                <button onclick="saveHoleData()" class="w-full bg-[#2DCB8A] hover:bg-[#34e09a] text-[#0D1A12] font-bold py-4 rounded-xl flex justify-center items-center gap-2 transition-transform active:scale-95 shadow-[0_0_15px_rgba(45,203,138,0.2)]">
-                    Complete Hole &rarr;
-                </button>
+                <textarea id="hole-comment" placeholder="Any notes on this hole?" class="w-full bg-[#1A1A3A] border border-white/10 rounded-xl p-4 text-sm text-[#F4F4F0] outline-none h-24 resize-none mb-6"></textarea>
             </div>
         `;
     }
 
     return `
-    <div class="flex flex-col h-full relative bg-[#0D0D1E]">
-        <div class="bg-[#1A1A3A] p-6 rounded-b-2xl border-b border-white/10 shadow-lg z-10 shrink-0">
-            <div class="flex justify-between items-center mb-4">
-                <div>
-                    <span class="text-[#2DCB8A] font-bold uppercase tracking-widest text-[10px]">Playing</span>
-                    <h2 class="text-xl font-serif font-bold truncate max-w-[200px]">${STATE.player.courseName}</h2>
-                </div>
-                <button onclick="switchView('learn')" class="text-[#404060] hover:text-white transition-colors">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
-                </button>
+    <div class="flex flex-col h-full bg-[#0D0D1E]">
+        <div class="bg-[#1A1A3A] p-6 rounded-b-2xl border-b border-white/10 shadow-lg shrink-0">
+            <div class="flex justify-between items-center mb-6">
+                <div><span class="text-[#2DCB8A] font-bold uppercase tracking-widest text-[10px]">Hole ${hole.number}</span><h2 class="text-2xl font-serif font-bold">Par ${hole.par}</h2></div>
+                <div class="text-right"><span class="text-[#8890A0] font-bold uppercase tracking-widest text-[10px]">Total Strokes</span><div class="text-3xl font-serif font-bold text-[#E8A930]">${currentTotalStrokes}</div></div>
             </div>
-            <div class="flex justify-between items-end">
-                <div>
-                    <span class="text-[#8890A0] text-xs font-bold tracking-widest uppercase block mb-1">Hole ${hole.number}</span>
-                    <div class="text-3xl font-serif font-bold flex items-baseline gap-2">
-                        Par ${hole.par} <span class="text-lg text-[#404060] font-sans font-normal">${hole.distance}y</span>
-                    </div>
-                </div>
-                <div class="text-right">
-                    <span class="text-[#8890A0] text-xs font-bold tracking-widest uppercase block mb-1">Strokes Logged</span>
-                    <span class="text-4xl font-serif font-bold text-[#E8A930]">${totalHoleStrokes}</span>
-                </div>
+            <div class="grid grid-cols-4 gap-2 text-center border-t border-white/5 pt-4">
+                <div><div class="text-[9px] uppercase font-bold text-[#404060] mb-1">To Par</div><div class="text-sm font-black ${scoreToPar > 0 ? 'text-[#E85030]' : 'text-[#2DCB8A]'}">${scoreToParStr}</div></div>
+                <div><div class="text-[9px] uppercase font-bold text-[#404060] mb-1">PPG</div><div class="text-sm font-black text-white">${ppg}</div></div>
+                <div><div class="text-[9px] uppercase font-bold text-[#404060] mb-1">GIR %</div><div class="text-sm font-black text-[#2DCB8A]">${girPct}%</div></div>
+                <div><div class="text-[9px] uppercase font-bold text-[#404060] mb-1">Holes</div><div class="text-sm font-black text-white">${completedHoles}</div></div>
             </div>
         </div>
-
-        <div class="p-6 flex-1 flex flex-col hide-scrollbar overflow-y-auto">
-            ${round.currentHoleShots.length > 0 && round.holeState === 'fairway' ? `
-                <div class="mb-6 space-y-2">
-                    ${round.currentHoleShots.map((s, i) => `
-                        <div class="flex justify-between items-center bg-[#1A1A3A]/50 p-2 rounded-lg text-sm border border-white/5">
-                            <span class="text-[#8890A0] font-bold text-xs uppercase tracking-wider">Shot ${i+1}</span>
-                            <span class="text-white font-bold">${s.club} <span class="text-[#2DCB8A] text-xs ml-1">${s.distance}y</span></span>
-                        </div>
-                    `).join('')}
-                </div>
-            ` : ''}
-            ${interactions}
-        </div>
+        <div class="p-6 flex-1 flex flex-col hide-scrollbar overflow-y-auto pb-10">${interactions}</div>
     </div>`;
 }
 
 function renderCoachCorner() {
     const round = STATE.activeRound;
     return `
-    <div class="flex flex-col h-full bg-[#0D0D1E] animate-fade-in p-6 pb-24">
-        <div class="text-center mt-4 mb-6">
-            <div class="w-16 h-16 rounded-full bg-[#1D7A5A] flex items-center justify-center text-3xl mx-auto mb-3 shadow-[0_0_20px_rgba(45,203,138,0.2)] border-2 border-[#2DCB8A]">🥊</div>
-            <h1 class="text-2xl font-serif font-bold uppercase tracking-widest text-[#F4F4F0]">Coach's Corner</h1>
-            <p class="text-[#8890A0] text-sm mt-1">Through Hole ${STATE.player.courseHoles[round.holeIndex - 1].number}</p>
+    <div class="flex flex-col h-full p-6 animate-fade-in bg-[#0D0D1E]">
+        <div class="text-center mt-6 mb-8">
+            <div class="w-16 h-16 rounded-full bg-[#1D7A5A] flex items-center justify-center text-3xl mx-auto mb-4 border-2 border-[#2DCB8A] shadow-[0_0_20px_rgba(45,203,138,0.2)]">🥊</div>
+            <h1 class="text-3xl font-serif font-bold uppercase tracking-tighter text-[#F4F4F0]">Corner Man</h1>
+            <p class="text-[#8890A0] text-sm mt-1 uppercase tracking-widest font-bold">Mid-Round Strategy</p>
         </div>
-
-        <div class="flex-1 bg-[#1A1A3A] border border-white/10 rounded-xl p-4 flex flex-col overflow-hidden mb-6 shadow-xl">
-            <div id="corner-chat-area" class="flex-1 overflow-y-auto hide-scrollbar space-y-4 flex flex-col">
-                ${round.cornerMessages.map(msg => `
-                    <div class="flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}">
-                        <div class="max-w-[90%] p-4 rounded-xl text-sm leading-relaxed ${msg.role === 'user' ? 'bg-[#2DCB8A] text-[#0D1A12] rounded-br-sm font-semibold' : 'bg-[#0D0D1E] border border-white/10 text-[#F4F4F0] rounded-bl-sm font-medium'}">${msg.text}</div>
-                    </div>
-                `).join('')}
-                ${round.isCoachTyping ? `
-                    <div class="flex justify-start">
-                        <div class="bg-[#0D0D1E] border border-white/10 rounded-xl rounded-bl-sm p-4 flex gap-1 items-center">
-                            <div class="w-1.5 h-1.5 bg-[#8890A0] rounded-full typing-dot"></div>
-                            <div class="w-1.5 h-1.5 bg-[#8890A0] rounded-full typing-dot"></div>
-                            <div class="w-1.5 h-1.5 bg-[#8890A0] rounded-full typing-dot"></div>
-                        </div>
-                    </div>
-                ` : ''}
-            </div>
+        <div class="flex-1 bg-[#1A1A3A] border border-white/10 rounded-2xl p-6 overflow-y-auto hide-scrollbar mb-8">
+            ${round.isCoachTyping ? `
+                <div class="flex gap-2 items-center text-[#8890A0]">
+                    <div class="w-2 h-2 bg-[#2DCB8A] rounded-full animate-bounce"></div>
+                    <div class="w-2 h-2 bg-[#2DCB8A] rounded-full animate-bounce" style="animation-delay:0.2s"></div>
+                    <div class="w-2 h-2 bg-[#2DCB8A] rounded-full animate-bounce" style="animation-delay:0.4s"></div>
+                    <span class="text-xs ml-2 font-bold uppercase tracking-widest">Analyzing your game...</span>
+                </div>
+            ` : `
+                <div class="text-[#F4F4F0] leading-relaxed text-lg font-medium space-y-4">
+                    ${round.cornerMessages[round.cornerMessages.length - 1]?.text || 'Looking at your data...'}
+                </div>
+            `}
         </div>
-
         <div class="space-y-3 shrink-0">
             <div class="flex gap-2">
                 <input id="corner-chat-input" type="text" placeholder="Questions for Coach?" onkeydown="if(event.key==='Enter') sendCornerMessage()" class="flex-1 bg-[#1A1A3A] border border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-[#2DCB8A] text-[#F4F4F0]">
                 <button onclick="sendCornerMessage()" class="w-12 rounded-xl bg-[#1A1A3A] border border-white/10 hover:border-[#2DCB8A] flex items-center justify-center text-[#2DCB8A] transition-colors"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></button>
             </div>
-            <button onclick="returnToTee()" class="w-full bg-[#2DCB8A] hover:bg-[#34e09a] text-[#0D1A12] font-bold py-4 rounded-xl flex justify-center items-center gap-2 transition-transform active:scale-95 shadow-[0_0_15px_rgba(45,203,138,0.2)]">
-                Back to the Tee &rarr;
-            </button>
+            <button onclick="returnToTee()" class="w-full bg-[#2DCB8A] text-[#0D1A12] font-bold py-5 rounded-xl uppercase tracking-widest shadow-lg active:scale-95 transition-transform">Back to the Tee &rarr;</button>
         </div>
     </div>`;
 }
 
 function renderPostRound() {
-    const round = STATE.activeRound;
-    if (!round) return '';
+    const r = STATE.activeRound;
+    const holes = r.holesLog;
+    const totalStrokes = holes.reduce((s, h) => s + h.totalStrokes, 0);
+    const totalPar = holes.reduce((s, h) => s + h.par, 0);
+    const toPar = totalStrokes - totalPar;
+    const toParStr = toPar > 0 ? `+${toPar}` : toPar === 0 ? 'E' : toPar;
 
-    const totalStrokes = round.holesLog.reduce((sum, h) => sum + h.totalStrokes, 0);
-    const totalPar = STATE.player.courseHoles.reduce((sum, h) => sum + h.par, 0);
-    const scoreToPar = totalStrokes - totalPar;
-    const scoreString = scoreToPar > 0 ? `+${scoreToPar}` : scoreToPar === 0 ? 'E' : scoreToPar;
+    const drivableHoles = holes.filter(h => h.par > 3);
+    const fairwaysHit = drivableHoles.filter(h => h.shots[0]?.lie === 'Fairway').length;
+    const fairwayPct = drivableHoles.length > 0 ? Math.round((fairwaysHit / drivableHoles.length) * 100) : 0;
+    
+    const totalPutts = holes.reduce((s, h) => s + h.putts, 0);
+    const ppg = (totalPutts / holes.length).toFixed(1);
 
     const parStats = { 3: { s: 0, c: 0 }, 4: { s: 0, c: 0 }, 5: { s: 0, c: 0 } };
-    round.holesLog.forEach(h => { if(parStats[h.par]) { parStats[h.par].s += h.totalStrokes; parStats[h.par].c++; } });
+    holes.forEach(h => { parStats[h.par].s += h.totalStrokes; parStats[h.par].c++; });
 
-    let bestStretchScore = Infinity; let bestStartHole = 1;
-    for (let i = 0; i <= round.holesLog.length - 3; i++) {
-        const sum = (round.holesLog[i].totalStrokes - round.holesLog[i].par) + 
-                    (round.holesLog[i+1].totalStrokes - round.holesLog[i+1].par) + 
-                    (round.holesLog[i+2].totalStrokes - round.holesLog[i+2].par);
-        if (sum < bestStretchScore) { bestStretchScore = sum; bestStartHole = round.holesLog[i].number; }
-    }
-    const stretchStr = bestStretchScore > 0 ? `+${bestStretchScore}` : bestStretchScore === 0 ? 'E' : bestStretchScore;
+    const filteredClub = r.summaryFilter || 'All';
+    let allShots = [];
+    holes.forEach(h => h.shots.forEach(s => allShots.push(s)));
+    if (filteredClub !== 'All') allShots = allShots.filter(s => s.club === filteredClub);
 
-    let scorecardHTML = `<div class="grid grid-cols-10 gap-1 text-[10px] text-center font-bold text-[#8890A0] mb-2"><div class="col-span-1">H</div><div class="col-span-1">P</div><div class="col-span-1">S</div><div class="col-span-1">H</div><div class="col-span-1">P</div><div class="col-span-1">S</div><div class="col-span-1">H</div><div class="col-span-1">P</div><div class="col-span-1">S</div></div>`;
-    for(let i=0; i<6; i++) {
-        scorecardHTML += `<div class="grid grid-cols-10 gap-1 text-xs text-center mb-1 text-white">`;
-        for(let j=0; j<3; j++) {
-            const h = round.holesLog[i*3 + j];
-            if(!h) continue;
-            const color = h.totalStrokes < h.par ? 'text-[#2DCB8A]' : h.totalStrokes > h.par ? 'text-[#E85030]' : 'text-white';
-            scorecardHTML += `<div class="col-span-1 py-1 bg-[#1A1A3A] rounded">${h.number}</div><div class="col-span-1 py-1 bg-[#1A1A3A] rounded">${h.par}</div><div class="col-span-1 py-1 bg-[#1A1A3A] rounded font-bold ${color}">${h.totalStrokes}</div>${j<2?'<div class="col-span-0.5"></div>':''}`;
-        }
-        scorecardHTML += `</div>`;
-    }
+    const getDistPct = (dir, dist) => {
+        if (allShots.length === 0) return '0%';
+        const count = allShots.filter(s => s.direction === dir && s.distOut === dist).length;
+        return Math.round((count / allShots.length) * 100) + '%';
+    };
 
-    let aiSectionHTML = '';
-    if (round.analysis === 'loading') {
-        aiSectionHTML = `
-        <div class="bg-[#1D7A5A]/20 p-6 rounded-2xl border border-[#2DCB8A]/30 text-center animate-pulse">
-            <div class="text-3xl mb-4">🤖</div>
-            <h3 class="font-bold text-[#2DCB8A] mb-2">Coach is analyzing your round...</h3>
-            <p class="text-sm text-[#8890A0]">Running Strokes Gained, updating core metrics, and building your weekly plan.</p>
-        </div>`;
-    } else if (round.analysis) {
-        aiSectionHTML = `
-        <div class="bg-[#1A1A3A] p-6 rounded-2xl border border-[#2DCB8A]/50 shadow-xl mb-6">
-            <h3 class="font-serif text-xl font-bold text-[#F4F4F0] mb-3 flex items-center gap-2">🤖 Coach Analysis</h3>
-            <p class="text-[#F4F4F0] text-sm leading-relaxed mb-6 italic border-l-2 border-[#2DCB8A] pl-3">"${round.analysis.coachMessage}"</p>
-            
-            <div class="mb-6">
-                <h4 class="text-xs font-bold uppercase tracking-widest text-[#8890A0] mb-3">Updated Core Proficiency</h4>
-                <div class="grid grid-cols-2 gap-2">
-                    ${Object.keys(round.analysis.coreScores).map(k => `
-                        <div class="flex justify-between items-center text-sm border-b border-white/5 pb-1">
-                            <span class="capitalize text-[#8890A0]">${k.replace(/([A-Z])/g, ' $1').trim()}</span>
-                            <span class="text-[#2DCB8A] font-bold">${round.analysis.coreScores[k]}/5</span>
-                        </div>
-                    `).join('')}
-                </div>
-            </div>
+    const clubsInBag = [...new Set(STATE.player.bag.map(c => c.name))];
+    const isPutter = filteredClub === 'Putter';
 
-            <div class="space-y-4 mb-6">
-                <div>
-                    <h4 class="text-xs font-bold uppercase tracking-widest text-[#8890A0] mb-1">Recommended Reading</h4>
-                    <p class="text-sm text-[#F4F4F0]">${round.analysis.suggestedLearn}</p>
-                </div>
-                <div>
-                    <h4 class="text-xs font-bold uppercase tracking-widest text-[#8890A0] mb-1">Recommended Drill</h4>
-                    <p class="text-sm text-[#F4F4F0]">${round.analysis.suggestedPractice}</p>
-                </div>
-            </div>
-
-            <button onclick="acceptAIPlan()" class="w-full bg-[#2DCB8A] hover:bg-[#34e09a] text-[#0D1A12] font-bold py-3 rounded-xl transition-transform active:scale-95">
-                Accept & Update Plan
-            </button>
-        </div>`;
-    }
-
-    return `
-    <div class="flex flex-col h-full p-6 animate-fade-in bg-[#0D0D1E]">
-        <div class="text-center mt-6 mb-6">
-            <h1 class="text-2xl font-serif font-bold uppercase tracking-widest text-[#F4F4F0]">Round Complete</h1>
-            <p class="text-[#8890A0] text-sm">${STATE.player.courseName}</p>
-        </div>
-
-        <div class="bg-gradient-to-br from-[#1A1A3A] to-[#0D0D1E] rounded-2xl p-6 border border-white/10 flex justify-center items-baseline gap-4 mb-8 shadow-xl">
-            <span class="text-7xl font-serif font-bold text-[#F4F4F0] tracking-tighter">${totalStrokes}</span>
-            <span class="text-xl font-bold ${scoreToPar > 0 ? 'text-[#E85030]' : 'text-[#2DCB8A]'}">(${scoreString})</span>
-        </div>
-
-        <div class="space-y-8">
-            ${aiSectionHTML}
-
-            <section>
-                <h3 class="text-sm font-bold uppercase tracking-widest text-[#8890A0] mb-3">Scorecard</h3>
-                <div class="bg-[#1A1A3A] p-4 rounded-xl border border-white/10">${scorecardHTML}</div>
-            </section>
-
-            <section>
-                <h3 class="text-sm font-bold uppercase tracking-widest text-[#8890A0] mb-3">Performance Stats</h3>
-                <div class="grid grid-cols-2 gap-3">
-                    <div class="bg-[#1A1A3A] p-4 rounded-xl border border-white/10">
-                        <div class="text-[10px] text-[#8890A0] uppercase mb-1">Avg Par 3</div>
-                        <div class="text-xl font-bold text-[#F4F4F0]">${parStats[3].c ? (parStats[3].s/parStats[3].c).toFixed(1) : '-'}</div>
-                    </div>
-                    <div class="bg-[#1A1A3A] p-4 rounded-xl border border-white/10">
-                        <div class="text-[10px] text-[#8890A0] uppercase mb-1">Avg Par 4</div>
-                        <div class="text-xl font-bold text-[#F4F4F0]">${parStats[4].c ? (parStats[4].s/parStats[4].c).toFixed(1) : '-'}</div>
-                    </div>
-                    <div class="bg-[#1A1A3A] p-4 rounded-xl border border-white/10">
-                        <div class="text-[10px] text-[#8890A0] uppercase mb-1">Avg Par 5</div>
-                        <div class="text-xl font-bold text-[#F4F4F0]">${parStats[5].c ? (parStats[5].s/parStats[5].c).toFixed(1) : '-'}</div>
-                    </div>
-                    <div class="bg-[#1A1A3A] p-4 rounded-xl border border-[#2DCB8A]/30 relative overflow-hidden">
-                        <div class="text-[10px] text-[#2DCB8A] uppercase mb-1">Best 3 Holes</div>
-                        <div class="text-xl font-bold text-[#F4F4F0]">${stretchStr}</div>
-                        <div class="text-[9px] text-[#8890A0] absolute bottom-2 right-2">Holes ${bestStartHole}-${bestStartHole+2}</div>
-                    </div>
-                </div>
-            </section>
-
-            <section>
-                <h3 class="text-sm font-bold uppercase tracking-widest text-[#8890A0] mb-3">Club Distances (This Round)</h3>
-                <div class="bg-[#1A1A3A] p-2 rounded-xl border border-white/10 space-y-1">
-                    ${Object.keys(round.clubAvgs || {}).map(club => `
-                        <div class="flex items-center justify-between p-2 hover:bg-[#14142E] rounded-lg">
-                            <span class="text-sm font-semibold text-[#8890A0]">${club}</span>
-                            <div class="flex items-center gap-3">
-                                <span class="text-[#F4F4F0] font-bold">${round.clubAvgs[club]}y</span>
-                                <button onclick="updateBagDistance('${club}', ${round.clubAvgs[club]})" class="text-[9px] uppercase font-bold bg-[#2DCB8A]/10 text-[#2DCB8A] px-2 py-1 rounded hover:bg-[#2DCB8A] hover:text-[#0D1A12] transition-colors">Update Bag</button>
+    let suggestionsHTML = '';
+    if (r.newLearn?.length > 0 || r.newPractice?.length > 0) {
+        suggestionsHTML = `
+            <div class="mb-10 animate-fade-in">
+                <h3 class="text-xs font-black uppercase tracking-widest text-[#8890A0] mb-4">Coach Plan Updates</h3>
+                <div class="space-y-3">
+                    ${r.newLearn.map((item, idx) => `
+                        <div class="bg-[#1A1A3A] p-4 rounded-xl border border-[#2DCB8A]/30 shadow-lg">
+                            <span class="text-[10px] uppercase font-black text-[#2DCB8A] mb-2 block tracking-widest">New to Learn</span>
+                            <p class="text-sm text-white mb-4 leading-relaxed">${item}</p>
+                            <div class="flex gap-2">
+                                <button onclick="handlePlanAction('learn', ${idx}, 'add')" class="flex-1 bg-[#2DCB8A]/20 hover:bg-[#2DCB8A] text-[#2DCB8A] hover:text-[#0D1A12] text-xs font-bold py-2.5 rounded-lg transition-colors">Add to Hub</button>
+                                <button onclick="handlePlanAction('learn', ${idx}, 'ignore')" class="flex-1 bg-white/5 hover:bg-white/10 text-[#8890A0] hover:text-white text-xs font-bold py-2.5 rounded-lg transition-colors">Ignore</button>
                             </div>
                         </div>
                     `).join('')}
-                    ${Object.keys(round.clubAvgs || {}).length === 0 ? '<div class="text-xs text-[#8890A0] p-2">No full shots recorded to average.</div>' : ''}
+                    ${r.newPractice.map((item, idx) => `
+                        <div class="bg-[#1A1A3A] p-4 rounded-xl border border-[#2DCB8A]/30 shadow-lg">
+                            <span class="text-[10px] uppercase font-black text-[#2DCB8A] mb-2 block tracking-widest">New to Practice</span>
+                            <p class="text-sm text-white mb-4 leading-relaxed">${item}</p>
+                            <div class="flex gap-2">
+                                <button onclick="handlePlanAction('practice', ${idx}, 'add')" class="flex-1 bg-[#2DCB8A]/20 hover:bg-[#2DCB8A] text-[#2DCB8A] hover:text-[#0D1A12] text-xs font-bold py-2.5 rounded-lg transition-colors">Add to Hub</button>
+                                <button onclick="handlePlanAction('practice', ${idx}, 'ignore')" class="flex-1 bg-white/5 hover:bg-white/10 text-[#8890A0] hover:text-white text-xs font-bold py-2.5 rounded-lg transition-colors">Ignore</button>
+                            </div>
+                        </div>
+                    `).join('')}
                 </div>
-            </section>
-            
-            <div class="pb-8 pt-4">
-                <button onclick="switchView('progress')" class="w-full bg-[#1A1A3A] hover:bg-[#14142E] text-[#F4F4F0] font-bold py-4 rounded-xl flex justify-center items-center gap-2 border border-white/10 transition-colors">Go to Progress</button>
+            </div>
+        `;
+    }
+
+    return `
+    <div class="flex flex-col h-full bg-[#0D0D1E] animate-fade-in p-6 pb-24 overflow-y-auto hide-scrollbar">
+        <div class="text-center mt-4 mb-8">
+            <h1 class="text-sm font-black uppercase tracking-[0.2em] text-[#2DCB8A] mb-2">Round Summary</h1>
+            <div class="flex justify-center items-baseline gap-4">
+                <span class="text-7xl font-black text-white">${totalStrokes}</span>
+                <span class="text-2xl font-bold ${toPar > 0 ? 'text-[#E85030]' : 'text-[#2DCB8A]'}">${toParStr}</span>
             </div>
         </div>
+
+        <div class="grid grid-cols-2 gap-3 mb-8">
+            <div class="bg-[#1A1A3A] p-5 rounded-2xl border border-white/5 text-center">
+                <div class="text-[10px] font-black text-[#404060] uppercase mb-1">Fairways Hit</div>
+                <div class="text-3xl font-black text-white">${fairwayPct}%</div>
+            </div>
+            <div class="bg-[#1A1A3A] p-5 rounded-2xl border border-white/5 text-center">
+                <div class="text-[10px] font-black text-[#404060] uppercase mb-1">Putts Per Green</div>
+                <div class="text-3xl font-black text-white">${ppg}</div>
+            </div>
+        </div>
+
+        <!-- AI Core Proficiency Scoring -->
+        <div class="mb-10">
+            <h3 class="text-xs font-black uppercase tracking-widest text-[#8890A0] mb-4">Round Proficiency (AI Score)</h3>
+            <div class="bg-[#1A1A3A] p-6 rounded-2xl border border-[#2DCB8A]/20 space-y-4">
+                ${r.roundProficiency ? Object.keys(r.roundProficiency).map(area => `
+                    <div>
+                        <div class="flex justify-between text-[10px] font-bold uppercase mb-1.5">
+                            <span class="text-[#8890A0]">${area.replace(/([A-Z])/g, ' $1').trim()}</span>
+                            <span class="text-[#2DCB8A]">${r.roundProficiency[area]}/5</span>
+                        </div>
+                        <div class="prof-bar-bg">
+                            <div class="prof-bar-fill" style="width: ${(r.roundProficiency[area] / 5) * 100}%"></div>
+                        </div>
+                    </div>
+                `).join('') : `
+                    <div class="flex gap-2 items-center text-[#8890A0] py-4">
+                        <div class="w-2 h-2 bg-[#2DCB8A] rounded-full animate-pulse"></div>
+                        <span class="text-[10px] uppercase font-bold tracking-widest">Generating Proficiency Scores...</span>
+                    </div>
+                `}
+            </div>
+        </div>
+
+        <div class="mb-8">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xs font-black uppercase tracking-widest text-[#8890A0]">Shot Distribution</h3>
+                <select onchange="updateSummaryFilter(this.value)" class="bg-[#1A1A3A] text-white text-[10px] font-bold uppercase p-2 px-3 rounded-lg border border-white/10 outline-none">
+                    <option value="All">All Clubs</option>
+                    ${clubsInBag.map(c => `<option value="${c}" ${filteredClub === c ? 'selected' : ''}>${c}</option>`).join('')}
+                </select>
+            </div>
+
+            ${isPutter ? `
+                <div class="bg-[#1A1A3A] p-8 rounded-2xl border border-white/10 text-center">
+                    <div class="text-[10px] font-black text-[#404060] uppercase mb-2">Total Putts</div>
+                    <div class="text-6xl font-black text-white mb-6">${totalPutts}</div>
+                    <div class="h-px bg-white/5 w-full mb-6"></div>
+                    <div class="text-3xl font-black text-[#2DCB8A]">${ppg} PPG</div>
+                </div>
+            ` : `
+                <div class="grid grid-cols-3 gap-2 mb-4">
+                    <div class="stat-grid-box"><span class="stat-grid-label">Short L</span><span class="stat-grid-value">${getDistPct('Left', 'Short')}</span></div>
+                    <div class="stat-grid-box"><span class="stat-grid-label">Short M</span><span class="stat-grid-value">${getDistPct('Straight', 'Short')}</span></div>
+                    <div class="stat-grid-box"><span class="stat-grid-label">Short R</span><span class="stat-grid-value">${getDistPct('Right', 'Short')}</span></div>
+                    <div class="stat-grid-box"><span class="stat-grid-label">At Dist L</span><span class="stat-grid-value">${getDistPct('Left', 'At Dist')}</span></div>
+                    <div class="stat-grid-box stat-grid-active"><span class="stat-grid-label">Target</span><span class="stat-grid-value">${getDistPct('Straight', 'At Dist')}</span></div>
+                    <div class="stat-grid-box"><span class="stat-grid-label">At Dist R</span><span class="stat-grid-value">${getDistPct('Right', 'At Dist')}</span></div>
+                    <div class="stat-grid-box"><span class="stat-grid-label">Long L</span><span class="stat-grid-value">${getDistPct('Left', 'Long')}</span></div>
+                    <div class="stat-grid-box"><span class="stat-grid-label">Long M</span><span class="stat-grid-value">${getDistPct('Straight', 'Long')}</span></div>
+                    <div class="stat-grid-box"><span class="stat-grid-label">Long R</span><span class="stat-grid-value">${getDistPct('Right', 'Long')}</span></div>
+                </div>
+                <div class="bg-[#1A1A3A] p-4 rounded-xl flex justify-between items-center border border-white/5">
+                    <span class="text-[10px] font-black text-[#404060] uppercase tracking-widest">OB Hits</span>
+                    <span class="text-sm font-black text-[#E85030]">${allShots.filter(s => s.ob).length}</span>
+                </div>
+            `}
+        </div>
+
+        <div class="mb-10">
+            <h3 class="text-xs font-black uppercase tracking-widest text-[#8890A0] mb-4">Hole Performance</h3>
+            <div class="space-y-2">
+                ${[3,4,5].map(p => {
+                    const avg = parStats[p].c > 0 ? (parStats[p].s / parStats[p].c).toFixed(1) : '0.0';
+                    const diff = (parseFloat(avg) - p).toFixed(1);
+                    return `
+                    <div class="bg-[#1A1A3A] p-4 rounded-xl flex justify-between items-center border border-white/5">
+                        <div><span class="text-[10px] font-black text-[#404060] uppercase block mb-1">Par ${p} Avg</span><span class="text-lg font-black text-white">${avg}</span></div>
+                        <div class="text-right"><span class="text-[10px] font-black text-[#404060] uppercase block mb-1">Vs Par</span><span class="text-lg font-black ${diff > 0 ? 'text-[#E85030]' : 'text-[#2DCB8A]'}">${diff > 0 ? '+' + diff : diff === '0.0' ? 'E' : diff}</span></div>
+                    </div>`;
+                }).join('')}
+            </div>
+        </div>
+
+        ${suggestionsHTML}
+
+        <button onclick="switchView('progress')" class="w-full bg-[#1A1A3A] border border-white/10 text-white font-bold py-5 rounded-2xl uppercase tracking-widest shadow-lg">Finalize & Sync</button>
     </div>`;
 }
+
+window.updateSummaryFilter = (val) => {
+    STATE.activeRound.summaryFilter = val;
+    render();
+};
 
 function renderProgress() {
     return `
     <div class="flex flex-col h-full p-6 animate-fade-in">
         <h1 class="text-2xl font-serif font-bold mb-6">Progress</h1>
-
         ${STATE.player.roundCount === 0 ? `
             <div class="bg-[#E8A930]/10 p-4 rounded-xl border border-[#E8A930]/30 mb-6 shadow-sm">
                 <p class="text-[#E8A930] text-sm leading-relaxed">
-                    <strong>Welcome to Progress!</strong> Since you haven't logged a round yet, your Learn and Practice plans are based purely on your initial self-assessment. 
-                    Play a round to start unlocking data-driven insights and achievements!
+                    <strong>Welcome to Progress!</strong> Since you haven't logged a round yet, your Learn and Practice plans are based purely on your initial self-assessment. Play a round to start unlocking data-driven insights!
                 </p>
             </div>
         ` : ''}
-
         <div class="bg-[#1A1A3A] border border-white/10 rounded-xl p-5 mb-4">
             <h3 class="text-[10px] font-bold uppercase tracking-widest text-[#8890A0] mb-1">Strokes Gained vs ${STATE.player.targetHandicap.toFixed(1)} Benchmark</h3>
             <p class="text-xs text-[#8890A0] mb-6">Where you're losing strokes per round</p>
             <div class="space-y-4">
-                ${[
-                    { label: 'Putting', value: -2.1, color: '#E85030', width: '84%' },
-                    { label: 'Approach', value: -0.8, color: '#E8A930', width: '32%' },
-                    { label: 'Short Game', value: -0.4, color: '#B8C830', width: '16%' },
-                    { label: 'Off the Tee', value: -0.2, color: '#2DCB8A', width: '8%' }
-                ].map(stat => `
+                ${[{ label: 'Putting', value: -2.1, color: '#E85030', width: '84%' }, { label: 'Approach', value: -0.8, color: '#E8A930', width: '32%' }, { label: 'Short Game', value: -0.4, color: '#B8C830', width: '16%' }, { label: 'Off the Tee', value: -0.2, color: '#2DCB8A', width: '8%' }].map(stat => `
                     <div class="flex items-center gap-3">
                         <span class="w-20 text-xs font-bold text-[#F4F4F0]">${stat.label}</span>
                         <div class="flex-1 h-2 bg-[#404060] rounded-full relative"><div class="absolute top-0 left-0 h-full rounded-full" style="width: ${STATE.player.roundCount > 0 ? stat.width : '0%'}; background-color: ${stat.color}"></div></div>
@@ -1183,14 +915,12 @@ function renderProgress() {
                 `).join('')}
             </div>
         </div>
-        
         <div class="grid grid-cols-2 gap-3 mb-6">
             <div class="bg-[#1A1A3A] border border-white/10 p-4 rounded-xl"><div class="text-3xl font-bold text-[#F4F4F0]">${STATE.player.roundCount}</div><div class="text-[10px] text-[#8890A0] uppercase tracking-wider mt-1">Rounds Logged</div></div>
             <div class="bg-[#1A1A3A] border border-white/10 p-4 rounded-xl"><div class="text-3xl font-bold text-[#F4F4F0]">${STATE.player.sessionsCount}</div><div class="text-[10px] text-[#8890A0] uppercase tracking-wider mt-1">Total Sessions</div></div>
             <div class="bg-[#1A1A3A] border border-white/10 p-4 rounded-xl"><div class="text-3xl font-bold text-[#2DCB8A]">${STATE.player.drillsPassed}</div><div class="text-[10px] text-[#2DCB8A] uppercase tracking-wider mt-1">Drills Passed</div></div>
             <div class="bg-[#1A1A3A] border border-white/10 p-4 rounded-xl"><div class="text-3xl font-bold text-[#E8A930]">${STATE.player.achievements.length}</div><div class="text-[10px] text-[#E8A930] uppercase tracking-wider mt-1">Achievements</div></div>
         </div>
-
         ${STATE.player.achievements.length > 0 ? `
             <div class="bg-[#1A1A3A] border border-white/10 rounded-xl p-5 mb-8">
                 <h3 class="text-[10px] font-bold uppercase tracking-widest text-[#8890A0] mb-4">Trophy Room</h3>
@@ -1251,9 +981,72 @@ function renderCoach() {
     </div>`;
 }
 
+function renderCheckIn() {
+    return `
+    <div class="flex flex-col h-full p-6 animate-fade-in">
+        <header class="mb-6">
+            <h1 class="text-2xl font-serif font-bold text-[#F4F4F0] flex items-center gap-2 tracking-widest">
+                <svg class="text-[#2DCB8A] w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg> CHECK-IN
+            </h1>
+            <p class="text-[#8890A0] text-sm mt-1">Update your skills and bag map as you improve.</p>
+        </header>
+
+        <div class="flex-1 overflow-y-auto hide-scrollbar space-y-8 pb-8">
+            <section>
+                <div class="flex justify-between items-end mb-4">
+                    <h2 class="text-lg font-bold">Core Proficiency</h2>
+                    <span class="text-[10px] uppercase tracking-wider text-[#404060]">Tap to update</span>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    ${Object.keys(STATE.player.coreAreas).map(area => `
+                        <div class="bg-[#1A1A3A] p-3 rounded-xl border border-white/10">
+                            <div class="text-xs font-semibold text-[#8890A0] capitalize mb-2">${area.replace(/([A-Z])/g, ' $1').trim()}</div>
+                            <div class="flex justify-between items-center mb-1">
+                                <input type="range" min="1" max="5" value="${STATE.player.coreAreas[area]}" oninput="STATE.player.coreAreas['${area}'] = parseInt(this.value); document.getElementById('ci-val-${area}').innerText = this.value; document.getElementById('ci-lbl-${area}').innerText = getRatingLabel(this.value, STATE.player.currentHandicap);" onchange="syncProfileToFirebase()" class="w-2/3 accent-[#2DCB8A]">
+                                <span id="ci-val-${area}" class="text-[#2DCB8A] font-bold bg-[#0D0D1E] px-2 py-1 rounded-md text-sm border border-white/5">${STATE.player.coreAreas[area]}</span>
+                            </div>
+                            <div id="ci-lbl-${area}" class="text-[9px] text-[#8890A0] text-center uppercase tracking-wider font-semibold mt-2 leading-tight">
+                                ${getRatingLabel(STATE.player.coreAreas[area], STATE.player.currentHandicap)}
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            </section>
+
+            <section>
+                <div class="flex justify-between items-end mb-4">
+                    <h2 class="text-lg font-bold">Bag Map</h2>
+                    <span class="text-[10px] uppercase tracking-wider text-[#404060]">Yards</span>
+                </div>
+                <div class="bg-[#1A1A3A] rounded-xl border border-white/10 p-2 space-y-1">
+                    ${STATE.player.bag.map((club, idx) => `
+                        <div class="flex flex-col gap-1 hover:bg-[#14142E] p-2 rounded-lg transition-colors border border-transparent">
+                            <div class="flex items-center gap-4">
+                                <span class="flex-1 text-sm font-semibold text-[#8890A0]">${club.name}</span>
+                                <input type="number" id="bag-club-${club.name}" value="${club.distance}" onchange="window.updateBagDistance('${club.name}', parseInt(this.value) || 0);" class="w-16 bg-[#0D0D1E] border border-white/10 rounded p-1 text-center text-[#2DCB8A] font-bold outline-none focus:border-[#2DCB8A]">
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            </section>
+
+            <section class="mt-8 pt-6 border-t border-white/10">
+                <button onclick="logout()" class="w-full bg-[#1A1A3A] hover:bg-[#2a1a2a] text-[#E85030] font-bold py-4 rounded-xl border border-[#E85030]/20 transition-colors">
+                    Log Out / Forget Me
+                </button>
+            </section>
+        </div>
+    </div>`;
+}
+
 // ============================================================================
 // 6. EVENT HANDLERS & ACTIONS
 // ============================================================================
+
+window.updateClubSlider = (idx) => { STATE.activeRound.selectedClubIndex = parseInt(idx); render(); }
+window.setOutcome = (cat, val) => { STATE.activeRound.shotOutcomes[cat] = val; render(); }
+window.checkWelcomePhone = () => { document.getElementById('welcome-next-btn').disabled = document.getElementById('welcome-phone').value.length < 5; }
+window.checkWelcomeName = () => { document.getElementById('welcome-start-btn').disabled = document.getElementById('welcome-name').value.length < 2; }
 
 window.toggleTask = function(type, idx) {
     const key = `${type}_${idx}`;
@@ -1268,94 +1061,27 @@ window.toggleTask = function(type, idx) {
     render();
 }
 
-window.checkWelcomePhone = function() {
-    const phone = document.getElementById('welcome-phone').value.trim();
-    document.getElementById('welcome-next-btn').disabled = phone.length < 5;
+window.toggleInfo = function(area) {
+    STATE.activeInfo = STATE.activeInfo === area ? null : area;
+    render();
 }
 
-window.checkWelcomeName = function() {
-    const name = document.getElementById('welcome-name').value.trim();
-    document.getElementById('welcome-start-btn').disabled = name.length < 2;
-}
-
-window.verifyPhone = async function() {
-    const phone = document.getElementById('welcome-phone').value.trim();
-    if(!phone) return;
-    
-    const btn = document.getElementById('welcome-next-btn');
-    btn.innerText = "Checking...";
-    btn.disabled = true;
-
-    if (db) {
-        try {
-            const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'profiles', phone);
-            const docSnap = await getDoc(docRef);
-            if(docSnap.exists()) {
-                STATE.player = { ...STATE.player, ...docSnap.data() };
-                localStorage.setItem('descent_phone', phone);
-                switchView('learn');
-                return;
-            }
-        } catch(e) { console.error("Firebase error", e); }
-    }
-    
-    STATE.player.phone = phone;
-    document.getElementById('welcome-step-1').classList.add('hidden');
-    document.getElementById('welcome-step-2').classList.remove('hidden');
-}
-
-window.startNewProfile = async function() {
-    const name = document.getElementById('welcome-name').value.trim();
-    if(!name) return;
-    STATE.player.name = name;
-    localStorage.setItem('descent_phone', STATE.player.phone);
-    await syncProfileToFirebase();
-    switchView('onboarding');
-}
-
-window.logout = function() {
-    localStorage.removeItem('descent_phone');
-    STATE.player = resetPlayerState();
-    switchView('welcome');
-}
-
-window.setOBStep = function(step) { STATE.onboardingStep = step; render(); }
-window.nextOBStep = function() {
-    if (STATE.onboardingStep === 5) {
-        syncProfileToFirebase();
-        STATE.welcomeStep = 1;
-        switchView('welcome_sequence');
-        setTimeout(() => { if (STATE.currentView === 'welcome_sequence' && STATE.welcomeStep === 1) nextWelcomeSequence(); }, 2500);
-    } else {
-        STATE.onboardingStep++;
-        render();
-    }
-}
-
-window.nextWelcomeSequence = function() {
-    if (STATE.welcomeStep === 4) switchView('learn');
-    else { STATE.welcomeStep++; render(); }
-}
-
-window.toggleInfo = function(area) { STATE.activeInfo = STATE.activeInfo === area ? null : area; render(); }
-window.updateAllRatingLabels = function() {
-    Object.keys(STATE.player.coreAreas).map(area => {
-        const el = document.getElementById(`lbl-${area}`);
-        if(el) el.innerText = getRatingLabel(STATE.player.coreAreas[area], STATE.player.currentHandicap);
-    });
-}
 window.updateCourseSelection = function(courseName) {
     STATE.player.courseName = courseName;
     const dbCourse = COURSE_DATABASE.find(c => c.name === courseName);
     if (dbCourse) STATE.player.courseHoles = JSON.parse(JSON.stringify(dbCourse.holes));
-    syncProfileToFirebase(); render();
-}
-window.updateBagDistance = function(clubName, dist) {
-    const idx = STATE.player.bag.findIndex(c => c.name === clubName);
-    if(idx >= 0) { STATE.player.bag[idx].distance = dist; syncProfileToFirebase(); render(); }
+    syncProfileToFirebase();
+    render();
 }
 
-// === PLAY TAB OVERHAUL ===
+window.updateBagDistance = function(clubName, dist) {
+    const idx = STATE.player.bag.findIndex(c => c.name === clubName);
+    if(idx >= 0) {
+        STATE.player.bag[idx].distance = dist;
+        syncProfileToFirebase();
+        render();
+    }
+}
 
 window.suggestClubIndex = function(distance) {
     const bag = STATE.player.bag;
@@ -1363,7 +1089,6 @@ window.suggestClubIndex = function(distance) {
         const idx = bag.findIndex(c => c.id === 'putter');
         return idx >= 0 ? idx : 0;
     }
-    
     let closestIdx = -1;
     let smallestDiff = Infinity;
     for (let i = 0; i < bag.length; i++) {
@@ -1374,7 +1099,6 @@ window.suggestClubIndex = function(distance) {
             closestIdx = i;
         }
     }
-    
     if (closestIdx === -1) {
         let maxDist = -1;
         for (let i = 0; i < bag.length; i++) {
@@ -1385,155 +1109,6 @@ window.suggestClubIndex = function(distance) {
     return closestIdx === -1 ? 0 : closestIdx;
 }
 
-window.startRoundFlow = function() {
-    STATE.activeRound = {
-        holeIndex: 0, holesLog: [], currentHoleShots: [], penaltyStrokes: 0,
-        currentShotDistance: STATE.player.courseHoles[0].distance,
-        selectedClubIndex: suggestClubIndex(STATE.player.courseHoles[0].distance),
-        shotOutcomes: { dist: 'At Dist', dir: 'Straight', lie: 'Fairway', cont: 'Good Strike', ob: false },
-        holeState: 'fairway', cornerMessages: [],
-        isCoachTyping: false, analysis: null, clubAvgs: {}
-    };
-    switchView('play_active');
-}
-
-window.updateClubSlider = function(idx) {
-    STATE.activeRound.selectedClubIndex = parseInt(idx);
-    render();
-}
-
-window.setOutcome = function(category, value) {
-    STATE.activeRound.shotOutcomes[category] = value;
-    render();
-}
-
-window.recordFairwayShot = function() {
-    const round = STATE.activeRound;
-    const club = STATE.player.bag[round.selectedClubIndex];
-    const outs = round.shotOutcomes;
-    const dist = parseInt(document.getElementById('shot-distance').value) || 0;
-    
-    round.currentHoleShots.push({ 
-        club: club.name, distance: dist, type: document.getElementById('shot-type').value,
-        outDistance: outs.dist, outDirection: outs.dir, outLie: outs.lie, outContact: outs.cont, outOB: outs.ob
-    });
-
-    if (outs.ob) round.penaltyStrokes += 1;
-
-    if (outs.lie === 'Green') {
-        round.holeState = 'green';
-    } else {
-        const remaining = Math.max(0, dist - club.distance);
-        round.currentShotDistance = remaining;
-        round.selectedClubIndex = suggestClubIndex(remaining);
-        round.shotOutcomes = { dist: 'At Dist', dir: 'Straight', lie: 'Fairway', cont: 'Good Strike', ob: false };
-    }
-    render();
-}
-
-window.saveHoleData = async function() {
-    const round = STATE.activeRound;
-    const hole = STATE.player.courseHoles[round.holeIndex];
-    const putts = parseInt(document.getElementById('putt-count').value) || 0;
-    const comment = document.getElementById('hole-comment').value.trim();
-
-    round.holesLog.push({
-        number: hole.number, par: hole.par,
-        shots: [...round.currentHoleShots], putts: putts, penalties: round.penaltyStrokes,
-        totalStrokes: round.currentHoleShots.length + putts + round.penaltyStrokes, 
-        comment: comment
-    });
-
-    if (hole.number === 18) {
-        await finishRoundLogic();
-    } else if (hole.number % 3 === 0 && !STATE.player.settings.silenceCoach) {
-        round.holeState = 'fairway'; round.holeIndex++; round.currentHoleShots = []; round.penaltyStrokes = 0;
-        
-        const last3 = round.holesLog.slice(-3);
-        const promptData = last3.map(h => `Hole ${h.number}(Par ${h.par}): ${h.totalStrokes} strokes (${h.putts} putts, ${h.penalties} penalties). Shots: ${h.shots.map(s => `${s.club} (${s.outContact}${s.outOB ? ' [OB]' : ''}, ${s.outLie})`).join(', ')}. Comment: ${h.comment || 'none'}`).join('. ');
-        
-        round.cornerMessages = []; round.isCoachTyping = true;
-        switchView('coach_corner');
-        const advice = await getAIAdvice(`Here is my data for the last 3 holes: ${promptData}. Analyze the shot outcomes and give me strategy for the next 3 holes.`);
-        round.cornerMessages.push({ role: 'coach', text: advice }); round.isCoachTyping = false;
-        STATE.chatMessages.push({ role: 'coach', text: `Between Holes ${hole.number} & ${hole.number+1}: ${advice}` });
-        render();
-    } else {
-        round.holeIndex++; round.currentHoleShots = []; round.penaltyStrokes = 0;
-        const nextHole = STATE.player.courseHoles[round.holeIndex];
-        round.currentShotDistance = nextHole.distance;
-        round.selectedClubIndex = suggestClubIndex(nextHole.distance);
-        round.shotOutcomes = { dist: 'At Dist', dir: 'Straight', lie: 'Fairway', cont: 'Good Strike', ob: false };
-        round.holeState = 'fairway'; render();
-    }
-}
-
-async function finishRoundLogic() {
-    const round = STATE.activeRound;
-    
-    // Calc Club Avgs
-    const sums = {}; const counts = {};
-    round.holesLog.forEach(h => h.shots.forEach(s => {
-        if(s.distance > 0 && s.type === 'Full') {
-            if(!sums[s.club]) { sums[s.club] = 0; counts[s.club] = 0; }
-            sums[s.club] += s.distance; counts[s.club]++;
-        }
-    }));
-    Object.keys(sums).forEach(k => { round.clubAvgs[k] = Math.round(sums[k]/counts[k]); });
-
-    round.analysis = 'loading';
-    switchView('post_round');
-
-    const promptData = JSON.stringify(round.holesLog.map(h => ({
-        hole: h.number, par: h.par, score: h.totalStrokes, putts: h.putts, comment: h.comment,
-        shots: h.shots.map(s => `${s.club} (${s.type}): ${s.outDistance}, ${s.outDirection}, ${s.outLie}, ${s.outContact}${s.outOB ? ' (OB)' : ''}`)
-    })));
-
-    const prompt = `Analyze this golf round data: ${promptData}. 
-    Return ONLY a valid JSON object with EXACTLY this structure (no markdown wrappers):
-    {
-      "coreScores": {"driving": 3, "longIrons": 3, "approach": 3, "aroundGreen": 3, "putting": 3, "recovery": 3},
-      "coachMessage": "positive 2 sentence constructive pep talk",
-      "suggestedLearn": "1 sentence reading rec based on weakness",
-      "suggestedPractice": "1 drill rec based on weakness",
-      "clubInsights": {"Driver": "Tends to miss right.", "7 Iron": "Consistently coming up short."}
-    }`;
-    
-    const textRes = await getAIAdvice(prompt, true);
-    try {
-        const start = textRes.indexOf('{');
-        const end = textRes.lastIndexOf('}') + 1;
-        if(start >= 0 && end > start) {
-            round.analysis = JSON.parse(textRes.substring(start, end));
-        } else { throw new Error('Bad format'); }
-    } catch(e) {
-        console.error("AI parse error", e, textRes);
-        round.analysis = {
-            coreScores: { driving: 3, longIrons: 3, approach: 3, aroundGreen: 3, putting: 2, recovery: 3 },
-            coachMessage: "Way to battle out there! We left a few out there on the greens, but the foundation is solid.",
-            suggestedLearn: "Review the 'Clock System' for wedge distance control.",
-            suggestedPractice: "Lag Putting: Hit 10 putts from 40 feet to within a 3-foot circle.",
-            clubInsights: { "Putter": "Speed control needs work." }
-        };
-    }
-    
-    await saveRoundToFirebase({ course: STATE.player.courseName, holes: round.holesLog });
-    render();
-}
-
-window.acceptAIPlan = function() {
-    STATE.player.coreAreas = STATE.activeRound.analysis.coreScores;
-    STATE.player.customPlan.learn = [STATE.activeRound.analysis.suggestedLearn];
-    STATE.player.customPlan.practice = [STATE.activeRound.analysis.suggestedPractice];
-    STATE.player.clubInsights = { ...STATE.player.clubInsights, ...STATE.activeRound.analysis.clubInsights };
-    
-    STATE.player.completedTasksSet['learn_0'] = false;
-    STATE.player.completedTasksSet['practice_0'] = false;
-    syncProfileToFirebase();
-    switchView('learn');
-}
-
-// Achievements Engine
 window.checkAchievements = function(roundData) {
     const a = STATE.player.achievements;
     const addBadge = (title, icon) => { if (!a.some(x => x.title === title)) a.push({title, icon}); }
@@ -1547,6 +1122,161 @@ window.checkAchievements = function(roundData) {
     
     const hasBirdie = roundData.holes.some(h => h.totalStrokes < h.par);
     if (hasBirdie) addBadge("Birdie Hunter", "🎯");
+}
+
+window.verifyPhone = async function() {
+    const phone = document.getElementById('welcome-phone').value.trim();
+    if (!phone) return;
+    
+    const btn = document.getElementById('welcome-next-btn');
+    btn.innerText = "Checking...";
+    btn.disabled = true;
+
+    if (db) {
+        try {
+            const snap = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'profiles', phone));
+            if (snap.exists()) { 
+                STATE.player = { ...STATE.player, ...snap.data() }; 
+                localStorage.setItem('descent_phone', phone);
+                switchView('learn'); 
+                return; 
+            }
+        } catch(e) {
+            console.error("Firebase verification bypassed:", e);
+        }
+    }
+    
+    STATE.player.phone = phone;
+    document.getElementById('welcome-step-1').classList.add('hidden');
+    document.getElementById('welcome-step-2').classList.remove('hidden');
+}
+
+window.startNewProfile = async () => { 
+    STATE.player.name = document.getElementById('welcome-name').value.trim(); 
+    await syncProfileToFirebase(); 
+    switchView('onboarding'); 
+}
+
+window.nextOBStep = () => { 
+    if (STATE.onboardingStep === 5) { syncProfileToFirebase(); switchView('welcome_sequence'); } 
+    else { STATE.onboardingStep++; render(); } 
+}
+
+window.nextWelcomeSequence = function() {
+    if (STATE.welcomeStep === 4) switchView('learn');
+    else { STATE.welcomeStep++; render(); }
+}
+
+window.handlePlanAction = (type, index, action) => {
+    const r = STATE.activeRound;
+    const item = type === 'learn' ? r.newLearn[index] : r.newPractice[index];
+    
+    if (action === 'add') {
+        STATE.player.customPlan[type].push(item);
+        const nextIdx = STATE.player.customPlan[type].length - 1;
+        STATE.player.completedTasksSet[`${type}_${nextIdx}`] = false;
+    }
+    
+    if (type === 'learn') r.newLearn.splice(index, 1);
+    else r.newPractice.splice(index, 1);
+    
+    syncProfileToFirebase();
+    render();
+};
+
+window.startRoundFlow = () => {
+    const firstHoleDist = STATE.player.courseHoles[0].distance;
+    STATE.activeRound = {
+        holeIndex: 0, holesLog: [], currentHoleShots: [], penaltyStrokes: 0,
+        selectedClubIndex: suggestClubIndex(firstHoleDist), tempPuttCount: 0,
+        currentShotDistance: firstHoleDist,
+        shotOutcomes: { dir: 'Straight', dist: 'At Dist', lie: 'Fairway', cont: 'Good Strike', ob: false },
+        holeState: 'fairway', cornerMessages: [],
+        currentHoleIsGir: false, isCoachTyping: false, summaryFilter: 'All', roundProficiency: null
+    };
+    switchView('play_active');
+}
+
+window.recordFairwayShot = () => {
+    const r = STATE.activeRound;
+    const hole = STATE.player.courseHoles[r.holeIndex];
+    const club = STATE.player.bag[r.selectedClubIndex];
+    const out = r.shotOutcomes;
+    const shotNumber = r.currentHoleShots.length + 1;
+    
+    // Automatically track distance behind the scenes based on standard club yardages
+    if (out.lie === 'Green') {
+        if (shotNumber <= (hole.par - 2)) r.currentHoleIsGir = true;
+        r.holeState = 'green';
+    }
+
+    r.currentHoleShots.push({ 
+        club: club.name, direction: out.dir, distOut: out.dist, lie: out.lie, contact: out.cont, ob: out.ob, distance: club.distance
+    });
+
+    if (out.ob) r.penaltyStrokes += 1;
+    
+    if (r.holeState !== 'green') {
+        const remaining = Math.max(0, r.currentShotDistance - club.distance);
+        r.currentShotDistance = remaining;
+        r.selectedClubIndex = suggestClubIndex(remaining);
+        r.shotOutcomes = { dir: 'Straight', dist: 'At Dist', lie: 'Fairway', cont: 'Good Strike', ob: false };
+    }
+    render();
+}
+
+window.finishHoleWithPutts = async (count) => {
+    const r = STATE.activeRound;
+    const hole = STATE.player.courseHoles[r.holeIndex];
+    const comment = document.getElementById('hole-comment')?.value || "";
+
+    r.holesLog.push({
+        number: hole.number, par: hole.par,
+        shots: [...r.currentHoleShots], putts: count, penalties: r.penaltyStrokes,
+        totalStrokes: r.currentHoleShots.length + count + r.penaltyStrokes,
+        isGir: r.currentHoleIsGir, comment: comment
+    });
+
+    if (hole.number === 18) {
+        switchView('post_round');
+        await performFinalAnalysis();
+        await saveRoundToFirebase({ course: STATE.player.courseName, holes: r.holesLog });
+    } else if (hole.number % 3 === 0) {
+        switchView('coach_corner');
+        r.isCoachTyping = true;
+        
+        const last3 = r.holesLog.slice(-3);
+        const next3 = STATE.player.courseHoles.slice(r.holeIndex + 1, r.holeIndex + 4);
+        const currentStats = {
+            totalStrokes: r.holesLog.reduce((s, h) => s + h.totalStrokes, 0),
+            toPar: r.holesLog.reduce((s, h) => s + (h.totalStrokes - h.par), 0),
+            ppg: (r.holesLog.reduce((s, h) => s + h.putts, 0) / r.holesLog.length).toFixed(1),
+            gir: Math.round((r.holesLog.filter(h => h.isGir).length / r.holesLog.length) * 100)
+        };
+
+        const prompt = `PLAYER CONTEXT: Driving: ${STATE.player.coreAreas.driving}/5, Approach: ${STATE.player.coreAreas.approach}/5, Putting: ${STATE.player.coreAreas.putting}/5. ROUND DATA (Hole ${hole.number}): Score: ${currentStats.toPar >= 0 ? '+' + currentStats.toPar : currentStats.toPar}. Stats: ${currentStats.gir}% GIR, ${currentStats.ppg} PPG. NEXT 3: ${next3.map(h => `H${h.number}: P${h.par}, ${h.distance}y`).join('\n')}. INSTRUCTION: Give salient strategy for the next 3 holes comparing history to current play. End with 'single thought for the next three holes:'`;
+
+        const advice = await getAIAdvice(prompt);
+        r.cornerMessages.push({ role: 'coach', text: advice });
+        STATE.chatMessages.push({ role: 'coach', text: `Between Holes ${hole.number} & ${hole.number+1}: ${advice}` });
+        r.isCoachTyping = false;
+        
+        setupNextHole(r);
+        render();
+    } else {
+        setupNextHole(r);
+        render();
+    }
+}
+
+function setupNextHole(r) {
+    r.holeIndex++;
+    const nextHoleDist = STATE.player.courseHoles[r.holeIndex].distance;
+    r.currentHoleShots = []; r.penaltyStrokes = 0; 
+    r.selectedClubIndex = suggestClubIndex(nextHoleDist);
+    r.currentShotDistance = nextHoleDist;
+    r.holeState = 'fairway'; r.currentHoleIsGir = false;
+    r.shotOutcomes = { dir: 'Straight', dist: 'At Dist', lie: 'Fairway', cont: 'Good Strike', ob: false };
 }
 
 window.sendCornerMessage = async function() {
@@ -1568,9 +1298,6 @@ window.sendCornerMessage = async function() {
 }
 
 window.returnToTee = function() {
-    const nextHole = STATE.player.courseHoles[STATE.activeRound.holeIndex];
-    STATE.activeRound.currentShotDistance = nextHole.distance;
-    STATE.activeRound.selectedClubIndex = suggestClubIndex(nextHole.distance);
     switchView('play_active');
 }
 
@@ -1586,32 +1313,56 @@ window.sendChatMessage = async function() {
     STATE.isTyping = false; render();
 }
 
-initFirebase().then(async () => {
-    const savedPhone = localStorage.getItem('descent_phone');
-    if (savedPhone && db) {
-        try {
-            const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'profiles', savedPhone);
-            const docSnap = await getDoc(docRef);
-            if(docSnap.exists()) {
-                STATE.player = { ...STATE.player, ...docSnap.data() };
-                
-                if(!STATE.player.achievements) STATE.player.achievements = [];
-                if(!STATE.player.completedTasksSet) STATE.player.completedTasksSet = {};
-                if(!STATE.player.customPlan) STATE.player.customPlan = { learn: [], practice: [] };
-                if(!STATE.player.settings) STATE.player.settings = { silenceCoach: false };
-                if(!STATE.player.clubInsights) STATE.player.clubInsights = {};
-                
-                switchView('learn');
-                return;
-            }
-        } catch(e) {}
-    }
-    switchView('welcome');
-});
+async function performFinalAnalysis() {
+    const r = STATE.activeRound;
+    const holeData = JSON.stringify(r.holesLog.map(h => ({
+        hole: h.number, strokes: h.totalStrokes, putts: h.putts, gir: h.isGir,
+        shots: h.shots.map(s => `${s.club}: ${s.distOut}, ${s.direction}, ${s.lie}`)
+    })));
 
-document.querySelectorAll('.nav-btn').forEach(btn => {
-    btn.addEventListener('click', () => switchView(btn.dataset.tab));
-});
+    const currentPlan = `Learning: ${STATE.player.customPlan.learn.join(' | ') || 'None'}. Practicing: ${STATE.player.customPlan.practice.join(' | ') || 'None'}.`;
+
+    const prompt = `
+    PLAYER CONTEXT: 
+    - Baseline Abilities (1-5): Driving: ${STATE.player.coreAreas.driving}, Approach: ${STATE.player.coreAreas.approach}, Putting: ${STATE.player.coreAreas.putting}. 
+    - Current Active Plan: ${currentPlan}.
+    
+    ROUND DATA: ${holeData}.
+    
+    INSTRUCTION: 
+    1. Analyze the round data comparing it to their baseline and current plan. 
+    2. Determine their round proficiency (1-5) for core areas FOR THIS ROUND ONLY.
+    3. Based on the biggest weaknesses shown IN THIS ROUND and taking into account what they are already practicing/learning, generate 1 to 3 specific, actionable NEW things to learn (e.g., reading/video topics) and 1 to 3 NEW things to practice (e.g., specific drills).
+    
+    Return ONLY a valid JSON object:
+    { 
+      "coreScores": { "driving": score, "longIrons": score, "approach": score, "aroundGreen": score, "putting": score, "recovery": score },
+      "newLearn": ["Specific learning topic 1"],
+      "newPractice": ["Specific drill 1"]
+    }`;
+
+    try {
+        let responseText = await getAIAdvice(prompt, true);
+        responseText = responseText.replace(/```json/gi, '').replace(/```/g, '').trim();
+        const analysis = JSON.parse(responseText);
+        r.roundProficiency = analysis.coreScores || { driving: 3, longIrons: 3, approach: 3, aroundGreen: 3, putting: 3, recovery: 3 };
+        r.newLearn = analysis.newLearn || [];
+        r.newPractice = analysis.newPractice || [];
+        render();
+    } catch(e) {
+        console.error("Proficiency Analysis Error", e);
+        r.roundProficiency = { driving: 3, longIrons: 3, approach: 3, aroundGreen: 3, putting: 3, recovery: 3 };
+        r.newLearn = ["Review course management basics."];
+        r.newPractice = ["Hit 20 balls focusing purely on tempo."];
+        render();
+    }
+}
+
+window.logout = () => { STATE.player = resetPlayerState(); switchView('welcome'); }
+
+initFirebase().then(() => switchView('welcome'));
+
+document.querySelectorAll('.nav-btn').forEach(btn => btn.onclick = () => switchView(btn.dataset.tab));
 
 </script>
 </body>
