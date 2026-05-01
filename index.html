@@ -163,9 +163,9 @@ async function getAIAdvice(promptText, requiresJson = false) {
         : "You are a gritty, encouraging golf coach (think boxing coach in the corner between rounds). Keep it to 2-3 short, punchy sentences. Offer real strategic advice based on the data provided, and give a strong pep talk.";
 
     try {
-        // Initialize the Gemini 1.5 Flash model via Firebase Vertex AI
+        // Initialize the Gemini 2.5 Flash model via Firebase Vertex AI
         const model = getGenerativeModel(vertexAI, { 
-            model: "gemini-1.5-flash",
+            model: "gemini-2.5-flash",
             systemInstruction: instruction
         });
         
