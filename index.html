@@ -861,9 +861,12 @@ function renderPlayActive() {
                 </div>
                 <div class="flex gap-2">
                     <button onclick="setOutcome('cont', 'Miss-hit')" class="flex-1 py-2.5 text-[10px] uppercase tracking-widest font-bold rounded-lg border ${outs.cont==='Miss-hit'?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#0D0D1E] text-[#8890A0] border-white/10'} transition-colors">Miss-hit</button>
-                    <button onclick="setOutcome('cont', 'OB')" class="flex-1 py-2.5 text-[10px] uppercase tracking-widest font-bold rounded-lg border ${outs.cont==='OB'?'bg-[#E85030] text-white border-[#E85030]':'bg-[#0D0D1E] text-[#8890A0] border-white/10'} transition-colors">OB (Pen)</button>
+                    <button onclick="setOutcome('cont', 'Good Strike')" class="flex-1 py-2.5 text-[10px] uppercase tracking-widest font-bold rounded-lg border ${outs.cont==='Good Strike'?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#0D0D1E] text-[#8890A0] border-white/10'} transition-colors">Good Strike</button>
                     <button onclick="setOutcome('cont', 'Dreamy')" class="flex-1 py-2.5 text-[10px] uppercase tracking-widest font-bold rounded-lg border ${outs.cont==='Dreamy'?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#0D0D1E] text-[#8890A0] border-white/10'} transition-colors">Dreamy</button>
                 </div>
+                <button onclick="setOutcome('ob', ${!outs.ob})" class="w-full py-2.5 text-[10px] uppercase tracking-widest font-bold rounded-lg border ${outs.ob?'bg-[#E85030] text-white border-[#E85030]':'bg-[#0D0D1E] text-[#8890A0] border-white/10 hover:border-[#E85030]/50 hover:text-[#E85030]'} transition-colors">
+                    ${outs.ob ? 'OB (Penalty Added)' : 'Mark as OB (Penalty)'}
+                </button>
             </div>
 
             <div class="flex flex-col gap-3 mt-auto pb-4">
@@ -1365,7 +1368,7 @@ window.startRoundFlow = function() {
         holeIndex: 0, holesLog: [], currentHoleShots: [], penaltyStrokes: 0,
         currentShotDistance: STATE.player.courseHoles[0].distance,
         selectedClubIndex: suggestClubIndex(STATE.player.courseHoles[0].distance),
-        shotOutcomes: { dist: 'At Dist', dir: 'Straight', lie: 'Fairway', cont: 'Dreamy' },
+        shotOutcomes: { dist: 'At Dist', dir: 'Straight', lie: 'Fairway', cont: 'Good Strike', ob: false },
         holeState: 'fairway', cornerMessages: [],
         isCoachTyping: false, analysis: null, clubAvgs: {}
     };
@@ -1390,10 +1393,10 @@ window.recordFairwayShot = function() {
     
     round.currentHoleShots.push({ 
         club: club.name, distance: dist, type: document.getElementById('shot-type').value,
-        outDistance: outs.dist, outDirection: outs.dir, outLie: outs.lie, outContact: outs.cont
+        outDistance: outs.dist, outDirection: outs.dir, outLie: outs.lie, outContact: outs.cont, outOB: outs.ob
     });
 
-    if (outs.cont === 'OB') round.penaltyStrokes += 1;
+    if (outs.ob) round.penaltyStrokes += 1;
 
     if (outs.lie === 'Green') {
         round.holeState = 'green';
@@ -1401,7 +1404,7 @@ window.recordFairwayShot = function() {
         const remaining = Math.max(0, dist - club.distance);
         round.currentShotDistance = remaining;
         round.selectedClubIndex = suggestClubIndex(remaining);
-        round.shotOutcomes = { dist: 'At Dist', dir: 'Straight', lie: 'Fairway', cont: 'Dreamy' };
+        round.shotOutcomes = { dist: 'At Dist', dir: 'Straight', lie: 'Fairway', cont: 'Good Strike', ob: false };
     }
     render();
 }
@@ -1425,7 +1428,7 @@ window.saveHoleData = async function() {
         round.holeState = 'fairway'; round.holeIndex++; round.currentHoleShots = []; round.penaltyStrokes = 0;
         
         const last3 = round.holesLog.slice(-3);
-        const promptData = last3.map(h => `Hole ${h.number}(Par ${h.par}): ${h.totalStrokes} strokes (${h.putts} putts, ${h.penalties} penalties). Shots: ${h.shots.map(s => `${s.club} (${s.outContact}, ${s.outLie})`).join(', ')}. Comment: ${h.comment || 'none'}`).join('. ');
+        const promptData = last3.map(h => `Hole ${h.number}(Par ${h.par}): ${h.totalStrokes} strokes (${h.putts} putts, ${h.penalties} penalties). Shots: ${h.shots.map(s => `${s.club} (${s.outContact}${s.outOB ? ' [OB]' : ''}, ${s.outLie})`).join(', ')}. Comment: ${h.comment || 'none'}`).join('. ');
         
         round.cornerMessages = []; round.isCoachTyping = true;
         switchView('coach_corner');
@@ -1438,7 +1441,7 @@ window.saveHoleData = async function() {
         const nextHole = STATE.player.courseHoles[round.holeIndex];
         round.currentShotDistance = nextHole.distance;
         round.selectedClubIndex = suggestClubIndex(nextHole.distance);
-        round.shotOutcomes = { dist: 'At Dist', dir: 'Straight', lie: 'Fairway', cont: 'Dreamy' };
+        round.shotOutcomes = { dist: 'At Dist', dir: 'Straight', lie: 'Fairway', cont: 'Good Strike', ob: false };
         round.holeState = 'fairway'; render();
     }
 }
@@ -1461,7 +1464,7 @@ async function finishRoundLogic() {
 
     const promptData = JSON.stringify(round.holesLog.map(h => ({
         hole: h.number, par: h.par, score: h.totalStrokes, putts: h.putts, comment: h.comment,
-        shots: h.shots.map(s => `${s.club} (${s.type}): ${s.outDistance}, ${s.outDirection}, ${s.outLie}, ${s.outContact}`)
+        shots: h.shots.map(s => `${s.club} (${s.type}): ${s.outDistance}, ${s.outDirection}, ${s.outLie}, ${s.outContact}${s.outOB ? ' (OB)' : ''}`)
     })));
 
     const prompt = `Analyze this golf round data: ${promptData}. 
