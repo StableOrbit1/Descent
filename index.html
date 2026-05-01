@@ -78,7 +78,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebas
 import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 import { getFirestore, doc, setDoc, getDoc, collection, addDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 import { getVertexAI, getGenerativeModel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-vertexai.js";
-// NEW: Import App Check to secure the Vertex AI API
+// Import App Check to secure the Vertex AI API
 import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app-check.js";
 
 let app = null;
@@ -103,6 +103,10 @@ async function initFirebase() {
         app = initializeApp(firebaseConfig);
 
         // --- FIREBASE APP CHECK ---
+        // Reactivating Debug Token to bypass ReCaptcha domain mismatch temporarily.
+        // Copy the token from your browser console and paste it into Firebase > App Check > Apps > Manage debug tokens
+        self.FIREBASE_APPCHECK_DEBUG_TOKEN = true; 
+        
         initializeAppCheck(app, {
             provider: new ReCaptchaV3Provider('6LfpHNMsAAAAANOgLk1nGJ-Ir9fpG5mD2xG7tl3X'), 
             isTokenAutoRefreshEnabled: true
