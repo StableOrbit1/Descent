@@ -1,0 +1,1593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Descent — Golf Performance</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #000; color: #F4F4F0; }
+        .font-serif { font-family: Georgia, serif; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        .animate-fade-in { animation: fadeIn 0.4s ease-out forwards; }
+        .animate-fade-out { animation: fadeOut 0.4s ease-in forwards; pointer-events: none; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeOut { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-15px); } }
+
+        /* Custom Range Slider */
+        input[type="range"] { -webkit-appearance: none; background: #404060; height: 6px; border-radius: 3px; outline: none; }
+        input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 24px; height: 24px; border-radius: 50%; background: #2DCB8A; cursor: pointer; box-shadow: 0 0 0 4px rgba(45,203,138,0.2); }
+        
+        /* Chat Typing Indicator */
+        .typing-dot { animation: typingBounce 1.2s ease-in-out infinite; }
+        .typing-dot:nth-child(2) { animation-delay: 0.15s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.3s; }
+        @keyframes typingBounce { 0%, 60%, 100% { transform: translateY(0); } 30% { transform: translateY(-4px); } }
+
+        .animate-pulse-slow { animation: pulseSlow 2.5s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        @keyframes pulseSlow { 0%, 100% { opacity: 1; transform: translateY(0); } 50% { opacity: .5; transform: translateY(6px); } }
+        
+        .task-completed { text-decoration: line-through; color: #404060; transition: all 0.3s ease; }
+    </style>
+</head>
+<body class="h-screen w-full flex justify-center overflow-hidden">
+
+    <div class="w-full max-w-md h-full bg-[#0D0D1E] relative flex flex-col shadow-2xl overflow-hidden border-x border-[#1A1A3A]">
+        
+        <div id="app-root" class="flex-1 overflow-y-auto overflow-x-hidden hide-scrollbar relative pb-24">
+            <!-- Content injected by JS -->
+        </div>
+
+        <nav id="bottom-nav" class="hidden absolute bottom-0 w-full bg-[#14142E] border-t border-white/10 flex justify-between items-center px-2 py-3 pb-6 z-50">
+            <button class="nav-btn flex flex-col items-center gap-1 transition-colors flex-1 text-[#404060] hover:text-[#8890A0]" data-tab="learn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+                <span class="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider">Learn</span>
+            </button>
+            <button class="nav-btn flex flex-col items-center gap-1 transition-colors flex-1 text-[#404060] hover:text-[#8890A0]" data-tab="practice">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+                <span class="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider">Practice</span>
+            </button>
+            <button class="nav-btn flex flex-col items-center gap-1 transition-colors flex-1 text-[#404060] hover:text-[#8890A0]" data-tab="play">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                <span class="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider">Play</span>
+            </button>
+            <button class="nav-btn flex flex-col items-center gap-1 transition-colors flex-1 text-[#404060] hover:text-[#8890A0]" data-tab="progress">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                <span class="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider">Progress</span>
+            </button>
+            <button class="nav-btn flex flex-col items-center gap-1 transition-colors flex-1 text-[#404060] hover:text-[#8890A0]" data-tab="coach">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 21 1.9-5.7a8.5 8.5 0 1 1 3.8 3.8z"/></svg>
+                <span class="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider">Coach</span>
+            </button>
+            <button class="nav-btn flex flex-col items-center gap-1 transition-colors flex-1 text-[#404060] hover:text-[#8890A0]" data-tab="checkin">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg>
+                <span class="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider">Check-in</span>
+            </button>
+        </nav>
+    </div>
+
+<script type="module">
+// ============================================================================
+// 1. FIREBASE INITIALIZATION & STATE MANAGEMENT
+// ============================================================================
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+import { getFirestore, doc, setDoc, getDoc, collection, addDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+// NEW: Import Official Vertex AI Firebase SDK
+import { getVertexAI, getGenerativeModel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-vertexai.js";
+
+let app = null;
+let db = null;
+let auth = null;
+let vertexAI = null;
+let currentUser = null;
+const appId = typeof __app_id !== 'undefined' ? __app_id : 'descent-app-id';
+
+async function initFirebase() {
+    try {
+        const firebaseConfig = {
+            apiKey: "AIzaSyDudUxzIzerhfrxJwE2_2Eeoc4rFtNstp0",
+            authDomain: "thisis50-e2aa3.firebaseapp.com",
+            projectId: "thisis50-e2aa3",
+            storageBucket: "thisis50-e2aa3.firebasestorage.app",
+            messagingSenderId: "125723749679",
+            appId: "1:125723749679:web:749fab5b7c313abfedc5da",
+            measurementId: "G-B6RBG4BKGE"
+        };
+        
+        app = initializeApp(firebaseConfig);
+        auth = getAuth(app);
+        db = getFirestore(app);
+        
+        // Initialize Vertex AI
+        vertexAI = getVertexAI(app);
+
+        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+            await signInWithCustomToken(auth, __initial_auth_token);
+        } else {
+            await signInAnonymously(auth);
+        }
+
+        onAuthStateChanged(auth, (user) => {
+            currentUser = user;
+        });
+    } catch (error) {
+        console.warn("Firebase running in local memory mode.", error);
+    }
+}
+
+window.syncProfileToFirebase = async function() {
+    if (!db || !STATE.player.phone) return;
+    try {
+        const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'profiles', STATE.player.phone);
+        await setDoc(docRef, STATE.player, { merge: true });
+    } catch (e) {
+        console.error("Failed to sync profile:", e);
+    }
+}
+
+async function saveRoundToFirebase(roundData) {
+    if (!db || !STATE.player.phone) return;
+    try {
+        const roundsCol = collection(db, 'artifacts', appId, 'public', 'data', `rounds_${STATE.player.phone}`);
+        await addDoc(roundsCol, {
+            ...roundData,
+            timestamp: new Date().toISOString()
+        });
+        
+        STATE.player.hasPlayedRound = true;
+        STATE.player.roundCount++;
+        
+        // Generate Achievements
+        window.checkAchievements(roundData);
+        
+        await syncProfileToFirebase();
+    } catch (e) {
+        console.error("Failed to save round:", e);
+    }
+}
+
+// SECURE Vertex AI / Gemini integration (Uses Firebase Auth, No Bare API Key)
+async function getAIAdvice(promptText, requiresJson = false) {
+    if (!vertexAI) return requiresJson ? "{}" : "Coach is offline.";
+
+    const instruction = requiresJson 
+        ? "You are a golf data analyst. Return ONLY raw, valid JSON. Do not use markdown wrappers like ```json."
+        : "You are a gritty, encouraging golf coach (think boxing coach in the corner between rounds). Keep it to 2-3 short, punchy sentences. Offer real strategic advice based on the data provided, and give a strong pep talk.";
+
+    try {
+        // Initialize the Gemini 1.5 Flash model via Firebase Vertex AI
+        const model = getGenerativeModel(vertexAI, { 
+            model: "gemini-1.5-flash",
+            systemInstruction: instruction
+        });
+        
+        const result = await model.generateContent(promptText);
+        return result.response.text();
+        
+    } catch (err) {
+        console.error("Vertex AI Error:", err);
+        return requiresJson ? "{}" : "Coach is reviewing the tape. Keep your head down, trust your swing, and play smart to your yardages.";
+    }
+}
+
+// ============================================================================
+// 2. CONSTANTS & INITIAL DATA
+// ============================================================================
+const DEFAULT_TARGET_DATE = new Date();
+DEFAULT_TARGET_DATE.setMonth(DEFAULT_TARGET_DATE.getMonth() + 6);
+
+const DEFAULT_BAG = [
+    { id: 'driver', name: 'Driver', distance: 260 }, { id: '3w', name: '3 Wood', distance: 235 },
+    { id: '5w', name: '5 Wood', distance: 215 }, { id: '4i', name: '4 Iron', distance: 195 },
+    { id: '5i', name: '5 Iron', distance: 185 }, { id: '6i', name: '6 Iron', distance: 175 },
+    { id: '7i', name: '7 Iron', distance: 165 }, { id: '8i', name: '8 Iron', distance: 155 },
+    { id: '9i', name: '9 Iron', distance: 145 }, { id: 'pw', name: 'P-Wedge', distance: 130 },
+    { id: 'gw', name: 'G-Wedge', distance: 115 }, { id: 'sw', name: 'S-Wedge', distance: 100 },
+    { id: 'lw', name: 'L-Wedge', distance: 85 }, { id: 'putter', name: 'Putter', distance: 20 }
+];
+
+const COURSE_DATABASE = [
+    {
+        id: 'nest-friday-harbour',
+        name: 'The Nest at Friday Harbour (Gold Tees)',
+        holes: [
+            { number: 1, par: 4, distance: 320 }, { number: 2, par: 3, distance: 131 },
+            { number: 3, par: 4, distance: 442 }, { number: 4, par: 4, distance: 359 },
+            { number: 5, par: 4, distance: 392 }, { number: 6, par: 5, distance: 526 },
+            { number: 7, par: 5, distance: 510 }, { number: 8, par: 3, distance: 184 },
+            { number: 9, par: 4, distance: 424 }, { number: 10, par: 4, distance: 338 },
+            { number: 11, par: 5, distance: 548 }, { number: 12, par: 3, distance: 215 },
+            { number: 13, par: 4, distance: 305 }, { number: 14, par: 5, distance: 540 },
+            { number: 15, par: 4, distance: 446 }, { number: 16, par: 4, distance: 367 },
+            { number: 17, par: 3, distance: 172 }, { number: 18, par: 4, distance: 415 }
+        ]
+    }
+];
+
+const PRACTICE_DRILLS = {
+    driving: {
+        home: "Mirror work: Practice slow-motion takeaways focusing strictly on clubface control and maintaining spine angle.",
+        range: "Hit 10 drives focusing solely on holding a balanced finish until the ball lands. Ignore distance.",
+        video: "[https://www.youtube.com/results?search_query=golf+driving+accuracy+drill+beginner](https://www.youtube.com/results?search_query=golf+driving+accuracy+drill+beginner)"
+    },
+    longIrons: {
+        home: "Core rotations: Use a medicine ball or resistance band to build rotational speed.",
+        range: "Tee up long irons slightly. Focus on sweeping the ball to build confidence with the strike.",
+        video: "[https://www.youtube.com/results?search_query=golf+long+iron+drills+beginner](https://www.youtube.com/results?search_query=golf+long+iron+drills+beginner)"
+    },
+    approach: {
+        home: "Carpet chipping: Practice putting-stroke chips with an 8-iron to feel low-point control.",
+        range: "Clock system: Hit 10 shots mapping exactly how far your 9:00 swing goes.",
+        video: "[https://www.youtube.com/results?search_query=golf+wedge+clock+system](https://www.youtube.com/results?search_query=golf+wedge+clock+system)"
+    },
+    aroundGreen: {
+        home: "Coin drill: Place a coin under the ball and practice clipping it without digging.",
+        range: "Bump and run: Practice exclusively with a 7 or 8 iron from off the fringe to understand rollout.",
+        video: "[https://www.youtube.com/results?search_query=golf+chipping+drills+beginner](https://www.youtube.com/results?search_query=golf+chipping+drills+beginner)"
+    },
+    putting: {
+        home: "Gate drill: Putt through two heavy books set 1-putter head apart. Forces a square face.",
+        range: "Lag putting: Hit 10 putts from 40 feet to within a 3-foot circle.",
+        video: "[https://www.youtube.com/results?search_query=golf+putting+drills+beginner](https://www.youtube.com/results?search_query=golf+putting+drills+beginner)"
+    },
+    recovery: {
+        home: "Visualize punch shots: Take stance in front of mirror, practice abbreviated follow-throughs.",
+        range: "Hit 5-iron punch shots keeping the ball below the height of the range picker.",
+        video: "[https://www.youtube.com/results?search_query=golf+punch+shot+drills](https://www.youtube.com/results?search_query=golf+punch+shot+drills)"
+    }
+};
+
+const SHOT_TYPES = ['Full', '3/4', 'Half', 'Knock Down', 'Draw', 'Fade'];
+const CORE_AREA_INFO = {
+    driving: "Accuracy and distance off the tee.", longIrons: "Approach shots from 175+ yards.",
+    approach: "Mid/short irons and wedges (100-175y).", aroundGreen: "Chipping, pitching, and bunkers (<30y).",
+    putting: "Distance control and green reading.", recovery: "Scrambling and escaping trouble."
+};
+
+window.getRatingLabel = function(rating, handicap) {
+    const hdcp = Math.round(handicap);
+    switch(parseInt(rating)) {
+        case 1: return `Much worse than other ${hdcp}s I play with`;
+        case 2: return `Worse than other ${hdcp}s I play with`;
+        case 3: return `About the same as other ${hdcp}s I play with`;
+        case 4: return `Better than other ${hdcp}s I play with`;
+        case 5: return `Much better than other ${hdcp}s I play with`;
+        default: return "";
+    }
+};
+
+function getTier(score) {
+    if (score <= 2) return 'beginner';
+    if (score === 3) return 'intermediate';
+    return 'advanced';
+}
+
+// ============================================================================
+// 3. APPLICATION STATE
+// ============================================================================
+function resetPlayerState() {
+    return {
+        name: '', phone: '',
+        currentHandicap: 14.0, targetHandicap: 8.0,
+        targetDate: DEFAULT_TARGET_DATE.toISOString().split('T')[0],
+        hasPlayedRound: false, roundCount: 0,
+        coreAreas: { driving: 3, longIrons: 3, approach: 3, aroundGreen: 3, putting: 3, recovery: 3 },
+        bag: JSON.parse(JSON.stringify(DEFAULT_BAG)),
+        courseName: COURSE_DATABASE[0].name,
+        courseHoles: JSON.parse(JSON.stringify(COURSE_DATABASE[0].holes)),
+        customPlan: { learn: [], practice: [] },
+        drillsPassed: 0, sessionsCount: 0, completedTasksSet: {},
+        achievements: [],
+        settings: { silenceCoach: false },
+        clubInsights: {}
+    };
+}
+
+window.STATE = {
+    currentView: 'welcome',
+    onboardingStep: 1, welcomeStep: 1,
+    activeInfo: null,
+    player: resetPlayerState(),
+    activeRound: null,
+    coachMode: 'accountability', isTyping: false,
+    chatMessages: [
+        { role: 'coach', text: "Welcome to Descent. Your custom plan will build here as you play and interact." }
+    ]
+};
+
+function getDescentNumber() { return (STATE.player.currentHandicap - STATE.player.targetHandicap).toFixed(1); }
+function getWeeksRemaining() {
+    const target = new Date(STATE.player.targetDate);
+    const now = new Date();
+    const diffTime = target - now;
+    if (diffTime <= 0) return 1;
+    return Math.max(1, Math.ceil((diffTime / (1000 * 60 * 60 * 24)) / 7));
+}
+
+// ============================================================================
+// 4. RENDERING ENGINE
+// ============================================================================
+const root = document.getElementById('app-root');
+const nav = document.getElementById('bottom-nav');
+
+window.switchView = function(viewName) {
+    STATE.currentView = viewName;
+    render();
+    
+    const hiddenViews = ['welcome', 'onboarding', 'welcome_sequence', 'play_active', 'post_round', 'coach_corner'];
+    if (hiddenViews.includes(viewName)) {
+        nav.classList.add('hidden');
+    } else {
+        nav.classList.remove('hidden');
+        document.querySelectorAll('.nav-btn').forEach(btn => {
+            if(btn.dataset.tab === viewName) {
+                btn.classList.remove('text-[#404060]');
+                btn.classList.add('text-[#2DCB8A]');
+            } else {
+                btn.classList.add('text-[#404060]');
+                btn.classList.remove('text-[#2DCB8A]');
+            }
+        });
+    }
+
+    if (viewName === 'coach' || viewName === 'coach_corner') {
+        setTimeout(() => {
+            const chatBox = document.getElementById('chat-scroll-area');
+            if(chatBox) chatBox.scrollTop = chatBox.scrollHeight;
+        }, 50);
+    }
+}
+
+function render() {
+    let html = '';
+    switch(STATE.currentView) {
+        case 'welcome': html = renderWelcome(); break;
+        case 'onboarding': html = renderOnboarding(); break;
+        case 'welcome_sequence': html = renderWelcomeSequence(); break;
+        case 'learn': html = renderLearn(); break;
+        case 'practice': html = renderPractice(); break;
+        case 'checkin': html = renderCheckIn(); break;
+        case 'play': html = renderPlayIntro(); break;
+        case 'play_active': html = renderPlayActive(); break;
+        case 'coach_corner': html = renderCoachCorner(); break;
+        case 'post_round': html = renderPostRound(); break;
+        case 'progress': html = renderProgress(); break;
+        case 'coach': html = renderCoach(); break;
+    }
+    root.innerHTML = html;
+}
+
+// ============================================================================
+// 5. VIEW COMPONENTS
+// ============================================================================
+
+function renderWelcome() {
+    return `
+    <div class="flex flex-col items-center justify-center h-full p-8 text-center animate-fade-in" id="welcome-container">
+        <div class="text-[#2DCB8A] mb-8 animate-pulse-slow">
+            <svg width="72" height="72" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="22 17 13.5 8.5 8.5 13.5 2 7" />
+                <polyline points="16 17 22 17 22 11" />
+            </svg>
+        </div>
+        <h1 class="text-5xl font-black tracking-widest text-[#F4F4F0] mb-4">DESCENT</h1>
+        <p class="text-[#8890A0] text-sm mb-10 max-w-xs">
+            The <strong class="text-[#F4F4F0]">science-backed</strong> path to lowering your handicap, built around your game.
+        </p>
+
+        <div id="welcome-step-1" class="w-full max-w-xs space-y-3 mb-8 text-left animate-fade-in">
+            <input type="tel" id="welcome-phone" placeholder="Phone Number" oninput="checkWelcomePhone()" class="w-full bg-[#1A1A3A] border border-white/10 rounded-xl p-4 text-[#F4F4F0] font-semibold outline-none focus:border-[#2DCB8A] transition-colors">
+            <button id="welcome-next-btn" disabled onclick="verifyPhone()" class="w-full bg-[#2DCB8A] disabled:opacity-50 hover:bg-[#34e09a] text-[#0D1A12] font-bold py-4 rounded-xl transition-transform active:scale-95 shadow-[0_0_20px_rgba(45,203,138,0.2)]">
+                Next &rarr;
+            </button>
+        </div>
+
+        <div id="welcome-step-2" class="w-full max-w-xs space-y-3 mb-8 text-left hidden animate-fade-in">
+            <p class="text-sm text-[#8890A0] text-center mb-2">New number! What should we call you?</p>
+            <input type="text" id="welcome-name" placeholder="Your Name" oninput="checkWelcomeName()" class="w-full bg-[#1A1A3A] border border-white/10 rounded-xl p-4 text-[#F4F4F0] font-semibold outline-none focus:border-[#2DCB8A] transition-colors">
+            <button id="welcome-start-btn" disabled onclick="startNewProfile()" class="w-full bg-[#2DCB8A] disabled:opacity-50 hover:bg-[#34e09a] text-[#0D1A12] font-bold py-4 rounded-xl transition-transform active:scale-95 shadow-[0_0_20px_rgba(45,203,138,0.2)]">
+                Begin Setup &rarr;
+            </button>
+        </div>
+    </div>`;
+}
+
+function renderOnboarding() {
+    const step = STATE.onboardingStep;
+    const pct = ((step - 1) / 4) * 100;
+    
+    let content = '';
+    if (step === 1) {
+        content = `
+        <div class="animate-fade-in space-y-8">
+            <div>
+                <h2 class="text-2xl font-serif font-bold mb-2">Your Goals</h2>
+                <p class="text-[#8890A0] mb-6">Set your current and target handicap, along with your goal date to begin.</p>
+                <div class="bg-[#1A1A3A] p-4 rounded-xl border border-white/10 mb-4">
+                    <h3 class="text-xs font-bold uppercase tracking-widest text-[#8890A0] mb-2">Current Handicap</h3>
+                    <div class="text-4xl font-serif font-bold text-[#E8A930] mb-2" id="ob-hdcp-val">${STATE.player.currentHandicap.toFixed(1)}</div>
+                    <input type="range" min="0" max="36" step="0.1" value="${STATE.player.currentHandicap}" oninput="STATE.player.currentHandicap = parseFloat(this.value); document.getElementById('ob-hdcp-val').innerText = parseFloat(this.value).toFixed(1); updateAllRatingLabels();" onchange="syncProfileToFirebase()" class="w-full">
+                </div>
+                <div class="bg-[#1A1A3A] p-4 rounded-xl border border-white/10 mb-6">
+                    <h3 class="text-xs font-bold uppercase tracking-widest text-[#8890A0] mb-2">Goal Handicap & Date</h3>
+                    <div class="text-4xl font-serif font-bold text-[#2DCB8A] mb-2" id="ob-target-val">${STATE.player.targetHandicap.toFixed(1)}</div>
+                    <input type="range" min="0" max="36" step="0.1" value="${STATE.player.targetHandicap}" oninput="STATE.player.targetHandicap = parseFloat(this.value); document.getElementById('ob-target-val').innerText = parseFloat(this.value).toFixed(1);" onchange="syncProfileToFirebase()" class="w-full mb-4">
+                    <input type="date" value="${STATE.player.targetDate}" onchange="STATE.player.targetDate = this.value; syncProfileToFirebase();" class="w-full bg-[#0D0D1E] border border-white/10 rounded-lg p-3 text-[#F4F4F0] outline-none focus:border-[#2DCB8A]">
+                </div>
+            </div>
+        </div>`;
+    } else if (step === 2) {
+        content = `
+        <div class="animate-fade-in space-y-8">
+            <div>
+                <h2 class="text-2xl font-serif font-bold mb-2">Assess Yourself</h2>
+                <p class="text-[#8890A0] mb-6">Rate yourself on core areas from 1 to 5 to establish your baseline.</p>
+                <div class="grid grid-cols-2 gap-3">
+                    ${Object.keys(STATE.player.coreAreas).map(area => `
+                        <div class="bg-[#1A1A3A] p-3 rounded-xl border border-white/10">
+                            <div class="flex items-center justify-between mb-1">
+                                <div class="text-xs text-[#8890A0] capitalize">${area.replace(/([A-Z])/g, ' $1').trim()}</div>
+                                <button onclick="toggleInfo('${area}')">
+                                    <svg class="${STATE.activeInfo === area ? 'text-[#2DCB8A]' : 'text-[#404060]'} w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                                </button>
+                            </div>
+                            ${STATE.activeInfo === area ? `<div class="text-[10px] text-[#2DCB8A] mb-2 leading-tight">${CORE_AREA_INFO[area]}</div>` : ''}
+                            <div class="flex items-center gap-2 mb-1">
+                                <input type="range" min="1" max="5" value="${STATE.player.coreAreas[area]}" oninput="STATE.player.coreAreas['${area}'] = parseInt(this.value); document.getElementById('val-${area}').innerText = this.value; document.getElementById('lbl-${area}').innerText = getRatingLabel(this.value, STATE.player.currentHandicap);" onchange="syncProfileToFirebase()" class="w-full">
+                                <div id="val-${area}" class="text-right text-[#2DCB8A] font-bold text-sm w-4">${STATE.player.coreAreas[area]}</div>
+                            </div>
+                            <div id="lbl-${area}" class="rating-label text-[9px] text-[#8890A0] text-center uppercase tracking-wider font-semibold mt-1 leading-tight">
+                                ${getRatingLabel(STATE.player.coreAreas[area], STATE.player.currentHandicap)}
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        </div>`;
+    } else if (step === 3) {
+        content = `
+        <div class="animate-fade-in space-y-6">
+            <h2 class="text-2xl font-serif font-bold mb-2">Home Course Setup</h2>
+            <p class="text-[#8890A0]">We'll track your real rounds here to monitor strokes gained over time.</p>
+            <div class="relative">
+                <select onchange="updateCourseSelection(this.value)" class="w-full bg-[#1A1A3A] border border-white/10 rounded-xl p-4 pr-10 text-lg font-bold focus:border-[#2DCB8A] outline-none text-[#F4F4F0] appearance-none">
+                    ${COURSE_DATABASE.map(c => `<option value="${c.name}" ${STATE.player.courseName === c.name ? 'selected' : ''}>${c.name}</option>`).join('')}
+                </select>
+                <svg class="w-5 h-5 absolute right-4 top-1/2 -translate-y-1/2 text-[#8890A0] pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+            </div>
+            <div class="space-y-2 pt-2">
+                ${STATE.player.courseHoles.map((hole, idx) => `
+                    <div class="flex items-center gap-3 bg-[#1A1A3A] p-2 rounded-xl">
+                        <div class="w-8 text-center font-bold text-[#8890A0]">${hole.number}</div>
+                        <select onchange="STATE.player.courseHoles[${idx}].par = parseInt(this.value); syncProfileToFirebase();" class="bg-[#0D0D1E] border border-white/10 rounded-lg p-2 text-center outline-none text-[#F4F4F0]">
+                            <option value="3" ${hole.par===3?'selected':''}>Par 3</option>
+                            <option value="4" ${hole.par===4?'selected':''}>Par 4</option>
+                            <option value="5" ${hole.par===5?'selected':''}>Par 5</option>
+                        </select>
+                        <input type="number" value="${hole.distance}" onchange="STATE.player.courseHoles[${idx}].distance = parseInt(this.value) || 0; syncProfileToFirebase();" class="flex-1 bg-[#0D0D1E] border border-white/10 rounded-lg p-2 text-right outline-none text-[#2DCB8A] font-bold">
+                    </div>
+                `).join('')}
+            </div>
+        </div>`;
+    } else if (step === 4) {
+        content = `
+        <div class="animate-fade-in space-y-6">
+            <h2 class="text-2xl font-serif font-bold mb-2">Your Bag Map</h2>
+            <p class="text-[#8890A0]">Enter expected distances on a good strike to calibrate your AI caddie.</p>
+            <div class="space-y-2">
+                ${STATE.player.bag.map((club, idx) => `
+                    <div class="flex items-center gap-4 bg-[#1A1A3A] p-3 rounded-xl border border-white/10">
+                        <span class="flex-1 font-semibold text-[#8890A0]">${club.name}</span>
+                        <input type="number" value="${club.distance}" onchange="STATE.player.bag[${idx}].distance = parseInt(this.value) || 0; syncProfileToFirebase();" class="w-20 bg-[#0D0D1E] border border-white/10 rounded-lg p-2 text-center text-[#2DCB8A] font-bold outline-none focus:border-[#2DCB8A]">
+                        <span class="text-[#404060] text-sm">yds</span>
+                    </div>
+                `).join('')}
+            </div>
+        </div>`;
+    } else if (step === 5) {
+        const weeks = getWeeksRemaining();
+        content = `
+        <div class="animate-fade-in flex flex-col justify-center h-full text-center">
+            <div class="w-16 h-16 rounded-full bg-[#2DCB8A]/10 border-2 border-[#2DCB8A] text-[#2DCB8A] flex items-center justify-center mx-auto mb-6">
+                 <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 8 22 22 8 22"/><polyline points="2 2 22 22"/></svg>
+            </div>
+            <h2 class="text-3xl font-serif font-bold mb-2">Your plan is ready.</h2>
+            <p class="text-[#8890A0] mb-6">Dropping ${getDescentNumber()} strokes over ${weeks} weeks.</p>
+            
+            <div class="grid grid-cols-2 gap-3 mb-6">
+                <div class="bg-[#1A1A3A] p-4 rounded-xl border border-[#2DCB8A]/30">
+                    <div class="text-[10px] font-bold text-[#8890A0] uppercase tracking-wider mb-1">Current</div>
+                    <div class="text-2xl font-bold text-[#F4F4F0]">${STATE.player.currentHandicap.toFixed(1)}</div>
+                </div>
+                <div class="bg-[#1A1A3A] p-4 rounded-xl border border-[#2DCB8A]/30">
+                    <div class="text-[10px] font-bold text-[#8890A0] uppercase tracking-wider mb-1">Goal</div>
+                    <div class="text-2xl font-bold text-[#2DCB8A]">${STATE.player.targetHandicap.toFixed(1)}</div>
+                </div>
+            </div>
+        </div>`;
+    }
+
+    return `
+    <div class="flex flex-col h-full p-6 pb-0">
+        <div class="shrink-0">
+            <div class="h-1 bg-[#404060] rounded-full overflow-hidden mb-4">
+                <div class="h-full bg-[#2DCB8A] transition-all duration-500" style="width: ${pct}%"></div>
+            </div>
+            <div class="flex justify-between items-center text-xs font-bold text-[#8890A0] uppercase tracking-wider">
+                ${step > 1 ? `<button onclick="setOBStep(${step - 1})" class="hover:text-white">&larr; Back</button>` : '<span></span>'}
+                <span>Step ${step} of 5</span>
+            </div>
+        </div>
+        <div class="flex-1 overflow-y-auto pt-6 hide-scrollbar">${content}</div>
+        <div class="shrink-0 py-6 bg-[#0D0D1E] sticky bottom-0">
+            <button onclick="nextOBStep()" class="w-full bg-[#2DCB8A] hover:bg-[#34e09a] text-[#0D1A12] font-bold py-4 rounded-xl transition-transform active:scale-95 shadow-[0_0_15px_rgba(45,203,138,0.2)]">
+                ${step === 5 ? 'Enter Descent &rarr;' : 'Continue &rarr;'}
+            </button>
+        </div>
+    </div>`;
+}
+
+function renderWelcomeSequence() {
+    const s = STATE.welcomeStep;
+    let content = '';
+    
+    if (s === 1) {
+        content = `<h2 class="text-5xl font-serif font-bold text-[#F4F4F0] animate-pulse-slow">Welcome.</h2>`;
+    } else if (s === 2) {
+        content = `
+        <div class="text-center px-4">
+            <svg class="mx-auto text-[#2DCB8A] w-16 h-16 mb-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+            <p class="text-xl text-[#F4F4F0] leading-relaxed">The more you <strong>Learn</strong>, <strong>Practice</strong> and <strong>Play</strong>...</p>
+            <p class="text-[#8890A0] mt-4">The more Descent can narrow in on what will most impact your progress.</p>
+        </div>`;
+    } else if (s === 3) {
+        content = `
+        <div class="text-center px-4">
+            <svg class="mx-auto text-[#7060C0] w-16 h-16 mb-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+            <p class="text-xl text-[#F4F4F0] leading-relaxed">You can toggle between modes at any time.</p>
+            <p class="text-[#8890A0] mt-4">Just use the menu at the bottom of your screen.</p>
+        </div>`;
+    } else if (s === 4) {
+        content = `
+        <div class="text-center px-4">
+            <svg class="mx-auto text-[#E8A930] w-16 h-16 mb-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+            <p class="text-xl text-[#F4F4F0] leading-relaxed">Check your Progress.</p>
+            <p class="text-[#8890A0] mt-4">See a clear evaluation of strokes gained and lost, your practice progress, and your learning plan.</p>
+        </div>`;
+    }
+
+    return `
+    <div class="flex flex-col h-full animate-fade-in p-6">
+        <div class="flex-1 flex items-center justify-center">
+            ${content}
+        </div>
+        <div class="shrink-0 py-6">
+            <button onclick="nextWelcomeSequence()" class="w-full bg-[#1A1A3A] border border-white/10 hover:bg-[#14142E] text-[#F4F4F0] font-bold py-4 rounded-xl transition-colors">
+                ${s === 4 ? "Let's Get Started" : "Continue"}
+            </button>
+        </div>
+    </div>`;
+}
+
+function renderLearn() {
+    let tasksHTML = '';
+    
+    if (STATE.player.customPlan.learn.length > 0) {
+        tasksHTML = STATE.player.customPlan.learn.map((task, idx) => {
+            const isDone = STATE.player.completedTasksSet[`learn_${idx}`];
+            return `
+            <div class="bg-[#1A1A3A] p-4 rounded-xl border border-white/10 flex gap-4 items-start shadow-sm transition-all" onclick="toggleTask('learn', ${idx})">
+                <div class="mt-1 flex-shrink-0">
+                    ${isDone ? `<svg class="text-[#2DCB8A]" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>` 
+                             : `<div class="w-6 h-6 rounded-full border-2 border-white/20"></div>`}
+                </div>
+                <div>
+                    <span class="uppercase text-[10px] font-bold tracking-widest ${isDone ? 'text-[#8890A0]' : 'text-[#2DCB8A]'} mb-1 block">Coach Plan</span>
+                    <p class="text-sm leading-relaxed ${isDone ? 'task-completed text-[#8890A0]' : 'text-[#F4F4F0]'}">${task}</p>
+                </div>
+            </div>`;
+        }).join('');
+    } else {
+        let worstArea = 'putting';
+        let lowestScore = 6;
+        for (let a in STATE.player.coreAreas) {
+            if (STATE.player.coreAreas[a] < lowestScore) { lowestScore = STATE.player.coreAreas[a]; worstArea = a; }
+        }
+        
+        const isDone = STATE.player.completedTasksSet[`learn_default`];
+        tasksHTML = `
+        <div class="bg-[#1A1A3A] p-4 rounded-xl border border-white/10 flex gap-4 items-start shadow-sm transition-all cursor-pointer" onclick="toggleTask('learn', 'default')">
+            <div class="mt-1 flex-shrink-0">
+                ${isDone ? `<svg class="text-[#2DCB8A]" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>` 
+                         : `<div class="w-6 h-6 rounded-full border-2 border-white/20"></div>`}
+            </div>
+            <div>
+                <span class="uppercase text-[10px] font-bold tracking-widest ${isDone ? 'text-[#8890A0]' : 'text-[#2DCB8A]'} mb-1 block">Reading</span>
+                <p class="text-sm leading-relaxed ${isDone ? 'task-completed text-[#8890A0]' : 'text-[#F4F4F0]'}">
+                    Read "Golf is Not a Game of Perfect" by Bob Rotella. Focus on visualization.
+                </p>
+            </div>
+        </div>`;
+    }
+
+    return `
+    <div class="flex flex-col h-full p-6 animate-fade-in">
+        <header class="flex justify-between items-center mb-8">
+            <div>
+                <h1 class="text-2xl font-serif font-bold text-[#2DCB8A] flex items-center gap-2 tracking-widest">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg> LEARN
+                </h1>
+                <p class="text-[#8890A0] text-sm mt-1">Your knowledge & strategy</p>
+            </div>
+            <div class="bg-[#1A1A3A] p-2 rounded-lg border border-white/10 text-center min-w-[80px]">
+                <span class="block text-2xl font-bold text-[#F4F4F0]">${STATE.player.currentHandicap.toFixed(1)}</span>
+                <span class="block text-[10px] uppercase text-[#8890A0] tracking-wider mt-0.5">Current</span>
+            </div>
+        </header>
+
+        <section>
+            <h2 class="text-xl font-serif font-bold mb-4 flex items-center gap-2">
+                <svg class="text-[#2DCB8A] w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg> Focus Areas
+            </h2>
+            ${STATE.player.roundCount === 0 ? `
+                <div class="bg-[#E8A930]/10 p-3 rounded-xl border border-[#E8A930]/30 mb-4 shadow-sm">
+                    <p class="text-[#E8A930] text-xs leading-relaxed">
+                        <strong>Note:</strong> Since you haven't played a round yet, your plan is based on your initial self-assessment.
+                    </p>
+                </div>
+            ` : ''}
+            <div class="space-y-4">
+                ${tasksHTML}
+            </div>
+        </section>
+
+        <section class="mt-8 space-y-3 pb-8">
+            <button onclick="switchView('practice')" class="w-full bg-[#1A1A3A] hover:bg-[#14142E] text-[#F4F4F0] font-bold py-4 rounded-2xl flex justify-center items-center gap-3 transition-transform active:scale-95 shadow-lg border border-white/10">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg> GO TO PRACTICE
+            </button>
+        </section>
+    </div>`;
+}
+
+function renderPractice() {
+    let content = '';
+    
+    if (STATE.player.customPlan.practice.length > 0) {
+        content = `
+        <div class="bg-[#1D7A5A]/20 p-4 rounded-xl border border-[#2DCB8A]/30 mb-6 shadow-sm">
+            <p class="text-[#F4F4F0] text-sm leading-relaxed">
+                <strong class="text-[#2DCB8A]">Data-driven Focus.</strong> Your Coach assigned the following drills based on your recent round performance.
+            </p>
+        </div>
+        <div class="space-y-4">
+            ${STATE.player.customPlan.practice.map((task, idx) => {
+                const isDone = STATE.player.completedTasksSet[`practice_${idx}`];
+                return `
+                <div class="bg-[#1A1A3A] p-4 rounded-xl border border-white/10 flex gap-4 items-start shadow-sm transition-all cursor-pointer" onclick="toggleTask('practice', ${idx})">
+                    <div class="mt-1 flex-shrink-0">
+                        ${isDone ? `<svg class="text-[#2DCB8A]" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>` 
+                                 : `<div class="w-6 h-6 rounded-full border-2 border-white/20"></div>`}
+                    </div>
+                    <div>
+                        <span class="uppercase text-[10px] font-bold tracking-widest ${isDone ? 'text-[#8890A0]' : 'text-[#2DCB8A]'} mb-1 block">Coach Assignment</span>
+                        <p class="text-sm leading-relaxed ${isDone ? 'task-completed text-[#8890A0]' : 'text-[#F4F4F0]'}">${task}</p>
+                    </div>
+                </div>
+                `;
+            }).join('')}
+        </div>
+        `;
+    } else {
+        let worstArea = 'putting';
+        let lowestScore = 6;
+        for (let a in STATE.player.coreAreas) {
+            if (STATE.player.coreAreas[a] < lowestScore) { lowestScore = STATE.player.coreAreas[a]; worstArea = a; }
+        }
+        const drill = PRACTICE_DRILLS[worstArea].range;
+        const isDone = STATE.player.completedTasksSet[`practice_default`];
+        
+        content = `
+        <div class="bg-[#1A1A3A] p-4 rounded-xl border border-white/10 mb-6 shadow-sm">
+            <p class="text-[#F4F4F0] text-sm leading-relaxed">
+                <strong class="text-[#2DCB8A]">Baseline Practice.</strong> Until you log a round, your drills are based on your self-assessment.
+            </p>
+        </div>
+        <div class="bg-[#1A1A3A] p-4 rounded-xl border border-white/10 flex gap-4 items-start shadow-sm transition-all cursor-pointer" onclick="toggleTask('practice', 'default')">
+            <div class="mt-1 flex-shrink-0">
+                ${isDone ? `<svg class="text-[#2DCB8A]" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>` 
+                         : `<div class="w-6 h-6 rounded-full border-2 border-white/20"></div>`}
+            </div>
+            <div>
+                <span class="uppercase text-[10px] font-bold tracking-widest ${isDone ? 'text-[#8890A0]' : 'text-[#2DCB8A]'} mb-1 block">Baseline Drill</span>
+                <p class="text-sm leading-relaxed ${isDone ? 'task-completed text-[#8890A0]' : 'text-[#F4F4F0]'}">${drill}</p>
+            </div>
+        </div>
+        `;
+    }
+
+    return `
+    <div class="flex flex-col h-full p-6 animate-fade-in pb-0">
+        <header class="mb-6 shrink-0">
+            <h1 class="text-2xl font-serif font-bold text-[#F4F4F0] flex items-center gap-2 tracking-widest">
+                <svg class="text-[#2DCB8A] w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg> PRACTICE
+            </h1>
+            <p class="text-[#8890A0] text-sm mt-1">Targeted drills for your core areas.</p>
+        </header>
+        <div class="flex-1 overflow-y-auto hide-scrollbar pb-8">
+            ${content}
+        </div>
+    </div>`;
+}
+
+function renderCheckIn() {
+    return `
+    <div class="flex flex-col h-full p-6 animate-fade-in">
+        <header class="mb-6">
+            <h1 class="text-2xl font-serif font-bold text-[#F4F4F0] flex items-center gap-2 tracking-widest">
+                <svg class="text-[#2DCB8A] w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg> CHECK-IN
+            </h1>
+            <p class="text-[#8890A0] text-sm mt-1">Update your skills and bag map as you improve.</p>
+        </header>
+
+        <div class="flex-1 overflow-y-auto hide-scrollbar space-y-8 pb-8">
+            <section>
+                <div class="flex justify-between items-end mb-4">
+                    <h2 class="text-lg font-bold">Core Proficiency</h2>
+                    <span class="text-[10px] uppercase tracking-wider text-[#404060]">Tap to update</span>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    ${Object.keys(STATE.player.coreAreas).map(area => `
+                        <div class="bg-[#1A1A3A] p-3 rounded-xl border border-white/10">
+                            <div class="text-xs font-semibold text-[#8890A0] capitalize mb-2">${area.replace(/([A-Z])/g, ' $1').trim()}</div>
+                            <div class="flex justify-between items-center mb-1">
+                                <input type="range" min="1" max="5" value="${STATE.player.coreAreas[area]}" oninput="STATE.player.coreAreas['${area}'] = parseInt(this.value); document.getElementById('ci-val-${area}').innerText = this.value; document.getElementById('ci-lbl-${area}').innerText = getRatingLabel(this.value, STATE.player.currentHandicap);" onchange="syncProfileToFirebase()" class="w-2/3 accent-[#2DCB8A]">
+                                <span id="ci-val-${area}" class="text-[#2DCB8A] font-bold bg-[#0D0D1E] px-2 py-1 rounded-md text-sm border border-white/5">${STATE.player.coreAreas[area]}</span>
+                            </div>
+                            <div id="ci-lbl-${area}" class="text-[9px] text-[#8890A0] text-center uppercase tracking-wider font-semibold mt-2 leading-tight">
+                                ${getRatingLabel(STATE.player.coreAreas[area], STATE.player.currentHandicap)}
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            </section>
+
+            <section>
+                <div class="flex justify-between items-end mb-4">
+                    <h2 class="text-lg font-bold">Bag Map & Insights</h2>
+                    <span class="text-[10px] uppercase tracking-wider text-[#404060]">Yards</span>
+                </div>
+                <div class="bg-[#1A1A3A] rounded-xl border border-white/10 p-2 space-y-1">
+                    ${STATE.player.bag.map((club, idx) => `
+                        <div class="flex flex-col gap-1 hover:bg-[#14142E] p-2 rounded-lg transition-colors border border-transparent ${STATE.player.clubInsights && STATE.player.clubInsights[club.name] ? 'border-white/5' : ''}">
+                            <div class="flex items-center gap-4">
+                                <span class="flex-1 text-sm font-semibold text-[#8890A0]">${club.name}</span>
+                                <input type="number" id="bag-club-${club.name}" value="${club.distance}" onchange="STATE.player.bag[${idx}].distance = parseInt(this.value) || 0; syncProfileToFirebase();" class="w-16 bg-[#0D0D1E] border border-white/10 rounded p-1 text-center text-[#2DCB8A] font-bold outline-none focus:border-[#2DCB8A]">
+                            </div>
+                            ${STATE.player.clubInsights && STATE.player.clubInsights[club.name] ? `
+                                <p class="text-[10px] text-[#E8A930] bg-[#E8A930]/10 p-1.5 rounded inline-block mt-1">💡 ${STATE.player.clubInsights[club.name]}</p>
+                            ` : ''}
+                        </div>
+                    `).join('')}
+                </div>
+            </section>
+
+            <section class="mt-8 pt-6 border-t border-white/10">
+                <button onclick="logout()" class="w-full bg-[#1A1A3A] hover:bg-[#2a1a2a] text-[#E85030] font-bold py-4 rounded-xl border border-[#E85030]/20 transition-colors">
+                    Log Out / Forget Me
+                </button>
+            </section>
+        </div>
+    </div>`;
+}
+
+function renderPlayIntro() {
+    return `
+    <div class="flex flex-col h-full p-6 animate-fade-in">
+        <h1 class="text-2xl font-serif font-bold mb-2">Track Round</h1>
+        <p class="text-[#8890A0] mb-6">Play ${STATE.player.courseName} and gather Strokes Gained data.</p>
+        
+        <div class="mb-8 bg-[#1A1A3A] border border-white/10 p-4 rounded-xl flex justify-between items-center">
+            <div>
+                <h3 class="font-bold text-[#F4F4F0] text-sm">Corner Man Coach</h3>
+                <p class="text-[10px] text-[#8890A0] mt-1">Get AI strategy every 3 holes</p>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" onchange="STATE.player.settings.silenceCoach = !this.checked; syncProfileToFirebase();" ${!STATE.player.settings.silenceCoach ? 'checked' : ''} class="sr-only peer">
+                <div class="w-11 h-6 bg-[#404060] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#2DCB8A]"></div>
+            </label>
+        </div>
+
+        <button onclick="startRoundFlow()" class="w-full bg-[#2DCB8A] hover:bg-[#34e09a] text-[#0D1A12] font-bold py-5 rounded-xl flex justify-center items-center gap-3 transition-transform active:scale-95 shadow-[0_0_20px_rgba(45,203,138,0.15)]">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg> TEE OFF
+        </button>
+    </div>`;
+}
+
+function renderPlayActive() {
+    const round = STATE.activeRound;
+    if (!round) return '';
+    const hole = STATE.player.courseHoles[round.holeIndex];
+    const totalHoleStrokes = round.currentHoleShots.length + round.penaltyStrokes;
+    const outs = round.shotOutcomes;
+    const selectedClubObj = STATE.player.bag[round.selectedClubIndex];
+
+    let interactions = '';
+    if (round.holeState === 'fairway') {
+        interactions = `
+            <p class="text-center text-[#2DCB8A] font-bold text-[10px] uppercase tracking-widest mb-6">Enter data AFTER your shot</p>
+
+            <div class="text-center mb-6">
+                <label class="text-[#8890A0] font-bold uppercase tracking-widest text-[10px] mb-2 block">Distance to Pin</label>
+                <div class="flex justify-center items-baseline gap-2">
+                    <input type="number" id="shot-distance" value="${round.currentShotDistance}" onchange="STATE.activeRound.currentShotDistance = parseInt(this.value)||0; render();" class="bg-transparent text-6xl font-serif font-bold text-center text-[#F4F4F0] w-40 outline-none border-b border-[#404060] focus:border-[#2DCB8A] transition-colors">
+                    <span class="text-xl text-[#404060] font-bold">yds</span>
+                </div>
+            </div>
+
+            <div class="bg-[#1A1A3A] p-4 rounded-xl border border-white/10 mb-6">
+                <div class="flex justify-between items-center mb-3">
+                    <span class="text-[#8890A0] font-bold text-[10px] uppercase tracking-widest">Club Used</span>
+                    <span class="text-[#F4F4F0] font-bold text-sm">${selectedClubObj.name} <span class="text-[#2DCB8A] text-xs ml-1">(${selectedClubObj.distance}y)</span></span>
+                </div>
+                <input type="range" min="0" max="${STATE.player.bag.length - 1}" value="${round.selectedClubIndex}" oninput="updateClubSlider(this.value)" class="w-full">
+            </div>
+
+            <div class="space-y-3 mb-8 animate-fade-in">
+                <div class="flex justify-between items-center bg-[#1A1A3A] border border-white/10 rounded-lg p-2 px-3 mb-2">
+                    <span class="text-[#8890A0] font-bold text-[10px] uppercase tracking-widest">Shot Type</span>
+                    <select id="shot-type" class="bg-transparent font-bold text-[#F4F4F0] outline-none text-sm text-right">
+                        ${SHOT_TYPES.map(t => `<option value="${t}">${t}</option>`).join('')}
+                    </select>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="setOutcome('dist', 'Short')" class="flex-1 py-2.5 text-[10px] uppercase tracking-widest font-bold rounded-lg border ${outs.dist==='Short'?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#0D0D1E] text-[#8890A0] border-white/10'} transition-colors">Short</button>
+                    <button onclick="setOutcome('dist', 'At Dist')" class="flex-1 py-2.5 text-[10px] uppercase tracking-widest font-bold rounded-lg border ${outs.dist==='At Dist'?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#0D0D1E] text-[#8890A0] border-white/10'} transition-colors">At Dist</button>
+                    <button onclick="setOutcome('dist', 'Long')" class="flex-1 py-2.5 text-[10px] uppercase tracking-widest font-bold rounded-lg border ${outs.dist==='Long'?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#0D0D1E] text-[#8890A0] border-white/10'} transition-colors">Long</button>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="setOutcome('dir', 'Left')" class="flex-1 py-2.5 text-[10px] uppercase tracking-widest font-bold rounded-lg border ${outs.dir==='Left'?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#0D0D1E] text-[#8890A0] border-white/10'} transition-colors">Left</button>
+                    <button onclick="setOutcome('dir', 'Straight')" class="flex-1 py-2.5 text-[10px] uppercase tracking-widest font-bold rounded-lg border ${outs.dir==='Straight'?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#0D0D1E] text-[#8890A0] border-white/10'} transition-colors">Straight</button>
+                    <button onclick="setOutcome('dir', 'Right')" class="flex-1 py-2.5 text-[10px] uppercase tracking-widest font-bold rounded-lg border ${outs.dir==='Right'?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#0D0D1E] text-[#8890A0] border-white/10'} transition-colors">Right</button>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="setOutcome('lie', 'Rough')" class="flex-1 py-2.5 text-[10px] uppercase tracking-widest font-bold rounded-lg border ${outs.lie==='Rough'?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#0D0D1E] text-[#8890A0] border-white/10'} transition-colors">Rough</button>
+                    <button onclick="setOutcome('lie', 'Fairway')" class="flex-1 py-2.5 text-[10px] uppercase tracking-widest font-bold rounded-lg border ${outs.lie==='Fairway'?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#0D0D1E] text-[#8890A0] border-white/10'} transition-colors">Fairway</button>
+                    <button onclick="setOutcome('lie', 'Green')" class="flex-1 py-2.5 text-[10px] uppercase tracking-widest font-bold rounded-lg border ${outs.lie==='Green'?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#0D0D1E] text-[#8890A0] border-white/10'} transition-colors">Green</button>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="setOutcome('cont', 'Miss-hit')" class="flex-1 py-2.5 text-[10px] uppercase tracking-widest font-bold rounded-lg border ${outs.cont==='Miss-hit'?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#0D0D1E] text-[#8890A0] border-white/10'} transition-colors">Miss-hit</button>
+                    <button onclick="setOutcome('cont', 'OB')" class="flex-1 py-2.5 text-[10px] uppercase tracking-widest font-bold rounded-lg border ${outs.cont==='OB'?'bg-[#E85030] text-white border-[#E85030]':'bg-[#0D0D1E] text-[#8890A0] border-white/10'} transition-colors">OB (Pen)</button>
+                    <button onclick="setOutcome('cont', 'Dreamy')" class="flex-1 py-2.5 text-[10px] uppercase tracking-widest font-bold rounded-lg border ${outs.cont==='Dreamy'?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#0D0D1E] text-[#8890A0] border-white/10'} transition-colors">Dreamy</button>
+                </div>
+            </div>
+
+            <div class="flex flex-col gap-3 mt-auto pb-4">
+                <button onclick="recordFairwayShot()" class="w-full bg-[#2DCB8A] hover:bg-[#34e09a] text-[#0D1A12] font-bold py-4 rounded-xl flex justify-center items-center gap-2 transition-transform active:scale-95 shadow-[0_0_15px_rgba(45,203,138,0.2)]">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg> Record Shot
+                </button>
+            </div>
+        `;
+    } else {
+        interactions = `
+            <div class="text-center mb-6 animate-fade-in mt-4">
+                <div class="w-16 h-16 rounded-full bg-[#2DCB8A]/10 border border-[#2DCB8A] text-[#2DCB8A] flex items-center justify-center mx-auto mb-4">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+                </div>
+                <h3 class="text-[#F4F4F0] font-serif font-bold text-xl mb-6">On the Green</h3>
+                
+                <label class="text-[#8890A0] font-bold uppercase tracking-widest text-[10px] mb-2 block">Total Putts</label>
+                <div class="flex justify-center items-center gap-6">
+                    <button onclick="const el=document.getElementById('putt-count'); el.value = Math.max(0, parseInt(el.value)-1);" class="w-12 h-12 rounded-full bg-[#1A1A3A] text-2xl border border-white/10 hover:border-[#2DCB8A] text-white">-</button>
+                    <input type="number" id="putt-count" value="2" class="bg-transparent text-6xl font-serif font-bold text-center text-[#2DCB8A] w-20 outline-none">
+                    <button onclick="const el=document.getElementById('putt-count'); el.value = parseInt(el.value)+1;" class="w-12 h-12 rounded-full bg-[#1A1A3A] text-2xl border border-white/10 hover:border-[#2DCB8A] text-white">+</button>
+                </div>
+            </div>
+
+            <div class="mb-8">
+                <label class="text-[#8890A0] font-bold uppercase tracking-widest text-[10px] mb-2 block">Hole Comments (Optional)</label>
+                <textarea id="hole-comment" rows="3" placeholder="Pushed the drive, chunked an iron, 3-putted..." class="w-full bg-[#1A1A3A] border border-white/10 rounded-xl p-3 text-sm text-[#F4F4F0] outline-none focus:border-[#2DCB8A] resize-none"></textarea>
+            </div>
+
+            <div class="mt-auto pb-4">
+                <button onclick="saveHoleData()" class="w-full bg-[#2DCB8A] hover:bg-[#34e09a] text-[#0D1A12] font-bold py-4 rounded-xl flex justify-center items-center gap-2 transition-transform active:scale-95 shadow-[0_0_15px_rgba(45,203,138,0.2)]">
+                    Complete Hole &rarr;
+                </button>
+            </div>
+        `;
+    }
+
+    return `
+    <div class="flex flex-col h-full relative bg-[#0D0D1E]">
+        <div class="bg-[#1A1A3A] p-6 rounded-b-2xl border-b border-white/10 shadow-lg z-10 shrink-0">
+            <div class="flex justify-between items-center mb-4">
+                <div>
+                    <span class="text-[#2DCB8A] font-bold uppercase tracking-widest text-[10px]">Playing</span>
+                    <h2 class="text-xl font-serif font-bold truncate max-w-[200px]">${STATE.player.courseName}</h2>
+                </div>
+                <button onclick="switchView('learn')" class="text-[#404060] hover:text-white transition-colors">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+                </button>
+            </div>
+            <div class="flex justify-between items-end">
+                <div>
+                    <span class="text-[#8890A0] text-xs font-bold tracking-widest uppercase block mb-1">Hole ${hole.number}</span>
+                    <div class="text-3xl font-serif font-bold flex items-baseline gap-2">
+                        Par ${hole.par} <span class="text-lg text-[#404060] font-sans font-normal">${hole.distance}y</span>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <span class="text-[#8890A0] text-xs font-bold tracking-widest uppercase block mb-1">Strokes Logged</span>
+                    <span class="text-4xl font-serif font-bold text-[#E8A930]">${totalHoleStrokes}</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="p-6 flex-1 flex flex-col hide-scrollbar overflow-y-auto">
+            ${round.currentHoleShots.length > 0 && round.holeState === 'fairway' ? `
+                <div class="mb-6 space-y-2">
+                    ${round.currentHoleShots.map((s, i) => `
+                        <div class="flex justify-between items-center bg-[#1A1A3A]/50 p-2 rounded-lg text-sm border border-white/5">
+                            <span class="text-[#8890A0] font-bold text-xs uppercase tracking-wider">Shot ${i+1}</span>
+                            <span class="text-white font-bold">${s.club} <span class="text-[#2DCB8A] text-xs ml-1">${s.distance}y</span></span>
+                        </div>
+                    `).join('')}
+                </div>
+            ` : ''}
+            ${interactions}
+        </div>
+    </div>`;
+}
+
+function renderCoachCorner() {
+    const round = STATE.activeRound;
+    return `
+    <div class="flex flex-col h-full bg-[#0D0D1E] animate-fade-in p-6 pb-24">
+        <div class="text-center mt-4 mb-6">
+            <div class="w-16 h-16 rounded-full bg-[#1D7A5A] flex items-center justify-center text-3xl mx-auto mb-3 shadow-[0_0_20px_rgba(45,203,138,0.2)] border-2 border-[#2DCB8A]">🥊</div>
+            <h1 class="text-2xl font-serif font-bold uppercase tracking-widest text-[#F4F4F0]">Coach's Corner</h1>
+            <p class="text-[#8890A0] text-sm mt-1">Through Hole ${STATE.player.courseHoles[round.holeIndex - 1].number}</p>
+        </div>
+
+        <div class="flex-1 bg-[#1A1A3A] border border-white/10 rounded-xl p-4 flex flex-col overflow-hidden mb-6 shadow-xl">
+            <div id="corner-chat-area" class="flex-1 overflow-y-auto hide-scrollbar space-y-4 flex flex-col">
+                ${round.cornerMessages.map(msg => `
+                    <div class="flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}">
+                        <div class="max-w-[90%] p-4 rounded-xl text-sm leading-relaxed ${msg.role === 'user' ? 'bg-[#2DCB8A] text-[#0D1A12] rounded-br-sm font-semibold' : 'bg-[#0D0D1E] border border-white/10 text-[#F4F4F0] rounded-bl-sm font-medium'}">${msg.text}</div>
+                    </div>
+                `).join('')}
+                ${round.isCoachTyping ? `
+                    <div class="flex justify-start">
+                        <div class="bg-[#0D0D1E] border border-white/10 rounded-xl rounded-bl-sm p-4 flex gap-1 items-center">
+                            <div class="w-1.5 h-1.5 bg-[#8890A0] rounded-full typing-dot"></div>
+                            <div class="w-1.5 h-1.5 bg-[#8890A0] rounded-full typing-dot"></div>
+                            <div class="w-1.5 h-1.5 bg-[#8890A0] rounded-full typing-dot"></div>
+                        </div>
+                    </div>
+                ` : ''}
+            </div>
+        </div>
+
+        <div class="space-y-3 shrink-0">
+            <div class="flex gap-2">
+                <input id="corner-chat-input" type="text" placeholder="Questions for Coach?" onkeydown="if(event.key==='Enter') sendCornerMessage()" class="flex-1 bg-[#1A1A3A] border border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-[#2DCB8A] text-[#F4F4F0]">
+                <button onclick="sendCornerMessage()" class="w-12 rounded-xl bg-[#1A1A3A] border border-white/10 hover:border-[#2DCB8A] flex items-center justify-center text-[#2DCB8A] transition-colors"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></button>
+            </div>
+            <button onclick="returnToTee()" class="w-full bg-[#2DCB8A] hover:bg-[#34e09a] text-[#0D1A12] font-bold py-4 rounded-xl flex justify-center items-center gap-2 transition-transform active:scale-95 shadow-[0_0_15px_rgba(45,203,138,0.2)]">
+                Back to the Tee &rarr;
+            </button>
+        </div>
+    </div>`;
+}
+
+function renderPostRound() {
+    const round = STATE.activeRound;
+    if (!round) return '';
+
+    const totalStrokes = round.holesLog.reduce((sum, h) => sum + h.totalStrokes, 0);
+    const totalPar = STATE.player.courseHoles.reduce((sum, h) => sum + h.par, 0);
+    const scoreToPar = totalStrokes - totalPar;
+    const scoreString = scoreToPar > 0 ? `+${scoreToPar}` : scoreToPar === 0 ? 'E' : scoreToPar;
+
+    const parStats = { 3: { s: 0, c: 0 }, 4: { s: 0, c: 0 }, 5: { s: 0, c: 0 } };
+    round.holesLog.forEach(h => { if(parStats[h.par]) { parStats[h.par].s += h.totalStrokes; parStats[h.par].c++; } });
+
+    let bestStretchScore = Infinity; let bestStartHole = 1;
+    for (let i = 0; i <= round.holesLog.length - 3; i++) {
+        const sum = (round.holesLog[i].totalStrokes - round.holesLog[i].par) + 
+                    (round.holesLog[i+1].totalStrokes - round.holesLog[i+1].par) + 
+                    (round.holesLog[i+2].totalStrokes - round.holesLog[i+2].par);
+        if (sum < bestStretchScore) { bestStretchScore = sum; bestStartHole = round.holesLog[i].number; }
+    }
+    const stretchStr = bestStretchScore > 0 ? `+${bestStretchScore}` : bestStretchScore === 0 ? 'E' : bestStretchScore;
+
+    let scorecardHTML = `<div class="grid grid-cols-10 gap-1 text-[10px] text-center font-bold text-[#8890A0] mb-2"><div class="col-span-1">H</div><div class="col-span-1">P</div><div class="col-span-1">S</div><div class="col-span-1">H</div><div class="col-span-1">P</div><div class="col-span-1">S</div><div class="col-span-1">H</div><div class="col-span-1">P</div><div class="col-span-1">S</div></div>`;
+    for(let i=0; i<6; i++) {
+        scorecardHTML += `<div class="grid grid-cols-10 gap-1 text-xs text-center mb-1 text-white">`;
+        for(let j=0; j<3; j++) {
+            const h = round.holesLog[i*3 + j];
+            if(!h) continue;
+            const color = h.totalStrokes < h.par ? 'text-[#2DCB8A]' : h.totalStrokes > h.par ? 'text-[#E85030]' : 'text-white';
+            scorecardHTML += `<div class="col-span-1 py-1 bg-[#1A1A3A] rounded">${h.number}</div><div class="col-span-1 py-1 bg-[#1A1A3A] rounded">${h.par}</div><div class="col-span-1 py-1 bg-[#1A1A3A] rounded font-bold ${color}">${h.totalStrokes}</div>${j<2?'<div class="col-span-0.5"></div>':''}`;
+        }
+        scorecardHTML += `</div>`;
+    }
+
+    let aiSectionHTML = '';
+    if (round.analysis === 'loading') {
+        aiSectionHTML = `
+        <div class="bg-[#1D7A5A]/20 p-6 rounded-2xl border border-[#2DCB8A]/30 text-center animate-pulse">
+            <div class="text-3xl mb-4">🤖</div>
+            <h3 class="font-bold text-[#2DCB8A] mb-2">Coach is analyzing your round...</h3>
+            <p class="text-sm text-[#8890A0]">Running Strokes Gained, updating core metrics, and building your weekly plan.</p>
+        </div>`;
+    } else if (round.analysis) {
+        aiSectionHTML = `
+        <div class="bg-[#1A1A3A] p-6 rounded-2xl border border-[#2DCB8A]/50 shadow-xl mb-6">
+            <h3 class="font-serif text-xl font-bold text-[#F4F4F0] mb-3 flex items-center gap-2">🤖 Coach Analysis</h3>
+            <p class="text-[#F4F4F0] text-sm leading-relaxed mb-6 italic border-l-2 border-[#2DCB8A] pl-3">"${round.analysis.coachMessage}"</p>
+            
+            <div class="mb-6">
+                <h4 class="text-xs font-bold uppercase tracking-widest text-[#8890A0] mb-3">Updated Core Proficiency</h4>
+                <div class="grid grid-cols-2 gap-2">
+                    ${Object.keys(round.analysis.coreScores).map(k => `
+                        <div class="flex justify-between items-center text-sm border-b border-white/5 pb-1">
+                            <span class="capitalize text-[#8890A0]">${k.replace(/([A-Z])/g, ' $1').trim()}</span>
+                            <span class="text-[#2DCB8A] font-bold">${round.analysis.coreScores[k]}/5</span>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+
+            <div class="space-y-4 mb-6">
+                <div>
+                    <h4 class="text-xs font-bold uppercase tracking-widest text-[#8890A0] mb-1">Recommended Reading</h4>
+                    <p class="text-sm text-[#F4F4F0]">${round.analysis.suggestedLearn}</p>
+                </div>
+                <div>
+                    <h4 class="text-xs font-bold uppercase tracking-widest text-[#8890A0] mb-1">Recommended Drill</h4>
+                    <p class="text-sm text-[#F4F4F0]">${round.analysis.suggestedPractice}</p>
+                </div>
+            </div>
+
+            <button onclick="acceptAIPlan()" class="w-full bg-[#2DCB8A] hover:bg-[#34e09a] text-[#0D1A12] font-bold py-3 rounded-xl transition-transform active:scale-95">
+                Accept & Update Plan
+            </button>
+        </div>`;
+    }
+
+    return `
+    <div class="flex flex-col h-full p-6 animate-fade-in bg-[#0D0D1E]">
+        <div class="text-center mt-6 mb-6">
+            <h1 class="text-2xl font-serif font-bold uppercase tracking-widest text-[#F4F4F0]">Round Complete</h1>
+            <p class="text-[#8890A0] text-sm">${STATE.player.courseName}</p>
+        </div>
+
+        <div class="bg-gradient-to-br from-[#1A1A3A] to-[#0D0D1E] rounded-2xl p-6 border border-white/10 flex justify-center items-baseline gap-4 mb-8 shadow-xl">
+            <span class="text-7xl font-serif font-bold text-[#F4F4F0] tracking-tighter">${totalStrokes}</span>
+            <span class="text-xl font-bold ${scoreToPar > 0 ? 'text-[#E85030]' : 'text-[#2DCB8A]'}">(${scoreString})</span>
+        </div>
+
+        <div class="space-y-8">
+            ${aiSectionHTML}
+
+            <section>
+                <h3 class="text-sm font-bold uppercase tracking-widest text-[#8890A0] mb-3">Scorecard</h3>
+                <div class="bg-[#1A1A3A] p-4 rounded-xl border border-white/10">${scorecardHTML}</div>
+            </section>
+
+            <section>
+                <h3 class="text-sm font-bold uppercase tracking-widest text-[#8890A0] mb-3">Performance Stats</h3>
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="bg-[#1A1A3A] p-4 rounded-xl border border-white/10">
+                        <div class="text-[10px] text-[#8890A0] uppercase mb-1">Avg Par 3</div>
+                        <div class="text-xl font-bold text-[#F4F4F0]">${parStats[3].c ? (parStats[3].s/parStats[3].c).toFixed(1) : '-'}</div>
+                    </div>
+                    <div class="bg-[#1A1A3A] p-4 rounded-xl border border-white/10">
+                        <div class="text-[10px] text-[#8890A0] uppercase mb-1">Avg Par 4</div>
+                        <div class="text-xl font-bold text-[#F4F4F0]">${parStats[4].c ? (parStats[4].s/parStats[4].c).toFixed(1) : '-'}</div>
+                    </div>
+                    <div class="bg-[#1A1A3A] p-4 rounded-xl border border-white/10">
+                        <div class="text-[10px] text-[#8890A0] uppercase mb-1">Avg Par 5</div>
+                        <div class="text-xl font-bold text-[#F4F4F0]">${parStats[5].c ? (parStats[5].s/parStats[5].c).toFixed(1) : '-'}</div>
+                    </div>
+                    <div class="bg-[#1A1A3A] p-4 rounded-xl border border-[#2DCB8A]/30 relative overflow-hidden">
+                        <div class="text-[10px] text-[#2DCB8A] uppercase mb-1">Best 3 Holes</div>
+                        <div class="text-xl font-bold text-[#F4F4F0]">${stretchStr}</div>
+                        <div class="text-[9px] text-[#8890A0] absolute bottom-2 right-2">Holes ${bestStartHole}-${bestStartHole+2}</div>
+                    </div>
+                </div>
+            </section>
+
+            <section>
+                <h3 class="text-sm font-bold uppercase tracking-widest text-[#8890A0] mb-3">Club Distances (This Round)</h3>
+                <div class="bg-[#1A1A3A] p-2 rounded-xl border border-white/10 space-y-1">
+                    ${Object.keys(round.clubAvgs || {}).map(club => `
+                        <div class="flex items-center justify-between p-2 hover:bg-[#14142E] rounded-lg">
+                            <span class="text-sm font-semibold text-[#8890A0]">${club}</span>
+                            <div class="flex items-center gap-3">
+                                <span class="text-[#F4F4F0] font-bold">${round.clubAvgs[club]}y</span>
+                                <button onclick="updateBagDistance('${club}', ${round.clubAvgs[club]})" class="text-[9px] uppercase font-bold bg-[#2DCB8A]/10 text-[#2DCB8A] px-2 py-1 rounded hover:bg-[#2DCB8A] hover:text-[#0D1A12] transition-colors">Update Bag</button>
+                            </div>
+                        </div>
+                    `).join('')}
+                    ${Object.keys(round.clubAvgs || {}).length === 0 ? '<div class="text-xs text-[#8890A0] p-2">No full shots recorded to average.</div>' : ''}
+                </div>
+            </section>
+            
+            <div class="pb-8 pt-4">
+                <button onclick="switchView('progress')" class="w-full bg-[#1A1A3A] hover:bg-[#14142E] text-[#F4F4F0] font-bold py-4 rounded-xl flex justify-center items-center gap-2 border border-white/10 transition-colors">Go to Progress</button>
+            </div>
+        </div>
+    </div>`;
+}
+
+function renderProgress() {
+    return `
+    <div class="flex flex-col h-full p-6 animate-fade-in">
+        <h1 class="text-2xl font-serif font-bold mb-6">Progress</h1>
+
+        ${STATE.player.roundCount === 0 ? `
+            <div class="bg-[#E8A930]/10 p-4 rounded-xl border border-[#E8A930]/30 mb-6 shadow-sm">
+                <p class="text-[#E8A930] text-sm leading-relaxed">
+                    <strong>Welcome to Progress!</strong> Since you haven't logged a round yet, your Learn and Practice plans are based purely on your initial self-assessment. 
+                    Play a round to start unlocking data-driven insights and achievements!
+                </p>
+            </div>
+        ` : ''}
+
+        <div class="bg-[#1A1A3A] border border-white/10 rounded-xl p-5 mb-4">
+            <h3 class="text-[10px] font-bold uppercase tracking-widest text-[#8890A0] mb-1">Strokes Gained vs ${STATE.player.targetHandicap.toFixed(1)} Benchmark</h3>
+            <p class="text-xs text-[#8890A0] mb-6">Where you're losing strokes per round</p>
+            <div class="space-y-4">
+                ${[
+                    { label: 'Putting', value: -2.1, color: '#E85030', width: '84%' },
+                    { label: 'Approach', value: -0.8, color: '#E8A930', width: '32%' },
+                    { label: 'Short Game', value: -0.4, color: '#B8C830', width: '16%' },
+                    { label: 'Off the Tee', value: -0.2, color: '#2DCB8A', width: '8%' }
+                ].map(stat => `
+                    <div class="flex items-center gap-3">
+                        <span class="w-20 text-xs font-bold text-[#F4F4F0]">${stat.label}</span>
+                        <div class="flex-1 h-2 bg-[#404060] rounded-full relative"><div class="absolute top-0 left-0 h-full rounded-full" style="width: ${STATE.player.roundCount > 0 ? stat.width : '0%'}; background-color: ${stat.color}"></div></div>
+                        <span class="w-8 text-right text-xs font-bold" style="color: ${stat.color}">${STATE.player.roundCount > 0 ? stat.value : '0.0'}</span>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+        
+        <div class="grid grid-cols-2 gap-3 mb-6">
+            <div class="bg-[#1A1A3A] border border-white/10 p-4 rounded-xl"><div class="text-3xl font-bold text-[#F4F4F0]">${STATE.player.roundCount}</div><div class="text-[10px] text-[#8890A0] uppercase tracking-wider mt-1">Rounds Logged</div></div>
+            <div class="bg-[#1A1A3A] border border-white/10 p-4 rounded-xl"><div class="text-3xl font-bold text-[#F4F4F0]">${STATE.player.sessionsCount}</div><div class="text-[10px] text-[#8890A0] uppercase tracking-wider mt-1">Total Sessions</div></div>
+            <div class="bg-[#1A1A3A] border border-white/10 p-4 rounded-xl"><div class="text-3xl font-bold text-[#2DCB8A]">${STATE.player.drillsPassed}</div><div class="text-[10px] text-[#2DCB8A] uppercase tracking-wider mt-1">Drills Passed</div></div>
+            <div class="bg-[#1A1A3A] border border-white/10 p-4 rounded-xl"><div class="text-3xl font-bold text-[#E8A930]">${STATE.player.achievements.length}</div><div class="text-[10px] text-[#E8A930] uppercase tracking-wider mt-1">Achievements</div></div>
+        </div>
+
+        ${STATE.player.achievements.length > 0 ? `
+            <div class="bg-[#1A1A3A] border border-white/10 rounded-xl p-5 mb-8">
+                <h3 class="text-[10px] font-bold uppercase tracking-widest text-[#8890A0] mb-4">Trophy Room</h3>
+                <div class="space-y-3">
+                    ${STATE.player.achievements.map(a => `
+                        <div class="flex items-center gap-3 bg-[#0D0D1E] p-3 rounded-lg border border-white/5">
+                            <div class="text-2xl">${a.icon}</div>
+                            <div class="font-bold text-sm text-[#F4F4F0]">${a.title}</div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        ` : ''}
+    </div>`;
+}
+
+function renderCoach() {
+    const modes = [
+        { id: 'accountability', icon: '💪', color: 'text-[#2DCB8A]', bg: 'bg-[#2DCB8A]/10 border-[#2DCB8A]/20', border: 'border-[#2DCB8A]', pillBg: 'bg-[#2DCB8A]/15' },
+        { id: 'technical', icon: '🎯', color: 'text-[#7060C0]', bg: 'bg-[#7060C0]/10 border-[#7060C0]/20', border: 'border-[#7060C0]', pillBg: 'bg-[#7060C0]/15' },
+        { id: 'mental', icon: '🧠', color: 'text-[#E8A930]', bg: 'bg-[#E8A930]/10 border-[#E8A930]/20', border: 'border-[#E8A930]', pillBg: 'bg-[#E8A930]/15' }
+    ];
+    const curMode = modes.find(m => m.id === STATE.coachMode);
+
+    return `
+    <div class="flex flex-col h-full p-6 animate-fade-in pb-0">
+        <div class="rounded-xl p-4 mb-4 flex items-center gap-3 border transition-colors ${curMode.bg} shrink-0">
+            <div class="w-10 h-10 rounded-full bg-[#1D7A5A] flex items-center justify-center text-xl shadow-lg border-2 border-[#2DCB8A]">🤖</div>
+            <div><h2 class="font-serif font-bold">Descent Coach</h2><div class="text-xs text-[#8890A0] capitalize">${curMode.id} Mode</div></div>
+        </div>
+        <div class="flex gap-2 mb-4 shrink-0">
+            ${modes.map(m => `
+                <button onclick="setCoachMode('${m.id}')" class="flex-1 py-1.5 rounded-lg border text-xs font-bold capitalize transition-colors ${STATE.coachMode === m.id ? `${m.pillBg} ${m.border} ${m.color}` : 'bg-[#1A1A3A] border-white/10 text-[#8890A0] hover:border-[#8890A0]'}">${m.id}</button>
+            `).join('')}
+        </div>
+        <div class="flex-1 bg-[#1A1A3A] border border-white/10 rounded-xl p-4 flex flex-col overflow-hidden mb-[10px]">
+            <div id="chat-scroll-area" class="flex-1 overflow-y-auto hide-scrollbar space-y-4 mb-4 flex flex-col">
+                ${STATE.chatMessages.map(msg => `
+                    <div class="flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}">
+                        <div class="max-w-[90%] p-3 rounded-xl text-sm leading-relaxed ${msg.role === 'user' ? 'bg-[#2DCB8A] text-[#0D1A12] rounded-br-sm font-semibold' : 'bg-[#0D0D1E] border border-white/10 text-[#F4F4F0] rounded-bl-sm font-medium'}">${msg.text}</div>
+                    </div>
+                `).join('')}
+                ${STATE.isTyping ? `
+                    <div class="flex justify-start">
+                        <div class="bg-[#0D0D1E] border border-white/10 rounded-xl rounded-bl-sm p-4 flex gap-1 items-center">
+                            <div class="w-1.5 h-1.5 bg-[#8890A0] rounded-full typing-dot"></div>
+                            <div class="w-1.5 h-1.5 bg-[#8890A0] rounded-full typing-dot"></div>
+                            <div class="w-1.5 h-1.5 bg-[#8890A0] rounded-full typing-dot"></div>
+                        </div>
+                    </div>
+                ` : ''}
+            </div>
+            <div class="flex gap-2 shrink-0">
+                <input id="chat-input" type="text" placeholder="Ask your coach..." value="${STATE.chatInput || ''}" oninput="STATE.chatInput=this.value" onkeydown="if(event.key==='Enter') sendChatMessage()" class="flex-1 bg-[#0D0D1E] border border-white/10 rounded-full px-4 py-2 text-sm outline-none focus:border-[#2DCB8A] text-white">
+                <button onclick="sendChatMessage()" class="w-10 h-10 rounded-full bg-[#2DCB8A] hover:bg-[#34e09a] flex items-center justify-center text-[#0D1A12] shrink-0"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></button>
+            </div>
+        </div>
+    </div>`;
+}
+
+// ============================================================================
+// 6. EVENT HANDLERS & ACTIONS
+// ============================================================================
+
+window.toggleTask = function(type, idx) {
+    const key = `${type}_${idx}`;
+    STATE.player.completedTasksSet[key] = !STATE.player.completedTasksSet[key];
+    if (STATE.player.completedTasksSet[key]) {
+        STATE.player.drillsPassed++;
+        STATE.player.sessionsCount++;
+    } else {
+        STATE.player.drillsPassed = Math.max(0, STATE.player.drillsPassed - 1);
+    }
+    syncProfileToFirebase();
+    render();
+}
+
+window.checkWelcomePhone = function() {
+    const phone = document.getElementById('welcome-phone').value.trim();
+    document.getElementById('welcome-next-btn').disabled = phone.length < 5;
+}
+
+window.checkWelcomeName = function() {
+    const name = document.getElementById('welcome-name').value.trim();
+    document.getElementById('welcome-start-btn').disabled = name.length < 2;
+}
+
+window.verifyPhone = async function() {
+    const phone = document.getElementById('welcome-phone').value.trim();
+    if(!phone) return;
+    
+    const btn = document.getElementById('welcome-next-btn');
+    btn.innerText = "Checking...";
+    btn.disabled = true;
+
+    if (db) {
+        try {
+            const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'profiles', phone);
+            const docSnap = await getDoc(docRef);
+            if(docSnap.exists()) {
+                STATE.player = { ...STATE.player, ...docSnap.data() };
+                localStorage.setItem('descent_phone', phone);
+                switchView('learn');
+                return;
+            }
+        } catch(e) { console.error("Firebase error", e); }
+    }
+    
+    STATE.player.phone = phone;
+    document.getElementById('welcome-step-1').classList.add('hidden');
+    document.getElementById('welcome-step-2').classList.remove('hidden');
+}
+
+window.startNewProfile = async function() {
+    const name = document.getElementById('welcome-name').value.trim();
+    if(!name) return;
+    STATE.player.name = name;
+    localStorage.setItem('descent_phone', STATE.player.phone);
+    await syncProfileToFirebase();
+    switchView('onboarding');
+}
+
+window.logout = function() {
+    localStorage.removeItem('descent_phone');
+    STATE.player = resetPlayerState();
+    switchView('welcome');
+}
+
+window.setOBStep = function(step) { STATE.onboardingStep = step; render(); }
+window.nextOBStep = function() {
+    if (STATE.onboardingStep === 5) {
+        syncProfileToFirebase();
+        STATE.welcomeStep = 1;
+        switchView('welcome_sequence');
+        setTimeout(() => { if (STATE.currentView === 'welcome_sequence' && STATE.welcomeStep === 1) nextWelcomeSequence(); }, 2500);
+    } else {
+        STATE.onboardingStep++;
+        render();
+    }
+}
+
+window.nextWelcomeSequence = function() {
+    if (STATE.welcomeStep === 4) switchView('learn');
+    else { STATE.welcomeStep++; render(); }
+}
+
+window.toggleInfo = function(area) { STATE.activeInfo = STATE.activeInfo === area ? null : area; render(); }
+window.updateAllRatingLabels = function() {
+    Object.keys(STATE.player.coreAreas).map(area => {
+        const el = document.getElementById(`lbl-${area}`);
+        if(el) el.innerText = getRatingLabel(STATE.player.coreAreas[area], STATE.player.currentHandicap);
+    });
+}
+window.updateCourseSelection = function(courseName) {
+    STATE.player.courseName = courseName;
+    const dbCourse = COURSE_DATABASE.find(c => c.name === courseName);
+    if (dbCourse) STATE.player.courseHoles = JSON.parse(JSON.stringify(dbCourse.holes));
+    syncProfileToFirebase(); render();
+}
+window.updateBagDistance = function(clubName, dist) {
+    const idx = STATE.player.bag.findIndex(c => c.name === clubName);
+    if(idx >= 0) { STATE.player.bag[idx].distance = dist; syncProfileToFirebase(); render(); }
+}
+
+// === PLAY TAB OVERHAUL ===
+
+window.suggestClubIndex = function(distance) {
+    const bag = STATE.player.bag;
+    if (distance <= 30) {
+        const idx = bag.findIndex(c => c.id === 'putter');
+        return idx >= 0 ? idx : 0;
+    }
+    
+    let closestIdx = -1;
+    let smallestDiff = Infinity;
+    for (let i = 0; i < bag.length; i++) {
+        if (bag[i].id === 'putter') continue;
+        const diff = bag[i].distance - distance;
+        if (diff >= 0 && diff < smallestDiff) {
+            smallestDiff = diff;
+            closestIdx = i;
+        }
+    }
+    
+    if (closestIdx === -1) {
+        let maxDist = -1;
+        for (let i = 0; i < bag.length; i++) {
+            if (bag[i].id === 'putter') continue;
+            if (bag[i].distance > maxDist) { maxDist = bag[i].distance; closestIdx = i; }
+        }
+    }
+    return closestIdx === -1 ? 0 : closestIdx;
+}
+
+window.startRoundFlow = function() {
+    STATE.activeRound = {
+        holeIndex: 0, holesLog: [], currentHoleShots: [], penaltyStrokes: 0,
+        currentShotDistance: STATE.player.courseHoles[0].distance,
+        selectedClubIndex: suggestClubIndex(STATE.player.courseHoles[0].distance),
+        shotOutcomes: { dist: 'At Dist', dir: 'Straight', lie: 'Fairway', cont: 'Dreamy' },
+        holeState: 'fairway', cornerMessages: [],
+        isCoachTyping: false, analysis: null, clubAvgs: {}
+    };
+    switchView('play_active');
+}
+
+window.updateClubSlider = function(idx) {
+    STATE.activeRound.selectedClubIndex = parseInt(idx);
+    render();
+}
+
+window.setOutcome = function(category, value) {
+    STATE.activeRound.shotOutcomes[category] = value;
+    render();
+}
+
+window.recordFairwayShot = function() {
+    const round = STATE.activeRound;
+    const club = STATE.player.bag[round.selectedClubIndex];
+    const outs = round.shotOutcomes;
+    const dist = parseInt(document.getElementById('shot-distance').value) || 0;
+    
+    round.currentHoleShots.push({ 
+        club: club.name, distance: dist, type: document.getElementById('shot-type').value,
+        outDistance: outs.dist, outDirection: outs.dir, outLie: outs.lie, outContact: outs.cont
+    });
+
+    if (outs.cont === 'OB') round.penaltyStrokes += 1;
+
+    if (outs.lie === 'Green') {
+        round.holeState = 'green';
+    } else {
+        const remaining = Math.max(0, dist - club.distance);
+        round.currentShotDistance = remaining;
+        round.selectedClubIndex = suggestClubIndex(remaining);
+        round.shotOutcomes = { dist: 'At Dist', dir: 'Straight', lie: 'Fairway', cont: 'Dreamy' };
+    }
+    render();
+}
+
+window.saveHoleData = async function() {
+    const round = STATE.activeRound;
+    const hole = STATE.player.courseHoles[round.holeIndex];
+    const putts = parseInt(document.getElementById('putt-count').value) || 0;
+    const comment = document.getElementById('hole-comment').value.trim();
+
+    round.holesLog.push({
+        number: hole.number, par: hole.par,
+        shots: [...round.currentHoleShots], putts: putts, penalties: round.penaltyStrokes,
+        totalStrokes: round.currentHoleShots.length + putts + round.penaltyStrokes, 
+        comment: comment
+    });
+
+    if (hole.number === 18) {
+        await finishRoundLogic();
+    } else if (hole.number % 3 === 0 && !STATE.player.settings.silenceCoach) {
+        round.holeState = 'fairway'; round.holeIndex++; round.currentHoleShots = []; round.penaltyStrokes = 0;
+        
+        const last3 = round.holesLog.slice(-3);
+        const promptData = last3.map(h => `Hole ${h.number}(Par ${h.par}): ${h.totalStrokes} strokes (${h.putts} putts, ${h.penalties} penalties). Shots: ${h.shots.map(s => `${s.club} (${s.outContact}, ${s.outLie})`).join(', ')}. Comment: ${h.comment || 'none'}`).join('. ');
+        
+        round.cornerMessages = []; round.isCoachTyping = true;
+        switchView('coach_corner');
+        const advice = await getAIAdvice(`Here is my data for the last 3 holes: ${promptData}. Analyze the shot outcomes and give me strategy for the next 3 holes.`);
+        round.cornerMessages.push({ role: 'coach', text: advice }); round.isCoachTyping = false;
+        STATE.chatMessages.push({ role: 'coach', text: `Between Holes ${hole.number} & ${hole.number+1}: ${advice}` });
+        render();
+    } else {
+        round.holeIndex++; round.currentHoleShots = []; round.penaltyStrokes = 0;
+        const nextHole = STATE.player.courseHoles[round.holeIndex];
+        round.currentShotDistance = nextHole.distance;
+        round.selectedClubIndex = suggestClubIndex(nextHole.distance);
+        round.shotOutcomes = { dist: 'At Dist', dir: 'Straight', lie: 'Fairway', cont: 'Dreamy' };
+        round.holeState = 'fairway'; render();
+    }
+}
+
+async function finishRoundLogic() {
+    const round = STATE.activeRound;
+    
+    // Calc Club Avgs
+    const sums = {}; const counts = {};
+    round.holesLog.forEach(h => h.shots.forEach(s => {
+        if(s.distance > 0 && s.type === 'Full') {
+            if(!sums[s.club]) { sums[s.club] = 0; counts[s.club] = 0; }
+            sums[s.club] += s.distance; counts[s.club]++;
+        }
+    }));
+    Object.keys(sums).forEach(k => { round.clubAvgs[k] = Math.round(sums[k]/counts[k]); });
+
+    round.analysis = 'loading';
+    switchView('post_round');
+
+    const promptData = JSON.stringify(round.holesLog.map(h => ({
+        hole: h.number, par: h.par, score: h.totalStrokes, putts: h.putts, comment: h.comment,
+        shots: h.shots.map(s => `${s.club} (${s.type}): ${s.outDistance}, ${s.outDirection}, ${s.outLie}, ${s.outContact}`)
+    })));
+
+    const prompt = `Analyze this golf round data: ${promptData}. 
+    Return ONLY a valid JSON object with EXACTLY this structure (no markdown wrappers):
+    {
+      "coreScores": {"driving": 3, "longIrons": 3, "approach": 3, "aroundGreen": 3, "putting": 3, "recovery": 3},
+      "coachMessage": "positive 2 sentence constructive pep talk",
+      "suggestedLearn": "1 sentence reading rec based on weakness",
+      "suggestedPractice": "1 drill rec based on weakness",
+      "clubInsights": {"Driver": "Tends to miss right.", "7 Iron": "Consistently coming up short."}
+    }`;
+    
+    const textRes = await getAIAdvice(prompt, true);
+    try {
+        const start = textRes.indexOf('{');
+        const end = textRes.lastIndexOf('}') + 1;
+        if(start >= 0 && end > start) {
+            round.analysis = JSON.parse(textRes.substring(start, end));
+        } else { throw new Error('Bad format'); }
+    } catch(e) {
+        console.error("AI parse error", e, textRes);
+        round.analysis = {
+            coreScores: { driving: 3, longIrons: 3, approach: 3, aroundGreen: 3, putting: 2, recovery: 3 },
+            coachMessage: "Way to battle out there! We left a few out there on the greens, but the foundation is solid.",
+            suggestedLearn: "Review the 'Clock System' for wedge distance control.",
+            suggestedPractice: "Lag Putting: Hit 10 putts from 40 feet to within a 3-foot circle.",
+            clubInsights: { "Putter": "Speed control needs work." }
+        };
+    }
+    
+    await saveRoundToFirebase({ course: STATE.player.courseName, holes: round.holesLog });
+    render();
+}
+
+window.acceptAIPlan = function() {
+    STATE.player.coreAreas = STATE.activeRound.analysis.coreScores;
+    STATE.player.customPlan.learn = [STATE.activeRound.analysis.suggestedLearn];
+    STATE.player.customPlan.practice = [STATE.activeRound.analysis.suggestedPractice];
+    STATE.player.clubInsights = { ...STATE.player.clubInsights, ...STATE.activeRound.analysis.clubInsights };
+    
+    STATE.player.completedTasksSet['learn_0'] = false;
+    STATE.player.completedTasksSet['practice_0'] = false;
+    syncProfileToFirebase();
+    switchView('learn');
+}
+
+// Achievements Engine
+window.checkAchievements = function(roundData) {
+    const a = STATE.player.achievements;
+    const addBadge = (title, icon) => { if (!a.some(x => x.title === title)) a.push({title, icon}); }
+    
+    if (STATE.player.roundCount === 1) addBadge("First Round Logged", "🏆");
+    
+    const totalScore = roundData.holes.reduce((sum, h) => sum + h.totalStrokes, 0);
+    if (totalScore < 100) addBadge("Broke 100", "💯");
+    if (totalScore < 90) addBadge("Broke 90", "🔥");
+    if (totalScore < 80) addBadge("Broke 80", "🦅");
+    
+    const hasBirdie = roundData.holes.some(h => h.totalStrokes < h.par);
+    if (hasBirdie) addBadge("Birdie Hunter", "🎯");
+}
+
+window.sendCornerMessage = async function() {
+    const inputEl = document.getElementById('corner-chat-input');
+    const text = inputEl.value.trim();
+    if (!text) return;
+
+    STATE.activeRound.cornerMessages.push({ role: 'user', text: text });
+    STATE.chatMessages.push({ role: 'user', text: text });
+    inputEl.value = '';
+    STATE.activeRound.isCoachTyping = true;
+    render();
+
+    const advice = await getAIAdvice(`The player replied to your last advice with: "${text}". Give a 1-2 sentence response.`);
+    STATE.activeRound.cornerMessages.push({ role: 'coach', text: advice });
+    STATE.chatMessages.push({ role: 'coach', text: advice });
+    STATE.activeRound.isCoachTyping = false;
+    render();
+}
+
+window.returnToTee = function() {
+    const nextHole = STATE.player.courseHoles[STATE.activeRound.holeIndex];
+    STATE.activeRound.currentShotDistance = nextHole.distance;
+    STATE.activeRound.selectedClubIndex = suggestClubIndex(nextHole.distance);
+    switchView('play_active');
+}
+
+window.setCoachMode = function(mode) { STATE.coachMode = mode; render(); }
+window.sendChatMessage = async function() {
+    const text = STATE.chatInput;
+    if (!text || !text.trim()) return;
+    STATE.chatMessages.push({ role: 'user', text: text.trim() });
+    STATE.chatInput = ''; STATE.isTyping = true; render();
+    
+    const advice = await getAIAdvice(`The player asks: "${text}". Give a 1-2 sentence coaching response.`);
+    STATE.chatMessages.push({ role: 'coach', text: advice });
+    STATE.isTyping = false; render();
+}
+
+initFirebase().then(async () => {
+    const savedPhone = localStorage.getItem('descent_phone');
+    if (savedPhone && db) {
+        try {
+            const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'profiles', savedPhone);
+            const docSnap = await getDoc(docRef);
+            if(docSnap.exists()) {
+                STATE.player = { ...STATE.player, ...docSnap.data() };
+                
+                if(!STATE.player.achievements) STATE.player.achievements = [];
+                if(!STATE.player.completedTasksSet) STATE.player.completedTasksSet = {};
+                if(!STATE.player.customPlan) STATE.player.customPlan = { learn: [], practice: [] };
+                if(!STATE.player.settings) STATE.player.settings = { silenceCoach: false };
+                if(!STATE.player.clubInsights) STATE.player.clubInsights = {};
+                
+                switchView('learn');
+                return;
+            }
+        } catch(e) {}
+    }
+    switchView('welcome');
+});
+
+document.querySelectorAll('.nav-btn').forEach(btn => {
+    btn.addEventListener('click', () => switchView(btn.dataset.tab));
+});
+
+</script>
+</body>
+</html>
