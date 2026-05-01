@@ -734,75 +734,75 @@ function renderPlayActive() {
     let interactions = '';
     if (round.holeState === 'fairway') {
         interactions = `
-            <div class="mb-10 text-center">
-                <div class="text-[#8890A0] font-bold uppercase tracking-widest text-[11px] mb-4">Choose Club</div>
-                <div class="text-4xl font-serif font-bold text-[#2DCB8A] mb-8">${club.name}</div>
-                <div class="px-4">
+            <div class="mb-4 text-center">
+                <div class="text-[#8890A0] font-bold uppercase tracking-widest text-[11px] mb-2">Choose Club</div>
+                <div class="text-3xl font-serif font-bold text-[#2DCB8A] mb-4">${club.name}</div>
+                <div class="px-2">
                     <input type="range" min="0" max="${STATE.player.bag.length - 2}" value="${round.selectedClubIndex}" oninput="updateClubSlider(this.value)" class="w-full">
-                    <div class="flex justify-between mt-4 text-[10px] font-bold text-[#404060] uppercase tracking-wider">
+                    <div class="flex justify-between mt-2 text-[10px] font-bold text-[#404060] uppercase tracking-wider">
                         <span>${STATE.player.bag[0].name}</span>
                         <span>${STATE.player.bag[STATE.player.bag.length-2].name}</span>
                     </div>
                 </div>
             </div>
 
-            <div class="space-y-3 mb-10">
+            <div class="space-y-2 mb-4">
                 <div class="flex gap-2">
-                    <button onclick="setOutcome('dir', 'Left')" class="flex-1 py-3 text-[10px] uppercase font-bold rounded-lg border ${outs.dir==='Left'?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#8890A0] border-transparent'}">Left</button>
-                    <button onclick="setOutcome('dir', 'Straight')" class="flex-1 py-3 text-[10px] uppercase font-bold rounded-lg border ${outs.dir==='Straight'?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#8890A0] border-transparent'}">Straight</button>
-                    <button onclick="setOutcome('dir', 'Right')" class="flex-1 py-3 text-[10px] uppercase font-bold rounded-lg border ${outs.dir==='Right'?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#8890A0] border-transparent'}">Right</button>
+                    <button onclick="setOutcome('dir', 'Left')" class="flex-1 py-2 text-[10px] uppercase font-bold rounded-lg border ${outs.dir==='Left'?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#8890A0] border-transparent'}">Left</button>
+                    <button onclick="setOutcome('dir', 'Straight')" class="flex-1 py-2 text-[10px] uppercase font-bold rounded-lg border ${outs.dir==='Straight'?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#8890A0] border-transparent'}">Straight</button>
+                    <button onclick="setOutcome('dir', 'Right')" class="flex-1 py-2 text-[10px] uppercase font-bold rounded-lg border ${outs.dir==='Right'?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#8890A0] border-transparent'}">Right</button>
                 </div>
                 <div class="flex gap-2">
-                    <button onclick="setOutcome('dist', 'Short')" class="flex-1 py-3 text-[10px] uppercase font-bold rounded-lg border ${outs.dist==='Short'?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#8890A0] border-transparent'}">Short</button>
-                    <button onclick="setOutcome('dist', 'At Dist')" class="flex-1 py-3 text-[10px] uppercase font-bold rounded-lg border ${outs.dist==='At Dist'?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#8890A0] border-transparent'}">At Dist</button>
-                    <button onclick="setOutcome('dist', 'Long')" class="flex-1 py-3 text-[10px] uppercase font-bold rounded-lg border ${outs.dist==='Long'?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#8890A0] border-transparent'}">Long</button>
+                    <button onclick="setOutcome('dist', 'Short')" class="flex-1 py-2 text-[10px] uppercase font-bold rounded-lg border ${outs.dist==='Short'?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#8890A0] border-transparent'}">Short</button>
+                    <button onclick="setOutcome('dist', 'At Dist')" class="flex-1 py-2 text-[10px] uppercase font-bold rounded-lg border ${outs.dist==='At Dist'?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#8890A0] border-transparent'}">At Dist</button>
+                    <button onclick="setOutcome('dist', 'Long')" class="flex-1 py-2 text-[10px] uppercase font-bold rounded-lg border ${outs.dist==='Long'?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#8890A0] border-transparent'}">Long</button>
                 </div>
                 <div class="flex gap-2">
-                    <button onclick="setOutcome('lie', 'Rough')" class="flex-1 py-3 text-[10px] uppercase font-bold rounded-lg border ${outs.lie==='Rough'?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#8890A0] border-transparent'}">Rough</button>
-                    <button onclick="setOutcome('lie', 'Fairway')" class="flex-1 py-3 text-[10px] uppercase font-bold rounded-lg border ${outs.lie==='Fairway'?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#8890A0] border-transparent'}">Fairway</button>
-                    <button onclick="setOutcome('lie', 'Green')" class="flex-1 py-3 text-[10px] uppercase font-bold rounded-lg border ${outs.lie==='Green'?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#8890A0] border-transparent'}">Green</button>
+                    <button onclick="setOutcome('lie', 'Rough')" class="flex-1 py-2 text-[10px] uppercase font-bold rounded-lg border ${outs.lie==='Rough'?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#8890A0] border-transparent'}">Rough</button>
+                    <button onclick="setOutcome('lie', 'Fairway')" class="flex-1 py-2 text-[10px] uppercase font-bold rounded-lg border ${outs.lie==='Fairway'?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#8890A0] border-transparent'}">Fairway</button>
+                    <button onclick="setOutcome('lie', 'Green')" class="flex-1 py-2 text-[10px] uppercase font-bold rounded-lg border ${outs.lie==='Green'?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#8890A0] border-transparent'}">Green</button>
                 </div>
                 <div class="flex gap-2">
-                    <button onclick="setOutcome('cont', 'Miss-hit')" class="flex-1 py-3 text-[10px] uppercase font-bold rounded-lg border ${outs.cont==='Miss-hit'?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#8890A0] border-transparent'}">Miss-hit</button>
-                    <button onclick="setOutcome('cont', 'Good Strike')" class="flex-1 py-3 text-[10px] uppercase font-bold rounded-lg border ${outs.cont==='Good Strike'?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#8890A0] border-transparent'}">Good Strike</button>
-                    <button onclick="setOutcome('cont', 'Dreamy')" class="flex-1 py-3 text-[10px] uppercase font-bold rounded-lg border ${outs.cont==='Dreamy'?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#8890A0] border-transparent'}">Dreamy</button>
+                    <button onclick="setOutcome('cont', 'Miss-hit')" class="flex-1 py-2 text-[10px] uppercase font-bold rounded-lg border ${outs.cont==='Miss-hit'?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#8890A0] border-transparent'}">Miss-hit</button>
+                    <button onclick="setOutcome('cont', 'Good Strike')" class="flex-1 py-2 text-[10px] uppercase font-bold rounded-lg border ${outs.cont==='Good Strike'?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#8890A0] border-transparent'}">Good Strike</button>
+                    <button onclick="setOutcome('cont', 'Dreamy')" class="flex-1 py-2 text-[10px] uppercase font-bold rounded-lg border ${outs.cont==='Dreamy'?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#8890A0] border-transparent'}">Dreamy</button>
                 </div>
-                <button onclick="setOutcome('ob', ${!outs.ob})" class="w-full py-3 text-[10px] uppercase font-bold rounded-lg border ${outs.ob?'bg-[#E85030] text-white border-[#E85030]':'bg-[#1A1A3A] text-[#8890A0] border-transparent'}">${outs.ob ? 'OB (Penalty Added)' : 'Mark as OB'}</button>
+                <button onclick="setOutcome('ob', ${!outs.ob})" class="w-full py-2 text-[10px] uppercase font-bold rounded-lg border ${outs.ob?'bg-[#E85030] text-white border-[#E85030]':'bg-[#1A1A3A] text-[#8890A0] border-transparent'}">${outs.ob ? 'OB (Penalty Added)' : 'Mark as OB'}</button>
             </div>
 
-            <button onclick="recordFairwayShot()" class="w-full bg-[#2DCB8A] text-[#0D1A12] font-bold py-5 rounded-xl transition-transform active:scale-95 shadow-lg mt-auto uppercase tracking-widest">Record Shot</button>
+            <button onclick="recordFairwayShot()" class="w-full bg-[#2DCB8A] text-[#0D1A12] font-bold py-3 rounded-xl transition-transform active:scale-95 shadow-lg mt-auto uppercase tracking-widest">Record Shot</button>
         `;
     } else {
         interactions = `
-            <div class="text-center mb-10 mt-4">
-                <div class="text-[#2DCB8A] text-xs font-bold uppercase tracking-widest mb-10">On the Green</div>
-                <div class="grid grid-cols-2 gap-3 mb-10">
-                    <button onclick="finishHoleWithPutts(0)" class="col-span-2 py-6 text-sm font-bold uppercase tracking-widest rounded-2xl border-2 ${round.tempPuttCount===0?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#F4F4F0] border-white/5'}">Hole Out (0 Putts)</button>
-                    <button onclick="finishHoleWithPutts(1)" class="py-5 text-xl font-bold rounded-2xl border-2 ${round.tempPuttCount===1?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#F4F4F0] border-white/5'}">1</button>
-                    <button onclick="finishHoleWithPutts(2)" class="py-5 text-xl font-bold rounded-2xl border-2 ${round.tempPuttCount===2?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#F4F4F0] border-white/5'}">2</button>
-                    <button onclick="finishHoleWithPutts(3)" class="py-5 text-xl font-bold rounded-2xl border-2 ${round.tempPuttCount===3?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#F4F4F0] border-white/5'}">3</button>
-                    <button onclick="finishHoleWithPutts(4)" class="py-5 text-xl font-bold rounded-2xl border-2 ${round.tempPuttCount===4?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#F4F4F0] border-white/5'}">4+</button>
+            <div class="text-center mb-4 mt-2">
+                <div class="text-[#2DCB8A] text-xs font-bold uppercase tracking-widest mb-4">On the Green</div>
+                <div class="grid grid-cols-2 gap-2 mb-4">
+                    <button onclick="finishHoleWithPutts(0)" class="col-span-2 py-4 text-sm font-bold uppercase tracking-widest rounded-2xl border-2 ${round.tempPuttCount===0?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#F4F4F0] border-white/5'}">Hole Out (0 Putts)</button>
+                    <button onclick="finishHoleWithPutts(1)" class="py-3 text-xl font-bold rounded-2xl border-2 ${round.tempPuttCount===1?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#F4F4F0] border-white/5'}">1</button>
+                    <button onclick="finishHoleWithPutts(2)" class="py-3 text-xl font-bold rounded-2xl border-2 ${round.tempPuttCount===2?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#F4F4F0] border-white/5'}">2</button>
+                    <button onclick="finishHoleWithPutts(3)" class="py-3 text-xl font-bold rounded-2xl border-2 ${round.tempPuttCount===3?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#F4F4F0] border-white/5'}">3</button>
+                    <button onclick="finishHoleWithPutts(4)" class="py-3 text-xl font-bold rounded-2xl border-2 ${round.tempPuttCount===4?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#F4F4F0] border-white/5'}">4+</button>
                 </div>
-                <textarea id="hole-comment" placeholder="Any notes on this hole?" class="w-full bg-[#1A1A3A] border border-white/10 rounded-xl p-4 text-sm text-[#F4F4F0] outline-none h-24 resize-none mb-6"></textarea>
+                <textarea id="hole-comment" placeholder="Any notes on this hole?" class="w-full bg-[#1A1A3A] border border-white/10 rounded-xl p-3 text-sm text-[#F4F4F0] outline-none h-20 resize-none mb-2"></textarea>
             </div>
         `;
     }
 
     return `
     <div class="flex flex-col h-full bg-[#0D0D1E]">
-        <div class="bg-[#1A1A3A] p-6 rounded-b-2xl border-b border-white/10 shadow-lg shrink-0">
-            <div class="flex justify-between items-center mb-6">
+        <div class="bg-[#1A1A3A] p-4 rounded-b-2xl border-b border-white/10 shadow-lg shrink-0">
+            <div class="flex justify-between items-center mb-4">
                 <div><span class="text-[#2DCB8A] font-bold uppercase tracking-widest text-[10px]">Hole ${hole.number}</span><h2 class="text-2xl font-serif font-bold">Par ${hole.par}</h2></div>
                 <div class="text-right"><span class="text-[#8890A0] font-bold uppercase tracking-widest text-[10px]">Total Strokes</span><div class="text-3xl font-serif font-bold text-[#E8A930]">${currentTotalStrokes}</div></div>
             </div>
-            <div class="grid grid-cols-4 gap-2 text-center border-t border-white/5 pt-4">
+            <div class="grid grid-cols-4 gap-2 text-center border-t border-white/5 pt-3">
                 <div><div class="text-[9px] uppercase font-bold text-[#404060] mb-1">To Par</div><div class="text-sm font-black ${scoreToPar > 0 ? 'text-[#E85030]' : 'text-[#2DCB8A]'}">${scoreToParStr}</div></div>
                 <div><div class="text-[9px] uppercase font-bold text-[#404060] mb-1">PPG</div><div class="text-sm font-black text-white">${ppg}</div></div>
                 <div><div class="text-[9px] uppercase font-bold text-[#404060] mb-1">GIR %</div><div class="text-sm font-black text-[#2DCB8A]">${girPct}%</div></div>
                 <div><div class="text-[9px] uppercase font-bold text-[#404060] mb-1">Holes</div><div class="text-sm font-black text-white">${completedHoles}</div></div>
             </div>
         </div>
-        <div class="p-6 flex-1 flex flex-col hide-scrollbar overflow-y-auto pb-10">${interactions}</div>
+        <div class="p-4 flex-1 flex flex-col hide-scrollbar overflow-y-auto pb-4">${interactions}</div>
     </div>`;
 }
 
