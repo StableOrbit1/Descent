@@ -46,7 +46,10 @@
 <body class="h-screen w-full flex justify-center overflow-hidden">
 
     <div class="w-full max-w-md h-full bg-[#0D0D1E] relative flex flex-col shadow-2xl overflow-hidden border-x border-[#1A1A3A]">
-        <div id="app-root" class="flex-1 overflow-y-auto overflow-x-hidden hide-scrollbar relative pb-24"></div>
+        
+        <div id="app-root" class="flex-1 overflow-y-auto overflow-x-hidden hide-scrollbar relative pb-24">
+            <!-- Content injected by JS -->
+        </div>
 
         <nav id="bottom-nav" class="hidden absolute bottom-0 w-full bg-[#14142E] border-t border-white/10 flex justify-between items-center px-2 py-3 pb-6 z-50">
             <button class="nav-btn flex flex-col items-center gap-1 transition-colors flex-1 text-[#404060] hover:text-[#8890A0]" data-tab="learn">
@@ -78,7 +81,7 @@
 
 <script type="module">
 // ============================================================================
-// 1. FIREBASE INITIALIZATION
+// 1. FIREBASE INITIALIZATION & STATE MANAGEMENT
 // ============================================================================
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
 import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
@@ -106,8 +109,10 @@ async function initFirebase() {
         };
         
         app = initializeApp(firebaseConfig);
-        
+
         // --- FIREBASE APP CHECK ---
+        // Ensuring app check uses your live domain whitelist properly!
+        // self.FIREBASE_APPCHECK_DEBUG_TOKEN = true; 
         initializeAppCheck(app, {
             provider: new ReCaptchaV3Provider('6LfpHNMsAAAAANOgLk1nGJ-Ir9fpG5mD2xG7tl3X'), 
             isTokenAutoRefreshEnabled: true
@@ -123,7 +128,9 @@ async function initFirebase() {
             await signInAnonymously(auth);
         }
 
-        onAuthStateChanged(auth, (user) => { currentUser = user; });
+        onAuthStateChanged(auth, (user) => {
+            currentUser = user;
+        });
     } catch (error) {
         console.warn("Firebase running in local memory mode.", error);
     }
@@ -143,11 +150,17 @@ async function saveRoundToFirebase(roundData) {
     if (!db || !STATE.player.phone) return;
     try {
         const roundsCol = collection(db, 'artifacts', appId, 'public', 'data', `rounds_${STATE.player.phone}`);
-        await addDoc(roundsCol, { ...roundData, timestamp: new Date().toISOString() });
+        await addDoc(roundsCol, {
+            ...roundData,
+            timestamp: new Date().toISOString()
+        });
         
         STATE.player.hasPlayedRound = true;
         STATE.player.roundCount++;
+        
+        // Generate Achievements
         window.checkAchievements(roundData);
+        
         await syncProfileToFirebase();
     } catch (e) {
         console.error("Failed to save round:", e);
@@ -159,7 +172,7 @@ async function getAIAdvice(promptText, requiresJson = false) {
         console.error("Vertex AI SDK failed to initialize.");
         return requiresJson ? "{}" : "Coach is offline. Vertex SDK not initialized.";
     }
-    
+
     const instruction = requiresJson 
         ? "You are a professional golf data analyst. Return ONLY raw, valid JSON. Do not include markdown formatting or backticks."
         : "You are a professional golf 'Corner Man'. Give SALIENT, CRISP coaching advice based on current stats vs historical player ability. End with - 'single thought for the next three holes:'";
@@ -169,8 +182,10 @@ async function getAIAdvice(promptText, requiresJson = false) {
             model: "gemini-2.5-flash",
             systemInstruction: instruction
         });
+        
         const result = await model.generateContent(promptText);
         return result.response.text();
+        
     } catch (err) {
         console.error("==== VERTEX AI CRASH ====");
         console.error("Error Message:", err.message);
@@ -180,19 +195,26 @@ async function getAIAdvice(promptText, requiresJson = false) {
 }
 
 // ============================================================================
-// 2. CONSTANTS & RESTORED DATA
+// 2. CONSTANTS & INITIAL DATA
 // ============================================================================
 const DEFAULT_TARGET_DATE = new Date();
 DEFAULT_TARGET_DATE.setMonth(DEFAULT_TARGET_DATE.getMonth() + 6);
 
 const DEFAULT_BAG = [
-    { id: 'driver', name: 'Driver', distance: 260 }, { id: '3w', name: '3 Wood', distance: 235 },
-    { id: '5w', name: '5 Wood', distance: 215 }, { id: '4i', name: '4 Iron', distance: 195 },
-    { id: '5i', name: '5 Iron', distance: 185 }, { id: '6i', name: '6 Iron', distance: 175 },
-    { id: '7i', name: '7 Iron', distance: 165 }, { id: '8i', name: '8 Iron', distance: 155 },
-    { id: '9i', name: '9 Iron', distance: 145 }, { id: 'pw', name: 'P-Wedge', distance: 130 },
-    { id: 'gw', name: 'G-Wedge', distance: 115 }, { id: 'sw', name: 'S-Wedge', distance: 100 },
-    { id: 'lw', name: 'L-Wedge', distance: 85 }, { id: 'putter', name: 'Putter', distance: 20 }
+    { id: 'driver', name: 'Driver', distance: 260 },
+    { id: '3w', name: '3 Wood', distance: 235 },
+    { id: '5w', name: '5 Wood', distance: 215 },
+    { id: '4i', name: '4 Iron', distance: 195 },
+    { id: '5i', name: '5 Iron', distance: 185 },
+    { id: '6i', name: '6 Iron', distance: 175 },
+    { id: '7i', name: '7 Iron', distance: 165 },
+    { id: '8i', name: '8 Iron', distance: 155 },
+    { id: '9i', name: '9 Iron', distance: 145 },
+    { id: 'pw', name: 'P-Wedge', distance: 130 },
+    { id: 'gw', name: 'G-Wedge', distance: 115 },
+    { id: 'sw', name: 'S-Wedge', distance: 100 },
+    { id: 'lw', name: 'L-Wedge', distance: 85 },
+    { id: 'putter', name: 'Putter', distance: 20 }
 ];
 
 const COURSE_DATABASE = [
@@ -216,9 +238,12 @@ const COURSE_DATABASE = [
 const SHOT_TYPES = ['Full', '3/4', 'Half', 'Knock Down', 'Draw', 'Fade'];
 
 const CORE_AREA_INFO = {
-    driving: "Accuracy and distance off the tee.", longIrons: "Approach shots from 175+ yards.",
-    approach: "Mid/short irons and wedges (100-175y).", aroundGreen: "Chipping, pitching, and bunkers (<30y).",
-    putting: "Distance control and green reading.", recovery: "Scrambling and escaping trouble."
+    driving: "Accuracy and distance off the tee.",
+    longIrons: "Approach shots from 175+ yards.",
+    approach: "Mid/short irons and wedges (100-175y).",
+    aroundGreen: "Chipping, pitching, and bunkers (<30y).",
+    putting: "Distance control and green reading.",
+    recovery: "Scrambling and escaping trouble."
 };
 
 const PRACTICE_DRILLS = {
@@ -291,11 +316,16 @@ window.STATE = {
     chatMessages: [{ role: 'coach', text: "Welcome to Descent. Let's get to work." }]
 };
 
-function getDescentNumber() { return (STATE.player.currentHandicap - STATE.player.targetHandicap).toFixed(1); }
+function getDescentNumber() { 
+    return (STATE.player.currentHandicap - STATE.player.targetHandicap).toFixed(1); 
+}
+
 function getWeeksRemaining() {
     const target = new Date(STATE.player.targetDate);
     const now = new Date();
-    return Math.max(1, Math.ceil(((target - now) / (1000 * 60 * 60 * 24)) / 7));
+    const diffTime = target - now;
+    if (diffTime <= 0) return 1;
+    return Math.max(1, Math.ceil((diffTime / (1000 * 60 * 60 * 24)) / 7));
 }
 
 // ============================================================================
@@ -307,19 +337,23 @@ const nav = document.getElementById('bottom-nav');
 window.switchView = function(viewName) {
     STATE.currentView = viewName;
     render();
+    
     const hiddenViews = ['welcome', 'onboarding', 'welcome_sequence', 'play_active', 'post_round', 'coach_corner'];
-    if (hiddenViews.includes(viewName)) nav.classList.add('hidden');
-    else {
+    if (hiddenViews.includes(viewName)) {
+        nav.classList.add('hidden');
+    } else {
         nav.classList.remove('hidden');
         document.querySelectorAll('.nav-btn').forEach(btn => {
             if(btn.dataset.tab === viewName) {
-                btn.classList.remove('text-[#404060]'); btn.classList.add('text-[#2DCB8A]');
+                btn.classList.remove('text-[#404060]');
+                btn.classList.add('text-[#2DCB8A]');
             } else {
-                btn.classList.add('text-[#404060]'); btn.classList.remove('text-[#2DCB8A]');
+                btn.classList.add('text-[#404060]');
+                btn.classList.remove('text-[#2DCB8A]');
             }
         });
     }
-    
+
     if (viewName === 'coach' || viewName === 'coach_corner') {
         setTimeout(() => {
             const chatBox = document.getElementById(viewName === 'coach' ? 'chat-scroll-area' : 'corner-chat-area');
@@ -356,18 +390,22 @@ function renderWelcome() {
     <div class="flex flex-col items-center justify-center h-full p-8 text-center animate-fade-in">
         <div class="text-[#2DCB8A] mb-8 animate-pulse-slow">
             <svg width="72" height="72" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="22 17 13.5 8.5 8.5 13.5 2 7" /><polyline points="16 17 22 17 22 11" />
+                <polyline points="22 17 13.5 8.5 8.5 13.5 2 7" />
+                <polyline points="16 17 22 17 22 11" />
             </svg>
         </div>
         <h1 class="text-5xl font-black tracking-widest text-[#F4F4F0] mb-4">DESCENT</h1>
         <p class="text-[#8890A0] text-sm mb-10 max-w-xs">The science-backed path to lowering your handicap.</p>
+        
         <div id="welcome-step-1" class="w-full max-w-xs space-y-3 mb-8 text-left animate-fade-in">
-            <input type="tel" id="welcome-phone" placeholder="Phone Number" oninput="checkWelcomePhone()" class="w-full bg-[#1A1A3A] border border-white/10 rounded-xl p-4 text-[#F4F4F0] font-semibold outline-none focus:border-[#2DCB8A]">
-            <button id="welcome-next-btn" disabled onclick="verifyPhone()" class="w-full bg-[#2DCB8A] disabled:opacity-50 text-[#0D1A12] font-bold py-4 rounded-xl shadow-[0_0_20px_rgba(45,203,138,0.2)]">Next &rarr;</button>
+            <input type="tel" id="welcome-phone" placeholder="Phone Number" oninput="checkWelcomePhone()" class="w-full bg-[#1A1A3A] border border-white/10 rounded-xl p-4 text-[#F4F4F0] font-semibold outline-none focus:border-[#2DCB8A] transition-colors">
+            <button id="welcome-next-btn" disabled onclick="verifyPhone()" class="w-full bg-[#2DCB8A] disabled:opacity-50 text-[#0D1A12] font-bold py-4 rounded-xl shadow-[0_0_20px_rgba(45,203,138,0.2)] transition-transform active:scale-95">Next &rarr;</button>
         </div>
+        
         <div id="welcome-step-2" class="w-full max-w-xs space-y-3 mb-8 text-left hidden animate-fade-in">
-            <input type="text" id="welcome-name" placeholder="Your Name" oninput="checkWelcomeName()" class="w-full bg-[#1A1A3A] border border-white/10 rounded-xl p-4 text-[#F4F4F0] font-semibold outline-none focus:border-[#2DCB8A]">
-            <button id="welcome-start-btn" disabled onclick="startNewProfile()" class="w-full bg-[#2DCB8A] text-[#0D1A12] font-bold py-4 rounded-xl shadow-[0_0_20px_rgba(45,203,138,0.2)]">Begin Setup &rarr;</button>
+            <p class="text-sm text-[#8890A0] text-center mb-2">New number! What should we call you?</p>
+            <input type="text" id="welcome-name" placeholder="Your Name" oninput="checkWelcomeName()" class="w-full bg-[#1A1A3A] border border-white/10 rounded-xl p-4 text-[#F4F4F0] font-semibold outline-none focus:border-[#2DCB8A] transition-colors">
+            <button id="welcome-start-btn" disabled onclick="startNewProfile()" class="w-full bg-[#2DCB8A] disabled:opacity-50 text-[#0D1A12] font-bold py-4 rounded-xl shadow-[0_0_20px_rgba(45,203,138,0.2)] transition-transform active:scale-95">Begin Setup &rarr;</button>
         </div>
     </div>`;
 }
@@ -375,43 +413,129 @@ function renderWelcome() {
 function renderOnboarding() {
     const step = STATE.onboardingStep;
     const pct = ((step - 1) / 4) * 100;
+    
     let content = '';
-    if (step === 1) content = `
+    if (step === 1) {
+        content = `
         <div class="animate-fade-in space-y-8">
-            <h2 class="text-2xl font-serif font-bold">Your Goals</h2>
-            <div class="bg-[#1A1A3A] p-4 rounded-xl border border-white/10">
-                <h3 class="text-xs font-bold uppercase tracking-widest text-[#8890A0] mb-2">Current Handicap</h3>
-                <div class="text-4xl font-serif font-bold text-[#E8A930] mb-2" id="ob-hdcp-val">${STATE.player.currentHandicap.toFixed(1)}</div>
-                <input type="range" min="0" max="36" step="0.1" value="${STATE.player.currentHandicap}" oninput="STATE.player.currentHandicap = parseFloat(this.value); document.getElementById('ob-hdcp-val').innerText = parseFloat(this.value).toFixed(1);" class="w-full">
-            </div>
-            <div class="bg-[#1A1A3A] p-4 rounded-xl border border-white/10">
-                <h3 class="text-xs font-bold uppercase tracking-widest text-[#8890A0] mb-2">Goal Handicap</h3>
-                <div class="text-4xl font-serif font-bold text-[#2DCB8A] mb-2" id="ob-target-val">${STATE.player.targetHandicap.toFixed(1)}</div>
-                <input type="range" min="0" max="36" step="0.1" value="${STATE.player.targetHandicap}" oninput="STATE.player.targetHandicap = parseFloat(this.value); document.getElementById('ob-target-val').innerText = parseFloat(this.value).toFixed(1);" class="w-full">
+            <div>
+                <h2 class="text-2xl font-serif font-bold mb-2">Your Goals</h2>
+                <p class="text-[#8890A0] mb-6">Set your current and target handicap, along with your goal date to begin.</p>
+                <div class="bg-[#1A1A3A] p-4 rounded-xl border border-white/10 mb-4">
+                    <h3 class="text-xs font-bold uppercase tracking-widest text-[#8890A0] mb-2">Current Handicap</h3>
+                    <div class="text-4xl font-serif font-bold text-[#E8A930] mb-2" id="ob-hdcp-val">${STATE.player.currentHandicap.toFixed(1)}</div>
+                    <input type="range" min="0" max="36" step="0.1" value="${STATE.player.currentHandicap}" oninput="STATE.player.currentHandicap = parseFloat(this.value); document.getElementById('ob-hdcp-val').innerText = parseFloat(this.value).toFixed(1);" class="w-full accent-[#2DCB8A]">
+                </div>
+                <div class="bg-[#1A1A3A] p-4 rounded-xl border border-white/10 mb-6">
+                    <h3 class="text-xs font-bold uppercase tracking-widest text-[#8890A0] mb-2">Goal Handicap</h3>
+                    <div class="text-4xl font-serif font-bold text-[#2DCB8A] mb-2" id="ob-target-val">${STATE.player.targetHandicap.toFixed(1)}</div>
+                    <input type="range" min="0" max="36" step="0.1" value="${STATE.player.targetHandicap}" oninput="STATE.player.targetHandicap = parseFloat(this.value); document.getElementById('ob-target-val').innerText = parseFloat(this.value).toFixed(1);" class="w-full accent-[#2DCB8A] mb-4">
+                    <input type="date" value="${STATE.player.targetDate}" onchange="STATE.player.targetDate = this.value;" class="w-full bg-[#0D0D1E] border border-white/10 rounded-lg p-3 text-[#F4F4F0] outline-none focus:border-[#2DCB8A]">
+                </div>
             </div>
         </div>`;
-    else if (step === 2) content = `
+    } else if (step === 2) {
+        content = `
         <div class="animate-fade-in space-y-8">
-            <h2 class="text-2xl font-serif font-bold">Assess Yourself</h2>
-            <div class="grid grid-cols-2 gap-3">
-                ${Object.keys(STATE.player.coreAreas).map(area => `
-                    <div class="bg-[#1A1A3A] p-3 rounded-xl border border-white/10 text-center relative">
-                        <button onclick="toggleInfo('${area}')" class="absolute top-2 right-2 text-[#8890A0] hover:text-[#2DCB8A]">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-                        </button>
-                        <div class="text-xs text-[#8890A0] capitalize mb-2">${area.replace(/([A-Z])/g, ' $1').trim()}</div>
-                        ${STATE.activeInfo === area ? `<div class="text-[9px] text-[#2DCB8A] mb-2 leading-tight px-1">${CORE_AREA_INFO[area]}</div>` : ''}
-                        <input type="range" min="1" max="5" value="${STATE.player.coreAreas[area]}" oninput="STATE.player.coreAreas['${area}'] = parseInt(this.value); document.getElementById('v-${area}').innerText = this.value; document.getElementById('l-${area}').innerText = getRatingLabel(this.value, STATE.player.currentHandicap);" class="w-full">
-                        <div id="v-${area}" class="text-[#2DCB8A] font-bold text-lg mt-1">${STATE.player.coreAreas[area]}</div>
-                        <div id="l-${area}" class="text-[8px] text-[#8890A0] uppercase tracking-wider font-bold mt-1">${getRatingLabel(STATE.player.coreAreas[area], STATE.player.currentHandicap)}</div>
-                    </div>`).join('')}
+            <div>
+                <h2 class="text-2xl font-serif font-bold mb-2">Assess Yourself</h2>
+                <p class="text-[#8890A0] mb-6">Rate yourself on core areas from 1 to 5 to establish your baseline.</p>
+                <div class="grid grid-cols-2 gap-3">
+                    ${Object.keys(STATE.player.coreAreas).map(area => `
+                        <div class="bg-[#1A1A3A] p-3 rounded-xl border border-white/10 text-center relative">
+                            <button onclick="toggleInfo('${area}')" class="absolute top-2 right-2 text-[#8890A0] hover:text-[#2DCB8A] transition-colors">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                            </button>
+                            <div class="text-xs text-[#8890A0] capitalize mb-2">${area.replace(/([A-Z])/g, ' $1').trim()}</div>
+                            ${STATE.activeInfo === area ? `<div class="text-[9px] text-[#2DCB8A] mb-2 leading-tight px-1">${CORE_AREA_INFO[area]}</div>` : ''}
+                            <input type="range" min="1" max="5" value="${STATE.player.coreAreas[area]}" oninput="STATE.player.coreAreas['${area}'] = parseInt(this.value); document.getElementById('v-${area}').innerText = this.value; document.getElementById('l-${area}').innerText = getRatingLabel(this.value, STATE.player.currentHandicap);" class="w-full accent-[#2DCB8A]">
+                            <div id="v-${area}" class="text-[#2DCB8A] font-bold text-lg mt-1">${STATE.player.coreAreas[area]}</div>
+                            <div id="l-${area}" class="text-[8px] text-[#8890A0] uppercase tracking-wider font-bold mt-1 leading-tight">${getRatingLabel(STATE.player.coreAreas[area], STATE.player.currentHandicap)}</div>
+                        </div>
+                    `).join('')}
+                </div>
             </div>
         </div>`;
-    else if (step === 3) content = `<div class="animate-fade-in space-y-6"><h2 class="text-2xl font-serif font-bold">Course Setup</h2><select onchange="window.updateCourseSelection(this.value)" class="w-full bg-[#1A1A3A] border border-white/10 rounded-xl p-4 text-lg font-bold outline-none text-[#F4F4F0]">${COURSE_DATABASE.map(c => `<option value="${c.name}">${c.name}</option>`).join('')}</select></div>`;
-    else if (step === 4) content = `<div class="animate-fade-in space-y-6"><h2 class="text-2xl font-serif font-bold">Bag Map</h2>${STATE.player.bag.map((club, idx) => `<div class="flex items-center gap-4 bg-[#1A1A3A] p-3 rounded-xl border border-white/10"><span class="flex-1 text-[#8890A0] font-semibold">${club.name}</span><input type="number" value="${club.distance}" onchange="window.updateBagDistance('${club.name}', parseInt(this.value)||0);" class="w-20 bg-[#0D0D1E] border border-white/10 rounded p-2 text-center text-[#2DCB8A] font-bold outline-none"></div>`).join('')}</div>`;
-    else if (step === 5) content = `<div class="animate-fade-in flex flex-col justify-center h-full text-center"><h2 class="text-3xl font-serif font-bold mb-2">Plan Ready.</h2><p class="text-[#8890A0]">Targeting ${getDescentNumber()} strokes down over ${getWeeksRemaining()} weeks.</p></div>`;
+    } else if (step === 3) {
+        content = `
+        <div class="animate-fade-in space-y-6">
+            <h2 class="text-2xl font-serif font-bold mb-2">Course Setup</h2>
+            <p class="text-[#8890A0]">We'll track your real rounds here to monitor strokes gained over time.</p>
+            <div class="relative">
+                <select onchange="window.updateCourseSelection(this.value)" class="w-full bg-[#1A1A3A] border border-white/10 rounded-xl p-4 pr-10 text-lg font-bold focus:border-[#2DCB8A] outline-none text-[#F4F4F0] appearance-none">
+                    ${COURSE_DATABASE.map(c => `<option value="${c.name}" ${STATE.player.courseName === c.name ? 'selected' : ''}>${c.name}</option>`).join('')}
+                </select>
+            </div>
+            <div class="space-y-2 pt-2">
+                ${STATE.player.courseHoles.map((hole, idx) => `
+                    <div class="flex items-center gap-3 bg-[#1A1A3A] p-2 rounded-xl border border-white/5">
+                        <div class="w-8 text-center font-bold text-[#8890A0]">${hole.number}</div>
+                        <select onchange="STATE.player.courseHoles[${idx}].par = parseInt(this.value);" class="bg-[#0D0D1E] border border-white/10 rounded-lg p-2 text-center outline-none text-[#F4F4F0]">
+                            <option value="3" ${hole.par===3?'selected':''}>Par 3</option>
+                            <option value="4" ${hole.par===4?'selected':''}>Par 4</option>
+                            <option value="5" ${hole.par===5?'selected':''}>Par 5</option>
+                        </select>
+                        <input type="number" value="${hole.distance}" onchange="STATE.player.courseHoles[${idx}].distance = parseInt(this.value) || 0;" class="flex-1 bg-[#0D0D1E] border border-white/10 rounded-lg p-2 text-right outline-none text-[#2DCB8A] font-bold">
+                    </div>
+                `).join('')}
+            </div>
+        </div>`;
+    } else if (step === 4) {
+        content = `
+        <div class="animate-fade-in space-y-6">
+            <h2 class="text-2xl font-serif font-bold mb-2">Your Bag Map</h2>
+            <p class="text-[#8890A0]">Enter expected distances on a good strike to calibrate your AI caddie.</p>
+            <div class="space-y-2">
+                ${STATE.player.bag.map((club, idx) => `
+                    <div class="flex items-center gap-4 bg-[#1A1A3A] p-3 rounded-xl border border-white/10">
+                        <span class="flex-1 font-semibold text-[#8890A0]">${club.name}</span>
+                        <input type="number" value="${club.distance}" onchange="window.updateBagDistance('${club.name}', parseInt(this.value) || 0);" class="w-20 bg-[#0D0D1E] border border-white/10 rounded-lg p-2 text-center text-[#2DCB8A] font-bold outline-none focus:border-[#2DCB8A]">
+                        <span class="text-[#404060] text-sm">yds</span>
+                    </div>
+                `).join('')}
+            </div>
+        </div>`;
+    } else if (step === 5) {
+        const weeks = getWeeksRemaining();
+        content = `
+        <div class="animate-fade-in flex flex-col justify-center h-full text-center">
+            <div class="w-16 h-16 rounded-full bg-[#2DCB8A]/10 border-2 border-[#2DCB8A] text-[#2DCB8A] flex items-center justify-center mx-auto mb-6 shadow-[0_0_20px_rgba(45,203,138,0.2)]">
+                 <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 8 22 22 8 22"/><polyline points="2 2 22 22"/></svg>
+            </div>
+            <h2 class="text-3xl font-serif font-bold mb-2">Your plan is ready.</h2>
+            <p class="text-[#8890A0] mb-8">Targeting ${getDescentNumber()} strokes down over ${weeks} weeks.</p>
+            
+            <div class="grid grid-cols-2 gap-3 mb-6">
+                <div class="bg-[#1A1A3A] p-5 rounded-2xl border border-[#2DCB8A]/30">
+                    <div class="text-[10px] font-bold text-[#8890A0] uppercase tracking-wider mb-1">Current</div>
+                    <div class="text-3xl font-bold text-[#F4F4F0]">${STATE.player.currentHandicap.toFixed(1)}</div>
+                </div>
+                <div class="bg-[#1A1A3A] p-5 rounded-2xl border border-[#2DCB8A]/30">
+                    <div class="text-[10px] font-bold text-[#8890A0] uppercase tracking-wider mb-1">Goal</div>
+                    <div class="text-3xl font-bold text-[#2DCB8A]">${STATE.player.targetHandicap.toFixed(1)}</div>
+                </div>
+            </div>
+        </div>`;
+    }
 
-    return `<div class="flex flex-col h-full p-6"><div class="h-1 bg-[#404060] rounded-full overflow-hidden mb-4"><div class="h-full bg-[#2DCB8A] transition-all" style="width: ${pct}%"></div></div><div class="flex-1 overflow-y-auto hide-scrollbar">${content}</div><div class="shrink-0 py-6"><button onclick="nextOBStep()" class="w-full bg-[#2DCB8A] text-[#0D1A12] font-bold py-4 rounded-xl shadow-[0_0_15px_rgba(45,203,138,0.2)]">${step === 5 ? 'Enter Descent' : 'Continue'}</button></div></div>`;
+    return `
+    <div class="flex flex-col h-full p-6 pb-0">
+        <div class="shrink-0">
+            <div class="h-1 bg-[#404060] rounded-full overflow-hidden mb-4">
+                <div class="h-full bg-[#2DCB8A] transition-all duration-500" style="width: ${pct}%"></div>
+            </div>
+            <div class="flex justify-between items-center text-xs font-bold text-[#8890A0] uppercase tracking-wider">
+                ${step > 1 ? `<button onclick="nextOBStep(-1)" class="hover:text-white transition-colors">&larr; Back</button>` : '<span></span>'}
+                <span>Step ${step} of 5</span>
+            </div>
+        </div>
+        <div class="flex-1 overflow-y-auto pt-6 hide-scrollbar">${content}</div>
+        <div class="shrink-0 py-6 bg-[#0D0D1E] sticky bottom-0">
+            <button onclick="nextOBStep(1)" class="w-full bg-[#2DCB8A] hover:bg-[#34e09a] text-[#0D1A12] font-bold py-4 rounded-xl transition-transform active:scale-95 shadow-[0_0_15px_rgba(45,203,138,0.2)]">
+                ${step === 5 ? 'Enter Descent &rarr;' : 'Continue &rarr;'}
+            </button>
+        </div>
+    </div>`;
 }
 
 function renderWelcomeSequence() {
@@ -475,18 +599,11 @@ function renderLearn() {
             </div>`;
         }).join('');
     } else {
-        let worstArea = 'putting';
-        let lowestScore = 6;
-        for (let a in STATE.player.coreAreas) {
-            if (STATE.player.coreAreas[a] < lowestScore) { lowestScore = STATE.player.coreAreas[a]; worstArea = a; }
-        }
-        
         const isDone = STATE.player.completedTasksSet[`learn_default`];
         tasksHTML = `
         <div class="bg-[#1A1A3A] p-4 rounded-xl border border-white/10 flex gap-4 items-start shadow-sm transition-all cursor-pointer" onclick="toggleTask('learn', 'default')">
             <div class="mt-1 flex-shrink-0">
-                ${isDone ? `<svg class="text-[#2DCB8A]" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>` 
-                         : `<div class="w-6 h-6 rounded-full border-2 border-white/20"></div>`}
+                ${isDone ? `<svg class="text-[#2DCB8A]" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>` : `<div class="w-6 h-6 rounded-full border-2 border-white/20"></div>`}
             </div>
             <div>
                 <span class="uppercase text-[10px] font-bold tracking-widest ${isDone ? 'text-[#8890A0]' : 'text-[#2DCB8A]'} mb-1 block">Reading</span>
@@ -499,12 +616,12 @@ function renderLearn() {
 
     return `
     <div class="flex flex-col h-full p-6 animate-fade-in">
-        <header class="flex justify-between items-center mb-8">
+        <header class="flex justify-between items-center mb-8 shrink-0">
             <div>
                 <h1 class="text-2xl font-serif font-bold text-[#2DCB8A] flex items-center gap-2 tracking-widest">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg> LEARN
                 </h1>
-                <p class="text-[#8890A0] text-sm mt-1">Your knowledge & strategy</p>
+                <p class="text-[#8890A0] text-sm mt-1">Knowledge & strategy</p>
             </div>
             <div class="bg-[#1A1A3A] p-2 rounded-lg border border-white/10 text-center min-w-[80px]">
                 <span class="block text-2xl font-bold text-[#F4F4F0]">${STATE.player.currentHandicap.toFixed(1)}</span>
@@ -512,7 +629,7 @@ function renderLearn() {
             </div>
         </header>
 
-        <section>
+        <div class="flex-1 overflow-y-auto hide-scrollbar pb-8">
             <h2 class="text-xl font-serif font-bold mb-4 flex items-center gap-2">
                 <svg class="text-[#2DCB8A] w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg> Focus Areas
             </h2>
@@ -526,7 +643,7 @@ function renderLearn() {
             <div class="space-y-4">
                 ${tasksHTML}
             </div>
-        </section>
+        </div>
     </div>`;
 }
 
@@ -535,7 +652,7 @@ function renderPractice() {
     
     if (STATE.player.customPlan.practice.length > 0) {
         content = `
-        <div class="bg-[#1D7A5A]/20 p-4 rounded-xl border border-[#2DCB8A]/30 mb-6 shadow-sm">
+        <div class="bg-[#1D7A5A]/20 p-4 rounded-xl border border-[#2DCB8A]/30 mb-6">
             <p class="text-[#F4F4F0] text-sm leading-relaxed">
                 <strong class="text-[#2DCB8A]">Data-driven Focus.</strong> Your Coach assigned the following drills based on your recent round performance.
             </p>
@@ -559,12 +676,16 @@ function renderPractice() {
         </div>
         `;
     } else {
-        let worstArea = 'putting';
-        let lowestScore = 6;
-        for (let a in STATE.player.coreAreas) {
-            if (STATE.player.coreAreas[a] < lowestScore) { lowestScore = STATE.player.coreAreas[a]; worstArea = a; }
+        let worstArea = 'putting'; 
+        let lowestScore = 6; 
+        for (let a in STATE.player.coreAreas) { 
+            if (STATE.player.coreAreas[a] < lowestScore) { 
+                lowestScore = STATE.player.coreAreas[a]; 
+                worstArea = a; 
+            } 
         }
-        const drill = PRACTICE_DRILLS[worstArea].range;
+        
+        const drill = PRACTICE_DRILLS[worstArea].range; 
         const isDone = STATE.player.completedTasksSet[`practice_default`];
         
         content = `
@@ -575,8 +696,7 @@ function renderPractice() {
         </div>
         <div class="bg-[#1A1A3A] p-4 rounded-xl border border-white/10 flex gap-4 items-start shadow-sm transition-all cursor-pointer" onclick="toggleTask('practice', 'default')">
             <div class="mt-1 flex-shrink-0">
-                ${isDone ? `<svg class="text-[#2DCB8A]" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>` 
-                         : `<div class="w-6 h-6 rounded-full border-2 border-white/20"></div>`}
+                ${isDone ? `<svg class="text-[#2DCB8A]" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>` : `<div class="w-6 h-6 rounded-full border-2 border-white/20"></div>`}
             </div>
             <div>
                 <span class="uppercase text-[10px] font-bold tracking-widest ${isDone ? 'text-[#8890A0]' : 'text-[#2DCB8A]'} mb-1 block">Baseline Drill</span>
@@ -589,7 +709,7 @@ function renderPractice() {
     return `
     <div class="flex flex-col h-full p-6 animate-fade-in pb-0">
         <header class="mb-6 shrink-0">
-            <h1 class="text-2xl font-serif font-bold text-[#F4F4F0] flex items-center gap-2 tracking-widest">
+            <h1 class="text-2xl font-serif font-bold text-[#F4F4F0] tracking-widest flex items-center gap-2">
                 <svg class="text-[#2DCB8A] w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg> PRACTICE
             </h1>
             <p class="text-[#8890A0] text-sm mt-1">Targeted drills for your core areas.</p>
@@ -601,7 +721,15 @@ function renderPractice() {
 }
 
 function renderPlayIntro() {
-    return `<div class="flex flex-col h-full p-6 animate-fade-in"><h1 class="text-2xl font-serif font-bold mb-2">Track Round</h1><p class="text-[#8890A0] mb-8">Play ${STATE.player.courseName} to gather Strokes Gained data.</p><button onclick="startRoundFlow()" class="w-full bg-[#2DCB8A] text-[#0D1A12] font-bold py-5 rounded-xl shadow-[0_0_20px_rgba(45,203,138,0.15)]">TEE OFF</button></div>`;
+    return `
+    <div class="flex flex-col h-full p-6 animate-fade-in">
+        <h1 class="text-2xl font-serif font-bold mb-2">Track Round</h1>
+        <p class="text-[#8890A0] mb-8">Play ${STATE.player.courseName} to gather Strokes Gained data.</p>
+        
+        <button onclick="startRoundFlow()" class="w-full bg-[#2DCB8A] hover:bg-[#34e09a] text-[#0D1A12] font-bold py-5 rounded-xl shadow-[0_0_20px_rgba(45,203,138,0.15)] transition-transform active:scale-95">
+            TEE OFF
+        </button>
+    </div>`;
 }
 
 function renderPlayActive() {
@@ -621,77 +749,105 @@ function renderPlayActive() {
     const girPct = completedHoles > 0 ? Math.round((totalGir / completedHoles) * 100) : '0';
 
     let interactions = '';
+    
     if (round.holeState === 'fairway') {
         interactions = `
-            <div class="mb-10 text-center">
-                <div class="text-[#8890A0] font-bold uppercase tracking-widest text-[11px] mb-4">Choose Club</div>
-                <div class="text-4xl font-serif font-bold text-[#2DCB8A] mb-8">${club.name}</div>
+            <div class="mb-3 text-center shrink-0">
+                <div class="text-[#8890A0] font-bold uppercase tracking-widest text-[10px] mb-1">Choose Club</div>
+                <div class="text-3xl font-serif font-bold text-[#2DCB8A] mb-2">${club.name}</div>
                 <div class="px-4">
                     <input type="range" min="0" max="${STATE.player.bag.length - 2}" value="${round.selectedClubIndex}" oninput="updateClubSlider(this.value)" class="w-full">
-                    <div class="flex justify-between mt-4 text-[10px] font-bold text-[#404060] uppercase tracking-wider">
-                        <span>${STATE.player.bag[0].name}</span>
-                        <span>${STATE.player.bag[STATE.player.bag.length-2].name}</span>
-                    </div>
                 </div>
             </div>
 
-            <div class="space-y-3 mb-10">
-                <div class="flex gap-2">
-                    <button onclick="setOutcome('dir', 'Left')" class="flex-1 py-3 text-[10px] uppercase font-bold rounded-lg border ${outs.dir==='Left'?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#8890A0] border-transparent'}">Left</button>
-                    <button onclick="setOutcome('dir', 'Straight')" class="flex-1 py-3 text-[10px] uppercase font-bold rounded-lg border ${outs.dir==='Straight'?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#8890A0] border-transparent'}">Straight</button>
-                    <button onclick="setOutcome('dir', 'Right')" class="flex-1 py-3 text-[10px] uppercase font-bold rounded-lg border ${outs.dir==='Right'?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#8890A0] border-transparent'}">Right</button>
+            <div class="space-y-1.5 mb-3 shrink-0">
+                <!-- Direction -->
+                <div class="flex gap-1.5">
+                    <button onclick="setOutcome('dir', 'Left')" class="flex-1 py-1.5 text-[9px] uppercase font-bold rounded-lg border ${outs.dir==='Left'?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#8890A0] border-transparent'} transition-colors">Left</button>
+                    <button onclick="setOutcome('dir', 'Straight')" class="flex-1 py-1.5 text-[9px] uppercase font-bold rounded-lg border ${outs.dir==='Straight'?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#8890A0] border-transparent'} transition-colors">Straight</button>
+                    <button onclick="setOutcome('dir', 'Right')" class="flex-1 py-1.5 text-[9px] uppercase font-bold rounded-lg border ${outs.dir==='Right'?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#8890A0] border-transparent'} transition-colors">Right</button>
                 </div>
-                <div class="flex gap-2">
-                    <button onclick="setOutcome('dist', 'Short')" class="flex-1 py-3 text-[10px] uppercase font-bold rounded-lg border ${outs.dist==='Short'?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#8890A0] border-transparent'}">Short</button>
-                    <button onclick="setOutcome('dist', 'At Dist')" class="flex-1 py-3 text-[10px] uppercase font-bold rounded-lg border ${outs.dist==='At Dist'?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#8890A0] border-transparent'}">At Dist</button>
-                    <button onclick="setOutcome('dist', 'Long')" class="flex-1 py-3 text-[10px] uppercase font-bold rounded-lg border ${outs.dist==='Long'?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#8890A0] border-transparent'}">Long</button>
+                <!-- Distance -->
+                <div class="flex gap-1.5">
+                    <button onclick="setOutcome('dist', 'Short')" class="flex-1 py-1.5 text-[9px] uppercase font-bold rounded-lg border ${outs.dist==='Short'?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#8890A0] border-transparent'} transition-colors">Short</button>
+                    <button onclick="setOutcome('dist', 'At Dist')" class="flex-1 py-1.5 text-[9px] uppercase font-bold rounded-lg border ${outs.dist==='At Dist'?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#8890A0] border-transparent'} transition-colors">At Dist</button>
+                    <button onclick="setOutcome('dist', 'Long')" class="flex-1 py-1.5 text-[9px] uppercase font-bold rounded-lg border ${outs.dist==='Long'?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#8890A0] border-transparent'} transition-colors">Long</button>
                 </div>
-                <div class="flex gap-2">
-                    <button onclick="setOutcome('lie', 'Rough')" class="flex-1 py-3 text-[10px] uppercase font-bold rounded-lg border ${outs.lie==='Rough'?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#8890A0] border-transparent'}">Rough</button>
-                    <button onclick="setOutcome('lie', 'Fairway')" class="flex-1 py-3 text-[10px] uppercase font-bold rounded-lg border ${outs.lie==='Fairway'?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#8890A0] border-transparent'}">Fairway</button>
-                    <button onclick="setOutcome('lie', 'Green')" class="flex-1 py-3 text-[10px] uppercase font-bold rounded-lg border ${outs.lie==='Green'?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#8890A0] border-transparent'}">Green</button>
+                <!-- Lie -->
+                <div class="flex gap-1.5">
+                    <button onclick="setOutcome('lie', 'Rough')" class="flex-1 py-1.5 text-[9px] uppercase font-bold rounded-lg border ${outs.lie==='Rough'?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#8890A0] border-transparent'} transition-colors">Rough</button>
+                    <button onclick="setOutcome('lie', 'Fairway')" class="flex-1 py-1.5 text-[9px] uppercase font-bold rounded-lg border ${outs.lie==='Fairway'?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#8890A0] border-transparent'} transition-colors">Fairway</button>
+                    <button onclick="setOutcome('lie', 'Green')" class="flex-1 py-1.5 text-[9px] uppercase font-bold rounded-lg border ${outs.lie==='Green'?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#8890A0] border-transparent'} transition-colors">Green</button>
                 </div>
-                <div class="flex gap-2">
-                    <button onclick="setOutcome('cont', 'Miss-hit')" class="flex-1 py-3 text-[10px] uppercase font-bold rounded-lg border ${outs.cont==='Miss-hit'?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#8890A0] border-transparent'}">Miss-hit</button>
-                    <button onclick="setOutcome('cont', 'Good Strike')" class="flex-1 py-3 text-[10px] uppercase font-bold rounded-lg border ${outs.cont==='Good Strike'?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#8890A0] border-transparent'}">Good Strike</button>
-                    <button onclick="setOutcome('cont', 'Dreamy')" class="flex-1 py-3 text-[10px] uppercase font-bold rounded-lg border ${outs.cont==='Dreamy'?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#8890A0] border-transparent'}">Dreamy</button>
+                <!-- Contact -->
+                <div class="flex gap-1.5">
+                    <button onclick="setOutcome('cont', 'Miss-hit')" class="flex-1 py-1.5 text-[9px] uppercase font-bold rounded-lg border ${outs.cont==='Miss-hit'?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#8890A0] border-transparent'} transition-colors">Miss-hit</button>
+                    <button onclick="setOutcome('cont', 'Good Strike')" class="flex-1 py-1.5 text-[9px] uppercase font-bold rounded-lg border ${outs.cont==='Good Strike'?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#8890A0] border-transparent'} transition-colors">Good Strike</button>
+                    <button onclick="setOutcome('cont', 'Dreamy')" class="flex-1 py-1.5 text-[9px] uppercase font-bold rounded-lg border ${outs.cont==='Dreamy'?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#8890A0] border-transparent'} transition-colors">Dreamy</button>
                 </div>
-                <button onclick="setOutcome('ob', ${!outs.ob})" class="w-full py-3 text-[10px] uppercase font-bold rounded-lg border ${outs.ob?'bg-[#E85030] text-white border-[#E85030]':'bg-[#1A1A3A] text-[#8890A0] border-transparent'}">${outs.ob ? 'OB (Penalty Added)' : 'Mark as OB'}</button>
+                <!-- Penalty -->
+                <button onclick="setOutcome('ob', ${!outs.ob})" class="w-full py-1.5 text-[9px] uppercase font-bold rounded-lg border ${outs.ob?'bg-[#E85030] text-white border-[#E85030]':'bg-[#1A1A3A] text-[#8890A0] border-transparent'} transition-colors">
+                    ${outs.ob ? 'OB (Penalty Added)' : 'Mark as OB'}
+                </button>
             </div>
 
-            <button onclick="recordFairwayShot()" class="w-full bg-[#2DCB8A] text-[#0D1A12] font-bold py-5 rounded-xl transition-transform active:scale-95 shadow-lg mt-auto uppercase tracking-widest">Record Shot</button>
+            <button onclick="recordFairwayShot()" class="w-full bg-[#2DCB8A] hover:bg-[#34e09a] text-[#0D1A12] font-bold py-3 rounded-xl shadow-lg mt-auto uppercase tracking-widest active:scale-95 transition-transform shrink-0">
+                Record Shot
+            </button>
         `;
     } else {
         interactions = `
-            <div class="text-center mb-10 mt-4">
-                <div class="text-[#2DCB8A] text-xs font-bold uppercase tracking-widest mb-10">On the Green</div>
-                <div class="grid grid-cols-2 gap-3 mb-10">
-                    <button onclick="finishHoleWithPutts(0)" class="col-span-2 py-6 text-sm font-bold uppercase tracking-widest rounded-2xl border-2 ${round.tempPuttCount===0?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#F4F4F0] border-white/5'}">Hole Out (0 Putts)</button>
-                    <button onclick="finishHoleWithPutts(1)" class="py-5 text-xl font-bold rounded-2xl border-2 ${round.tempPuttCount===1?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#F4F4F0] border-white/5'}">1</button>
-                    <button onclick="finishHoleWithPutts(2)" class="py-5 text-xl font-bold rounded-2xl border-2 ${round.tempPuttCount===2?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#F4F4F0] border-white/5'}">2</button>
-                    <button onclick="finishHoleWithPutts(3)" class="py-5 text-xl font-bold rounded-2xl border-2 ${round.tempPuttCount===3?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#F4F4F0] border-white/5'}">3</button>
-                    <button onclick="finishHoleWithPutts(4)" class="py-5 text-xl font-bold rounded-2xl border-2 ${round.tempPuttCount===4?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#F4F4F0] border-white/5'}">4+</button>
+            <div class="text-center mb-3 mt-1 shrink-0">
+                <div class="text-[#2DCB8A] text-[10px] font-bold uppercase tracking-widest mb-3">On the Green</div>
+                <div class="grid grid-cols-2 gap-2 mb-3">
+                    <button onclick="finishHoleWithPutts(0)" class="col-span-2 py-3 text-xs font-bold uppercase tracking-widest rounded-xl border-2 ${round.tempPuttCount===0?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#F4F4F0] border-white/5'} transition-colors">Hole Out (0 Putts)</button>
+                    <button onclick="finishHoleWithPutts(1)" class="py-2.5 text-lg font-bold rounded-xl border-2 ${round.tempPuttCount===1?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#F4F4F0] border-white/5'} transition-colors">1</button>
+                    <button onclick="finishHoleWithPutts(2)" class="py-2.5 text-lg font-bold rounded-xl border-2 ${round.tempPuttCount===2?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#F4F4F0] border-white/5'} transition-colors">2</button>
+                    <button onclick="finishHoleWithPutts(3)" class="py-2.5 text-lg font-bold rounded-xl border-2 ${round.tempPuttCount===3?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#F4F4F0] border-white/5'} transition-colors">3</button>
+                    <button onclick="finishHoleWithPutts(4)" class="py-2.5 text-lg font-bold rounded-xl border-2 ${round.tempPuttCount===4?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#F4F4F0] border-white/5'} transition-colors">4+</button>
                 </div>
-                <textarea id="hole-comment" placeholder="Any notes on this hole?" class="w-full bg-[#1A1A3A] border border-white/10 rounded-xl p-4 text-sm text-[#F4F4F0] outline-none h-24 resize-none mb-6"></textarea>
+                <textarea id="hole-comment" placeholder="Notes (Optional)" class="w-full bg-[#1A1A3A] border border-white/10 rounded-xl p-3 text-sm text-[#F4F4F0] outline-none h-14 resize-none transition-colors focus:border-[#2DCB8A]"></textarea>
             </div>
         `;
     }
 
     return `
-    <div class="flex flex-col h-full bg-[#0D0D1E]">
-        <div class="bg-[#1A1A3A] p-6 rounded-b-2xl border-b border-white/10 shadow-lg shrink-0">
-            <div class="flex justify-between items-center mb-6">
-                <div><span class="text-[#2DCB8A] font-bold uppercase tracking-widest text-[10px]">Hole ${hole.number}</span><h2 class="text-2xl font-serif font-bold">Par ${hole.par}</h2></div>
-                <div class="text-right"><span class="text-[#8890A0] font-bold uppercase tracking-widest text-[10px]">Total Strokes</span><div class="text-3xl font-serif font-bold text-[#E8A930]">${currentTotalStrokes}</div></div>
+    <div class="flex flex-col h-full bg-[#0D0D1E] animate-fade-in">
+        <div class="bg-[#1A1A3A] p-3 rounded-b-2xl border-b border-white/10 shadow-lg shrink-0">
+            <div class="flex justify-between items-center mb-2">
+                <div>
+                    <span class="text-[#2DCB8A] font-bold uppercase tracking-widest text-[9px]">Hole ${hole.number}</span>
+                    <h2 class="text-xl font-serif font-bold">Par ${hole.par}</h2>
+                </div>
+                <div class="text-right">
+                    <span class="text-[#8890A0] font-bold uppercase tracking-widest text-[9px]">Total Strokes</span>
+                    <div class="text-2xl font-serif font-bold text-[#E8A930]">${currentTotalStrokes}</div>
+                </div>
             </div>
-            <div class="grid grid-cols-4 gap-2 text-center border-t border-white/5 pt-4">
-                <div><div class="text-[9px] uppercase font-bold text-[#404060] mb-1">To Par</div><div class="text-sm font-black ${scoreToPar > 0 ? 'text-[#E85030]' : 'text-[#2DCB8A]'}">${scoreToParStr}</div></div>
-                <div><div class="text-[9px] uppercase font-bold text-[#404060] mb-1">PPG</div><div class="text-sm font-black text-white">${ppg}</div></div>
-                <div><div class="text-[9px] uppercase font-bold text-[#404060] mb-1">GIR %</div><div class="text-sm font-black text-[#2DCB8A]">${girPct}%</div></div>
-                <div><div class="text-[9px] uppercase font-bold text-[#404060] mb-1">Holes</div><div class="text-sm font-black text-white">${completedHoles}</div></div>
+            
+            <div class="grid grid-cols-4 gap-1 text-center border-t border-white/5 pt-1.5">
+                <div>
+                    <div class="text-[8px] uppercase font-bold text-[#404060] mb-0.5">To Par</div>
+                    <div class="text-xs font-black ${scoreToPar > 0 ? 'text-[#E85030]' : 'text-[#2DCB8A]'}">${scoreToParStr}</div>
+                </div>
+                <div>
+                    <div class="text-[8px] uppercase font-bold text-[#404060] mb-0.5">PPG</div>
+                    <div class="text-xs font-black text-white">${ppg}</div>
+                </div>
+                <div>
+                    <div class="text-[8px] uppercase font-bold text-[#404060] mb-0.5">GIR %</div>
+                    <div class="text-xs font-black text-[#2DCB8A]">${girPct}%</div>
+                </div>
+                <div>
+                    <div class="text-[8px] uppercase font-bold text-[#404060] mb-0.5">Holes</div>
+                    <div class="text-xs font-black text-white">${completedHoles}</div>
+                </div>
             </div>
         </div>
-        <div class="p-6 flex-1 flex flex-col hide-scrollbar overflow-y-auto pb-10">${interactions}</div>
+        
+        <div class="px-4 py-2 flex-1 flex flex-col overflow-y-auto hide-scrollbar pb-6">
+            ${interactions}
+        </div>
     </div>`;
 }
 
@@ -699,11 +855,11 @@ function renderCoachCorner() {
     const round = STATE.activeRound;
     return `
     <div class="flex flex-col h-full p-6 animate-fade-in bg-[#0D0D1E]">
-        <div class="text-center mt-6 mb-8">
-            <div class="w-16 h-16 rounded-full bg-[#1D7A5A] flex items-center justify-center text-3xl mx-auto mb-4 border-2 border-[#2DCB8A] shadow-[0_0_20px_rgba(45,203,138,0.2)]">🥊</div>
-            <h1 class="text-3xl font-serif font-bold uppercase tracking-tighter text-[#F4F4F0]">Corner Man</h1>
-            <p class="text-[#8890A0] text-sm mt-1 uppercase tracking-widest font-bold">Mid-Round Strategy</p>
+        <div class="text-center mt-4 mb-6">
+            <div class="w-16 h-16 rounded-full bg-[#1D7A5A] flex items-center justify-center text-3xl mx-auto mb-3 border-2 border-[#2DCB8A] shadow-[0_0_20px_rgba(45,203,138,0.2)]">🥊</div>
+            <h1 class="text-2xl font-serif font-bold uppercase tracking-tighter text-[#F4F4F0]">Corner Man</h1>
         </div>
+        
         <div class="flex-1 bg-[#1A1A3A] border border-white/10 rounded-2xl p-6 overflow-y-auto hide-scrollbar mb-8">
             ${round.isCoachTyping ? `
                 <div class="flex gap-2 items-center text-[#8890A0]">
@@ -718,46 +874,49 @@ function renderCoachCorner() {
                 </div>
             `}
         </div>
-        <div class="space-y-3 shrink-0">
+        
+        <div class="space-y-3 shrink-0 pb-10">
             <div class="flex gap-2">
-                <input id="corner-chat-input" type="text" placeholder="Questions for Coach?" onkeydown="if(event.key==='Enter') sendCornerMessage()" class="flex-1 bg-[#1A1A3A] border border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-[#2DCB8A] text-[#F4F4F0]">
+                <input id="corner-chat-input" type="text" placeholder="Questions for Coach?" onkeydown="if(event.key==='Enter') sendCornerMessage()" class="flex-1 bg-[#1A1A3A] border border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-[#2DCB8A] text-[#F4F4F0] transition-colors">
                 <button onclick="sendCornerMessage()" class="w-12 rounded-xl bg-[#1A1A3A] border border-white/10 hover:border-[#2DCB8A] flex items-center justify-center text-[#2DCB8A] transition-colors"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></button>
             </div>
-            <button onclick="returnToTee()" class="w-full bg-[#2DCB8A] text-[#0D1A12] font-bold py-5 rounded-xl uppercase tracking-widest shadow-lg active:scale-95 transition-transform">Back to the Tee &rarr;</button>
+            <button onclick="returnToTee()" class="w-full bg-[#2DCB8A] hover:bg-[#34e09a] text-[#0D1A12] font-bold py-4 rounded-xl uppercase tracking-widest shadow-lg active:scale-95 transition-transform">Back to the Tee &rarr;</button>
         </div>
     </div>`;
 }
 
 function renderPostRound() {
-    const r = STATE.activeRound;
+    const r = STATE.activeRound; 
     const holes = r.holesLog;
-    const totalStrokes = holes.reduce((s, h) => s + h.totalStrokes, 0);
+    const totalStrokes = holes.reduce((s, h) => s + h.totalStrokes, 0); 
     const totalPar = holes.reduce((s, h) => s + h.par, 0);
-    const toPar = totalStrokes - totalPar;
+    const toPar = totalStrokes - totalPar; 
     const toParStr = toPar > 0 ? `+${toPar}` : toPar === 0 ? 'E' : toPar;
-
+    
     const drivableHoles = holes.filter(h => h.par > 3);
     const fairwaysHit = drivableHoles.filter(h => h.shots[0]?.lie === 'Fairway').length;
     const fairwayPct = drivableHoles.length > 0 ? Math.round((fairwaysHit / drivableHoles.length) * 100) : 0;
     
-    const totalPutts = holes.reduce((s, h) => s + h.putts, 0);
-    const ppg = (totalPutts / holes.length).toFixed(1);
-
+    const totalPutts = holes.reduce((s, h) => s + h.putts, 0); 
+    const ppg = holes.length > 0 ? (totalPutts / holes.length).toFixed(1) : '0.0';
+    
     const parStats = { 3: { s: 0, c: 0 }, 4: { s: 0, c: 0 }, 5: { s: 0, c: 0 } };
     holes.forEach(h => { parStats[h.par].s += h.totalStrokes; parStats[h.par].c++; });
-
-    const filteredClub = r.summaryFilter || 'All';
-    let allShots = [];
+    
+    const filteredClub = r.summaryFilter || 'All'; 
+    let allShots = []; 
     holes.forEach(h => h.shots.forEach(s => allShots.push(s)));
-    if (filteredClub !== 'All') allShots = allShots.filter(s => s.club === filteredClub);
-
-    const getDistPct = (dir, dist) => {
-        if (allShots.length === 0) return '0%';
-        const count = allShots.filter(s => s.direction === dir && s.distOut === dist).length;
-        return Math.round((count / allShots.length) * 100) + '%';
+    if (filteredClub !== 'All') {
+        allShots = allShots.filter(s => s.club === filteredClub);
+    }
+    
+    const getDistPct = (dir, dist) => { 
+        if (allShots.length === 0) return '0%'; 
+        const count = allShots.filter(s => s.direction === dir && s.distOut === dist).length; 
+        return Math.round((count / allShots.length) * 100) + '%'; 
     };
-
-    const clubsInBag = [...new Set(STATE.player.bag.map(c => c.name))];
+    
+    const clubsInBag = [...new Set(STATE.player.bag.map(c => c.name))]; 
     const isPutter = filteredClub === 'Putter';
 
     let suggestionsHTML = '';
@@ -766,7 +925,7 @@ function renderPostRound() {
             <div class="mb-10 animate-fade-in">
                 <h3 class="text-xs font-black uppercase tracking-widest text-[#8890A0] mb-4">Coach Plan Updates</h3>
                 <div class="space-y-3">
-                    ${r.newLearn.map((item, idx) => `
+                    ${r.newLearn?.map((item, idx) => `
                         <div class="bg-[#1A1A3A] p-4 rounded-xl border border-[#2DCB8A]/30 shadow-lg">
                             <span class="text-[10px] uppercase font-black text-[#2DCB8A] mb-2 block tracking-widest">New to Learn</span>
                             <p class="text-sm text-white mb-4 leading-relaxed">${item}</p>
@@ -775,8 +934,8 @@ function renderPostRound() {
                                 <button onclick="handlePlanAction('learn', ${idx}, 'ignore')" class="flex-1 bg-white/5 hover:bg-white/10 text-[#8890A0] hover:text-white text-xs font-bold py-2.5 rounded-lg transition-colors">Ignore</button>
                             </div>
                         </div>
-                    `).join('')}
-                    ${r.newPractice.map((item, idx) => `
+                    `).join('') || ''}
+                    ${r.newPractice?.map((item, idx) => `
                         <div class="bg-[#1A1A3A] p-4 rounded-xl border border-[#2DCB8A]/30 shadow-lg">
                             <span class="text-[10px] uppercase font-black text-[#2DCB8A] mb-2 block tracking-widest">New to Practice</span>
                             <p class="text-sm text-white mb-4 leading-relaxed">${item}</p>
@@ -785,7 +944,7 @@ function renderPostRound() {
                                 <button onclick="handlePlanAction('practice', ${idx}, 'ignore')" class="flex-1 bg-white/5 hover:bg-white/10 text-[#8890A0] hover:text-white text-xs font-bold py-2.5 rounded-lg transition-colors">Ignore</button>
                             </div>
                         </div>
-                    `).join('')}
+                    `).join('') || ''}
                 </div>
             </div>
         `;
@@ -800,7 +959,7 @@ function renderPostRound() {
                 <span class="text-2xl font-bold ${toPar > 0 ? 'text-[#E85030]' : 'text-[#2DCB8A]'}">${toParStr}</span>
             </div>
         </div>
-
+        
         <div class="grid grid-cols-2 gap-3 mb-8">
             <div class="bg-[#1A1A3A] p-5 rounded-2xl border border-white/5 text-center">
                 <div class="text-[10px] font-black text-[#404060] uppercase mb-1">Fairways Hit</div>
@@ -812,7 +971,6 @@ function renderPostRound() {
             </div>
         </div>
 
-        <!-- AI Core Proficiency Scoring -->
         <div class="mb-10">
             <h3 class="text-xs font-black uppercase tracking-widest text-[#8890A0] mb-4">Round Proficiency (AI Score)</h3>
             <div class="bg-[#1A1A3A] p-6 rounded-2xl border border-[#2DCB8A]/20 space-y-4">
@@ -838,21 +996,22 @@ function renderPostRound() {
         <div class="mb-8">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-xs font-black uppercase tracking-widest text-[#8890A0]">Shot Distribution</h3>
-                <select onchange="updateSummaryFilter(this.value)" class="bg-[#1A1A3A] text-white text-[10px] font-bold uppercase p-2 px-3 rounded-lg border border-white/10 outline-none">
+                <select onchange="updateSummaryFilter(this.value)" class="bg-[#1A1A3A] text-white text-[10px] font-bold uppercase p-2 px-3 rounded-lg border border-white/10 outline-none focus:border-[#2DCB8A] transition-colors">
                     <option value="All">All Clubs</option>
                     ${clubsInBag.map(c => `<option value="${c}" ${filteredClub === c ? 'selected' : ''}>${c}</option>`).join('')}
                 </select>
             </div>
-
+            
             ${isPutter ? `
-                <div class="bg-[#1A1A3A] p-8 rounded-2xl border border-white/10 text-center">
+                <div class="bg-[#1A1A3A] p-8 rounded-2xl border border-white/10 text-center animate-fade-in">
                     <div class="text-[10px] font-black text-[#404060] uppercase mb-2">Total Putts</div>
                     <div class="text-6xl font-black text-white mb-6">${totalPutts}</div>
                     <div class="h-px bg-white/5 w-full mb-6"></div>
+                    <div class="text-[10px] font-black text-[#404060] uppercase mb-2">Efficiency</div>
                     <div class="text-3xl font-black text-[#2DCB8A]">${ppg} PPG</div>
                 </div>
             ` : `
-                <div class="grid grid-cols-3 gap-2 mb-4">
+                <div class="grid grid-cols-3 gap-2 mb-4 animate-fade-in">
                     <div class="stat-grid-box"><span class="stat-grid-label">Short L</span><span class="stat-grid-value">${getDistPct('Left', 'Short')}</span></div>
                     <div class="stat-grid-box"><span class="stat-grid-label">Short M</span><span class="stat-grid-value">${getDistPct('Straight', 'Short')}</span></div>
                     <div class="stat-grid-box"><span class="stat-grid-label">Short R</span><span class="stat-grid-value">${getDistPct('Right', 'Short')}</span></div>
@@ -863,7 +1022,7 @@ function renderPostRound() {
                     <div class="stat-grid-box"><span class="stat-grid-label">Long M</span><span class="stat-grid-value">${getDistPct('Straight', 'Long')}</span></div>
                     <div class="stat-grid-box"><span class="stat-grid-label">Long R</span><span class="stat-grid-value">${getDistPct('Right', 'Long')}</span></div>
                 </div>
-                <div class="bg-[#1A1A3A] p-4 rounded-xl flex justify-between items-center border border-white/5">
+                <div class="bg-[#1A1A3A] p-4 rounded-xl flex justify-between items-center border border-white/5 animate-fade-in">
                     <span class="text-[10px] font-black text-[#404060] uppercase tracking-widest">OB Hits</span>
                     <span class="text-sm font-black text-[#E85030]">${allShots.filter(s => s.ob).length}</span>
                 </div>
@@ -878,8 +1037,14 @@ function renderPostRound() {
                     const diff = (parseFloat(avg) - p).toFixed(1);
                     return `
                     <div class="bg-[#1A1A3A] p-4 rounded-xl flex justify-between items-center border border-white/5">
-                        <div><span class="text-[10px] font-black text-[#404060] uppercase block mb-1">Par ${p} Avg</span><span class="text-lg font-black text-white">${avg}</span></div>
-                        <div class="text-right"><span class="text-[10px] font-black text-[#404060] uppercase block mb-1">Vs Par</span><span class="text-lg font-black ${diff > 0 ? 'text-[#E85030]' : 'text-[#2DCB8A]'}">${diff > 0 ? '+' + diff : diff === '0.0' ? 'E' : diff}</span></div>
+                        <div>
+                            <span class="text-[10px] font-black text-[#404060] uppercase block mb-1">Par ${p} Avg</span>
+                            <span class="text-lg font-black text-white">${avg}</span>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-[10px] font-black text-[#404060] uppercase block mb-1">Vs Par</span>
+                            <span class="text-lg font-black ${diff > 0 ? 'text-[#E85030]' : 'text-[#2DCB8A]'}">${diff > 0 ? '+' + diff : diff === '0.0' ? 'E' : diff}</span>
+                        </div>
                     </div>`;
                 }).join('')}
             </div>
@@ -887,19 +1052,15 @@ function renderPostRound() {
 
         ${suggestionsHTML}
 
-        <button onclick="switchView('progress')" class="w-full bg-[#1A1A3A] border border-white/10 text-white font-bold py-5 rounded-2xl uppercase tracking-widest shadow-lg">Finalize & Sync</button>
+        <button onclick="switchView('progress')" class="w-full bg-[#1A1A3A] hover:bg-[#14142E] border border-white/10 text-white font-bold py-5 rounded-2xl uppercase tracking-widest shadow-lg mb-20 transition-colors">Finalize & Sync</button>
     </div>`;
 }
-
-window.updateSummaryFilter = (val) => {
-    STATE.activeRound.summaryFilter = val;
-    render();
-};
 
 function renderProgress() {
     return `
     <div class="flex flex-col h-full p-6 animate-fade-in">
         <h1 class="text-2xl font-serif font-bold mb-6">Progress</h1>
+        
         ${STATE.player.roundCount === 0 ? `
             <div class="bg-[#E8A930]/10 p-4 rounded-xl border border-[#E8A930]/30 mb-6 shadow-sm">
                 <p class="text-[#E8A930] text-sm leading-relaxed">
@@ -907,26 +1068,48 @@ function renderProgress() {
                 </p>
             </div>
         ` : ''}
+        
         <div class="bg-[#1A1A3A] border border-white/10 rounded-xl p-5 mb-4">
-            <h3 class="text-[10px] font-bold uppercase tracking-widest text-[#8890A0] mb-1">Strokes Gained vs ${STATE.player.targetHandicap.toFixed(1)} Benchmark</h3>
+            <h3 class="text-[10px] font-bold uppercase tracking-widest text-[#8890A0] mb-1">Strokes Gained vs Benchmark</h3>
             <p class="text-xs text-[#8890A0] mb-6">Where you're losing strokes per round</p>
             <div class="space-y-4">
-                ${[{ label: 'Putting', value: -2.1, color: '#E85030', width: '84%' }, { label: 'Approach', value: -0.8, color: '#E8A930', width: '32%' }, { label: 'Short Game', value: -0.4, color: '#B8C830', width: '16%' }, { label: 'Off the Tee', value: -0.2, color: '#2DCB8A', width: '8%' }].map(stat => `
+                ${[
+                    { label: 'Putting', value: -2.1, color: '#E85030', width: '84%' },
+                    { label: 'Approach', value: -0.8, color: '#E8A930', width: '32%' },
+                    { label: 'Short Game', value: -0.4, color: '#B8C830', width: '16%' },
+                    { label: 'Off the Tee', value: -0.2, color: '#2DCB8A', width: '8%' }
+                ].map(stat => `
                     <div class="flex items-center gap-3">
                         <span class="w-20 text-xs font-bold text-[#F4F4F0]">${stat.label}</span>
-                        <div class="flex-1 h-2 bg-[#404060] rounded-full relative"><div class="absolute top-0 left-0 h-full rounded-full" style="width: ${STATE.player.roundCount > 0 ? stat.width : '0%'}; background-color: ${stat.color}"></div></div>
+                        <div class="flex-1 h-2 bg-[#404060] rounded-full relative">
+                            <div class="absolute top-0 left-0 h-full rounded-full" style="width: ${STATE.player.roundCount > 0 ? stat.width : '0%'}; background-color: ${stat.color}"></div>
+                        </div>
                         <span class="w-8 text-right text-xs font-bold" style="color: ${stat.color}">${STATE.player.roundCount > 0 ? stat.value : '0.0'}</span>
                     </div>
                 `).join('')}
             </div>
         </div>
+        
         <div class="grid grid-cols-2 gap-3 mb-6">
-            <div class="bg-[#1A1A3A] border border-white/10 p-4 rounded-xl"><div class="text-3xl font-bold text-[#F4F4F0]">${STATE.player.roundCount}</div><div class="text-[10px] text-[#8890A0] uppercase tracking-wider mt-1">Rounds Logged</div></div>
-            <div class="bg-[#1A1A3A] border border-white/10 p-4 rounded-xl"><div class="text-3xl font-bold text-[#F4F4F0]">${STATE.player.sessionsCount}</div><div class="text-[10px] text-[#8890A0] uppercase tracking-wider mt-1">Total Sessions</div></div>
-            <div class="bg-[#1A1A3A] border border-white/10 p-4 rounded-xl"><div class="text-3xl font-bold text-[#2DCB8A]">${STATE.player.drillsPassed}</div><div class="text-[10px] text-[#2DCB8A] uppercase tracking-wider mt-1">Drills Passed</div></div>
-            <div class="bg-[#1A1A3A] border border-white/10 p-4 rounded-xl"><div class="text-3xl font-bold text-[#E8A930]">${STATE.player.achievements.length}</div><div class="text-[10px] text-[#E8A930] uppercase tracking-wider mt-1">Achievements</div></div>
+            <div class="bg-[#1A1A3A] border border-white/10 p-4 rounded-xl">
+                <div class="text-3xl font-bold text-[#F4F4F0]">${STATE.player.roundCount}</div>
+                <div class="text-[10px] text-[#8890A0] uppercase tracking-wider mt-1">Rounds Logged</div>
+            </div>
+            <div class="bg-[#1A1A3A] border border-white/10 p-4 rounded-xl">
+                <div class="text-3xl font-bold text-[#F4F4F0]">${STATE.player.sessionsCount}</div>
+                <div class="text-[10px] text-[#8890A0] uppercase tracking-wider mt-1">Total Sessions</div>
+            </div>
+            <div class="bg-[#1A1A3A] border border-white/10 p-4 rounded-xl">
+                <div class="text-3xl font-bold text-[#2DCB8A]">${STATE.player.drillsPassed}</div>
+                <div class="text-[10px] text-[#2DCB8A] uppercase tracking-wider mt-1">Drills Passed</div>
+            </div>
+            <div class="bg-[#1A1A3A] border border-white/10 p-4 rounded-xl">
+                <div class="text-3xl font-bold text-[#E8A930]">${STATE.player.achievements.length}</div>
+                <div class="text-[10px] text-[#E8A930] uppercase tracking-wider mt-1">Achievements</div>
+            </div>
         </div>
-        ${STATE.player.achievements.length > 0 ? `
+        
+        ${STATE.player.achievements?.length > 0 ? `
             <div class="bg-[#1A1A3A] border border-white/10 rounded-xl p-5 mb-8">
                 <h3 class="text-[10px] font-bold uppercase tracking-widest text-[#8890A0] mb-4">Trophy Room</h3>
                 <div class="space-y-3">
@@ -943,29 +1126,37 @@ function renderProgress() {
 }
 
 function renderCoach() {
+    const curMode = STATE.coachMode || 'accountability';
     const modes = [
-        { id: 'accountability', icon: '💪', color: 'text-[#2DCB8A]', bg: 'bg-[#2DCB8A]/10 border-[#2DCB8A]/20', border: 'border-[#2DCB8A]', pillBg: 'bg-[#2DCB8A]/15' },
-        { id: 'technical', icon: '🎯', color: 'text-[#7060C0]', bg: 'bg-[#7060C0]/10 border-[#7060C0]/20', border: 'border-[#7060C0]', pillBg: 'bg-[#7060C0]/15' },
-        { id: 'mental', icon: '🧠', color: 'text-[#E8A930]', bg: 'bg-[#E8A930]/10 border-[#E8A930]/20', border: 'border-[#E8A930]', pillBg: 'bg-[#E8A930]/15' }
+        { id: 'accountability', bg: 'bg-[#2DCB8A]/10 border-[#2DCB8A]/20', border: 'border-[#2DCB8A]', color: 'text-[#2DCB8A]', pillBg: 'bg-[#2DCB8A]/15' },
+        { id: 'technical', bg: 'bg-[#7060C0]/10 border-[#7060C0]/20', border: 'border-[#7060C0]', color: 'text-[#7060C0]', pillBg: 'bg-[#7060C0]/15' },
+        { id: 'mental', bg: 'bg-[#E8A930]/10 border-[#E8A930]/20', border: 'border-[#E8A930]', color: 'text-[#E8A930]', pillBg: 'bg-[#E8A930]/15' }
     ];
-    const curMode = modes.find(m => m.id === STATE.coachMode);
+    const modeConfig = modes.find(m => m.id === curMode) || modes[0];
 
     return `
     <div class="flex flex-col h-full p-6 animate-fade-in pb-0">
-        <div class="rounded-xl p-4 mb-4 flex items-center gap-3 border transition-colors ${curMode.bg} shrink-0">
+        <div class="rounded-xl p-4 mb-4 flex items-center gap-3 border transition-colors ${modeConfig.bg} shrink-0">
             <div class="w-10 h-10 rounded-full bg-[#1D7A5A] flex items-center justify-center text-xl shadow-lg border-2 border-[#2DCB8A]">🤖</div>
-            <div><h2 class="font-serif font-bold">Descent Coach</h2><div class="text-xs text-[#8890A0] capitalize">${curMode.id} Mode</div></div>
+            <div>
+                <h2 class="font-serif font-bold">Descent Coach</h2>
+                <div class="text-xs text-[#8890A0] capitalize">${curMode} Mode</div>
+            </div>
         </div>
+        
         <div class="flex gap-2 mb-4 shrink-0">
             ${modes.map(m => `
                 <button onclick="setCoachMode('${m.id}')" class="flex-1 py-1.5 rounded-lg border text-xs font-bold capitalize transition-colors ${STATE.coachMode === m.id ? `${m.pillBg} ${m.border} ${m.color}` : 'bg-[#1A1A3A] border-white/10 text-[#8890A0] hover:border-[#8890A0]'}">${m.id}</button>
             `).join('')}
         </div>
+        
         <div class="flex-1 bg-[#1A1A3A] border border-white/10 rounded-xl p-4 flex flex-col overflow-hidden mb-[10px]">
             <div id="chat-scroll-area" class="flex-1 overflow-y-auto hide-scrollbar space-y-4 mb-4 flex flex-col">
                 ${STATE.chatMessages.map(msg => `
                     <div class="flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}">
-                        <div class="max-w-[90%] p-3 rounded-xl text-sm leading-relaxed ${msg.role === 'user' ? 'bg-[#2DCB8A] text-[#0D1A12] rounded-br-sm font-semibold' : 'bg-[#0D0D1E] border border-white/10 text-[#F4F4F0] rounded-bl-sm font-medium'}">${msg.text}</div>
+                        <div class="max-w-[90%] p-3 rounded-xl text-sm leading-relaxed ${msg.role === 'user' ? 'bg-[#2DCB8A] text-[#0D1A12] rounded-br-sm font-semibold' : 'bg-[#0D0D1E] border border-white/10 text-[#F4F4F0] rounded-bl-sm font-medium'}">
+                            ${msg.text}
+                        </div>
                     </div>
                 `).join('')}
                 ${STATE.isTyping ? `
@@ -978,9 +1169,12 @@ function renderCoach() {
                     </div>
                 ` : ''}
             </div>
+            
             <div class="flex gap-2 shrink-0">
-                <input id="chat-input" type="text" placeholder="Ask your coach..." value="${STATE.chatInput || ''}" oninput="STATE.chatInput=this.value" onkeydown="if(event.key==='Enter') sendChatMessage()" class="flex-1 bg-[#0D0D1E] border border-white/10 rounded-full px-4 py-2 text-sm outline-none focus:border-[#2DCB8A] text-white">
-                <button onclick="sendChatMessage()" class="w-10 h-10 rounded-full bg-[#2DCB8A] hover:bg-[#34e09a] flex items-center justify-center text-[#0D1A12] shrink-0"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></button>
+                <input id="chat-input" type="text" placeholder="Ask your coach..." value="${STATE.chatInput || ''}" oninput="STATE.chatInput=this.value" onkeydown="if(event.key==='Enter') sendChatMessage()" class="flex-1 bg-[#0D0D1E] border border-white/10 rounded-full px-4 py-2 text-sm outline-none focus:border-[#2DCB8A] text-white transition-colors">
+                <button onclick="sendChatMessage()" class="w-10 h-10 rounded-full bg-[#2DCB8A] hover:bg-[#34e09a] flex items-center justify-center text-[#0D1A12] shrink-0 transition-transform active:scale-95">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                </button>
             </div>
         </div>
     </div>`;
@@ -1036,7 +1230,7 @@ function renderCheckIn() {
             </section>
 
             <section class="mt-8 pt-6 border-t border-white/10">
-                <button onclick="logout()" class="w-full bg-[#1A1A3A] hover:bg-[#2a1a2a] text-[#E85030] font-bold py-4 rounded-xl border border-[#E85030]/20 transition-colors">
+                <button onclick="window.logout()" class="w-full bg-[#1A1A3A] hover:bg-[#2a1a2a] text-[#E85030] font-bold py-4 rounded-xl border border-[#E85030]/20 transition-colors">
                     Log Out / Forget Me
                 </button>
             </section>
@@ -1045,85 +1239,112 @@ function renderCheckIn() {
 }
 
 // ============================================================================
-// 6. EVENT HANDLERS & ACTIONS (Fully Restored)
+// 6. EVENT HANDLERS & ACTIONS
 // ============================================================================
 
-window.updateClubSlider = (idx) => { STATE.activeRound.selectedClubIndex = parseInt(idx); render(); }
-window.setOutcome = (cat, val) => { STATE.activeRound.shotOutcomes[cat] = val; render(); }
-window.checkWelcomePhone = () => { document.getElementById('welcome-next-btn').disabled = document.getElementById('welcome-phone').value.length < 5; }
-window.checkWelcomeName = () => { document.getElementById('welcome-start-btn').disabled = document.getElementById('welcome-name').value.length < 2; }
+window.updateClubSlider = function(idx) { 
+    STATE.activeRound.selectedClubIndex = parseInt(idx); 
+    render(); 
+};
+
+window.setOutcome = function(cat, val) { 
+    STATE.activeRound.shotOutcomes[cat] = val; 
+    render(); 
+};
+
+window.checkWelcomePhone = function() { 
+    const el = document.getElementById('welcome-phone');
+    if(el) {
+        document.getElementById('welcome-next-btn').disabled = el.value.length < 5; 
+    }
+};
+
+window.checkWelcomeName = function() { 
+    const el = document.getElementById('welcome-name');
+    if(el) {
+        document.getElementById('welcome-start-btn').disabled = el.value.length < 2; 
+    }
+};
 
 window.toggleTask = function(type, idx) {
-    let key;
-    if (idx === 'default') {
-        key = `${type}_default`;
-    } else {
-        key = `${type}_${idx}`;
-    }
-    
+    let key = idx === 'default' ? `${type}_default` : `${type}_${idx}`;
     STATE.player.completedTasksSet[key] = !STATE.player.completedTasksSet[key];
     
-    if (STATE.player.completedTasksSet[key]) {
-        STATE.player.drillsPassed++;
-        STATE.player.sessionsCount++;
-    } else {
-        STATE.player.drillsPassed = Math.max(0, STATE.player.drillsPassed - 1);
+    if (STATE.player.completedTasksSet[key]) { 
+        STATE.player.drillsPassed++; 
+        STATE.player.sessionsCount++; 
+    } else { 
+        STATE.player.drillsPassed = Math.max(0, STATE.player.drillsPassed - 1); 
     }
-    syncProfileToFirebase();
+    
+    syncProfileToFirebase(); 
     render();
-}
+};
 
-window.toggleInfo = function(area) {
-    STATE.activeInfo = STATE.activeInfo === area ? null : area;
-    render();
-}
+window.toggleInfo = function(area) { 
+    STATE.activeInfo = STATE.activeInfo === area ? null : area; 
+    render(); 
+};
 
 window.updateCourseSelection = function(courseName) {
     STATE.player.courseName = courseName;
     const dbCourse = COURSE_DATABASE.find(c => c.name === courseName);
-    if (dbCourse) STATE.player.courseHoles = JSON.parse(JSON.stringify(dbCourse.holes));
-    syncProfileToFirebase();
+    if (dbCourse) {
+        STATE.player.courseHoles = JSON.parse(JSON.stringify(dbCourse.holes));
+    }
+    syncProfileToFirebase(); 
     render();
-}
+};
 
 window.updateBagDistance = function(clubName, dist) {
     const idx = STATE.player.bag.findIndex(c => c.name === clubName);
-    if(idx >= 0) {
-        STATE.player.bag[idx].distance = dist;
-        syncProfileToFirebase();
-        render();
+    if(idx >= 0) { 
+        STATE.player.bag[idx].distance = dist; 
+        syncProfileToFirebase(); 
+        render(); 
     }
-}
+};
 
 window.suggestClubIndex = function(distance) {
     const bag = STATE.player.bag;
-    if (distance <= 30) {
-        const idx = bag.findIndex(c => c.id === 'putter');
-        return idx >= 0 ? idx : 0;
+    if (distance <= 30) { 
+        const idx = bag.findIndex(c => c.id === 'putter'); 
+        return idx >= 0 ? idx : 0; 
     }
-    let closestIdx = -1;
+    
+    let closestIdx = -1; 
     let smallestDiff = Infinity;
+    
     for (let i = 0; i < bag.length; i++) {
         if (bag[i].id === 'putter') continue;
         const diff = bag[i].distance - distance;
-        if (diff >= 0 && diff < smallestDiff) {
-            smallestDiff = diff;
-            closestIdx = i;
+        if (diff >= 0 && diff < smallestDiff) { 
+            smallestDiff = diff; 
+            closestIdx = i; 
         }
     }
-    if (closestIdx === -1) {
-        let maxDist = -1;
-        for (let i = 0; i < bag.length; i++) {
-            if (bag[i].id === 'putter') continue;
-            if (bag[i].distance > maxDist) { maxDist = bag[i].distance; closestIdx = i; }
-        }
+    
+    if (closestIdx === -1) { 
+        let maxDist = -1; 
+        for (let i = 0; i < bag.length; i++) { 
+            if (bag[i].id === 'putter') continue; 
+            if (bag[i].distance > maxDist) { 
+                maxDist = bag[i].distance; 
+                closestIdx = i; 
+            } 
+        } 
     }
     return closestIdx === -1 ? 0 : closestIdx;
-}
+};
 
 window.checkAchievements = function(roundData) {
-    const a = STATE.player.achievements;
-    const addBadge = (title, icon) => { if (!a.some(x => x.title === title)) a.push({title, icon}); }
+    if (!STATE.player.achievements) STATE.player.achievements = [];
+    
+    const addBadge = (title, icon) => { 
+        if (!STATE.player.achievements.some(x => x.title === title)) {
+            STATE.player.achievements.push({title, icon}); 
+        }
+    };
     
     if (STATE.player.roundCount === 1) addBadge("First Round Logged", "🏆");
     
@@ -1134,246 +1355,289 @@ window.checkAchievements = function(roundData) {
     
     const hasBirdie = roundData.holes.some(h => h.totalStrokes < h.par);
     if (hasBirdie) addBadge("Birdie Hunter", "🎯");
-}
+};
 
 window.verifyPhone = async function() {
     const phone = document.getElementById('welcome-phone').value.trim();
     if (!phone) return;
     
-    const btn = document.getElementById('welcome-next-btn');
-    btn.innerText = "Checking...";
+    const btn = document.getElementById('welcome-next-btn'); 
+    btn.innerText = "Checking..."; 
     btn.disabled = true;
-
+    
     if (db) {
         try {
             const snap = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'profiles', phone));
             if (snap.exists()) { 
                 STATE.player = { ...STATE.player, ...snap.data() }; 
-                localStorage.setItem('descent_phone', phone);
+                localStorage.setItem('descent_phone', phone); 
                 switchView('learn'); 
                 return; 
             }
-        } catch(e) {
-            console.error("Firebase verification bypassed:", e);
+        } catch(e) { 
+            console.error("Firebase verification bypassed:", e); 
         }
     }
     
     STATE.player.phone = phone;
     document.getElementById('welcome-step-1').classList.add('hidden');
     document.getElementById('welcome-step-2').classList.remove('hidden');
-}
+};
 
-window.startNewProfile = async () => { 
+window.startNewProfile = async function() { 
     STATE.player.name = document.getElementById('welcome-name').value.trim(); 
     await syncProfileToFirebase(); 
     switchView('onboarding'); 
-}
+};
 
-window.nextOBStep = () => { 
-    if (STATE.onboardingStep === 5) { syncProfileToFirebase(); switchView('welcome_sequence'); } 
-    else { STATE.onboardingStep++; render(); } 
-}
+window.nextOBStep = function(dir = 1) { 
+    if (dir === 1) {
+        if (STATE.onboardingStep === 5) { 
+            syncProfileToFirebase(); 
+            switchView('welcome_sequence'); 
+        } else { 
+            STATE.onboardingStep++; 
+            render(); 
+        }
+    } else {
+        if (STATE.onboardingStep > 1) {
+            STATE.onboardingStep--;
+            render();
+        }
+    }
+};
 
-window.nextWelcomeSequence = function() {
-    if (STATE.welcomeStep === 4) switchView('learn');
-    else { STATE.welcomeStep++; render(); }
-}
+window.nextWelcomeSequence = function() { 
+    if (STATE.welcomeStep === 4) {
+        switchView('learn'); 
+    } else { 
+        STATE.welcomeStep++; 
+        render(); 
+    } 
+};
 
-window.handlePlanAction = (type, index, action) => {
-    const r = STATE.activeRound;
+window.handlePlanAction = function(type, index, action) {
+    const r = STATE.activeRound; 
     const item = type === 'learn' ? r.newLearn[index] : r.newPractice[index];
     
-    if (action === 'add') {
-        STATE.player.customPlan[type].push(item);
-        const nextIdx = STATE.player.customPlan[type].length - 1;
-        STATE.player.completedTasksSet[`${type}_${nextIdx}`] = false;
+    if (action === 'add') { 
+        STATE.player.customPlan[type].push(item); 
+        const nextIdx = STATE.player.customPlan[type].length - 1; 
+        STATE.player.completedTasksSet[`${type}_${nextIdx}`] = false; 
     }
     
-    if (type === 'learn') r.newLearn.splice(index, 1);
-    else r.newPractice.splice(index, 1);
+    if (type === 'learn') {
+        r.newLearn.splice(index, 1); 
+    } else {
+        r.newPractice.splice(index, 1);
+    }
     
-    syncProfileToFirebase();
+    syncProfileToFirebase(); 
     render();
 };
 
-window.startRoundFlow = () => {
-    const firstHoleDist = STATE.player.courseHoles[0].distance;
-    STATE.activeRound = {
-        holeIndex: 0, holesLog: [], currentHoleShots: [], penaltyStrokes: 0,
-        selectedClubIndex: suggestClubIndex(firstHoleDist), tempPuttCount: 0,
-        currentShotDistance: firstHoleDist,
-        shotOutcomes: { dir: 'Straight', dist: 'At Dist', lie: 'Fairway', cont: 'Good Strike', ob: false },
-        holeState: 'fairway', cornerMessages: [],
-        currentHoleIsGir: false, isCoachTyping: false, summaryFilter: 'All', roundProficiency: null
+window.updateSummaryFilter = function(val) { 
+    STATE.activeRound.summaryFilter = val; 
+    render(); 
+};
+
+window.startRoundFlow = function() {
+    const firstDist = STATE.player.courseHoles[0].distance;
+    STATE.activeRound = { 
+        holeIndex: 0, 
+        holesLog: [], 
+        currentHoleShots: [], 
+        penaltyStrokes: 0, 
+        selectedClubIndex: suggestClubIndex(firstDist), 
+        tempPuttCount: 0, 
+        currentShotDistance: firstDist, 
+        shotOutcomes: { dir: 'Straight', dist: 'At Dist', lie: 'Fairway', cont: 'Good Strike', ob: false }, 
+        holeState: 'fairway', 
+        cornerMessages: [], 
+        currentHoleIsGir: false, 
+        isCoachTyping: false, 
+        summaryFilter: 'All', 
+        roundProficiency: null 
     };
     switchView('play_active');
-}
+};
 
-window.recordFairwayShot = () => {
-    const r = STATE.activeRound;
+window.recordFairwayShot = function() {
+    const r = STATE.activeRound; 
     const hole = STATE.player.courseHoles[r.holeIndex];
-    const club = STATE.player.bag[r.selectedClubIndex];
+    const club = STATE.player.bag[r.selectedClubIndex]; 
     const out = r.shotOutcomes;
     const shotNumber = r.currentHoleShots.length + 1;
     
-    if (out.lie === 'Green') {
-        if (shotNumber <= (hole.par - 2)) r.currentHoleIsGir = true;
-        r.holeState = 'green';
+    if (out.lie === 'Green') { 
+        if (shotNumber <= (hole.par - 2)) {
+            r.currentHoleIsGir = true; 
+        }
+        r.holeState = 'green'; 
     }
-
+    
     r.currentHoleShots.push({ 
-        club: club.name, direction: out.dir, distOut: out.dist, lie: out.lie, contact: out.cont, ob: out.ob, distance: club.distance
+        club: club.name, 
+        direction: out.dir, 
+        distOut: out.dist, 
+        lie: out.lie, 
+        contact: out.cont, 
+        ob: out.ob, 
+        distance: club.distance 
     });
-
-    if (out.ob) r.penaltyStrokes += 1;
+    
+    if (out.ob) {
+        r.penaltyStrokes += 1;
+    }
     
     if (r.holeState !== 'green') {
-        const remaining = Math.max(0, r.currentShotDistance - club.distance);
+        const remaining = Math.max(0, r.currentShotDistance - club.distance); 
         r.currentShotDistance = remaining;
-        r.selectedClubIndex = suggestClubIndex(remaining);
+        r.selectedClubIndex = suggestClubIndex(remaining); 
         r.shotOutcomes = { dir: 'Straight', dist: 'At Dist', lie: 'Fairway', cont: 'Good Strike', ob: false };
     }
     render();
-}
+};
 
-window.finishHoleWithPutts = async (count) => {
-    const r = STATE.activeRound;
+window.finishHoleWithPutts = async function(count) {
+    const r = STATE.activeRound; 
     const hole = STATE.player.courseHoles[r.holeIndex];
-    const comment = document.getElementById('hole-comment')?.value || "";
-
-    r.holesLog.push({
-        number: hole.number, par: hole.par,
-        shots: [...r.currentHoleShots], putts: count, penalties: r.penaltyStrokes,
-        totalStrokes: r.currentHoleShots.length + count + r.penaltyStrokes,
-        isGir: r.currentHoleIsGir, comment: comment
+    const commentEl = document.getElementById('hole-comment');
+    
+    r.holesLog.push({ 
+        number: hole.number, 
+        par: hole.par, 
+        shots: [...r.currentHoleShots], 
+        putts: count, 
+        penalties: r.penaltyStrokes, 
+        totalStrokes: r.currentHoleShots.length + count + r.penaltyStrokes, 
+        isGir: r.currentHoleIsGir, 
+        comment: commentEl ? commentEl.value : "" 
     });
-
-    if (hole.number === 18) {
-        switchView('post_round');
-        await performFinalAnalysis();
-        await saveRoundToFirebase({ course: STATE.player.courseName, holes: r.holesLog });
-    } else if (hole.number % 3 === 0) {
-        switchView('coach_corner');
+    
+    if (hole.number === 18) { 
+        switchView('post_round'); 
+        await performFinalAnalysis(); 
+        await saveRoundToFirebase({ course: STATE.player.courseName, holes: r.holesLog }); 
+    }
+    else if (hole.number % 3 === 0) {
+        switchView('coach_corner'); 
         r.isCoachTyping = true;
         
-        const last3 = r.holesLog.slice(-3);
-        const next3 = STATE.player.courseHoles.slice(r.holeIndex + 1, r.holeIndex + 4);
-        const currentStats = {
-            totalStrokes: r.holesLog.reduce((s, h) => s + h.totalStrokes, 0),
-            toPar: r.holesLog.reduce((s, h) => s + (h.totalStrokes - h.par), 0),
-            ppg: (r.holesLog.reduce((s, h) => s + h.putts, 0) / r.holesLog.length).toFixed(1),
-            gir: Math.round((r.holesLog.filter(h => h.isGir).length / r.holesLog.length) * 100)
+        const currentStats = { 
+            gir: Math.round((r.holesLog.filter(h => h.isGir).length / r.holesLog.length) * 100), 
+            ppg: (r.holesLog.reduce((s, h) => s + h.putts, 0) / r.holesLog.length).toFixed(1) 
         };
-
-        const prompt = `PLAYER CONTEXT: Driving: ${STATE.player.coreAreas.driving}/5, Approach: ${STATE.player.coreAreas.approach}/5, Putting: ${STATE.player.coreAreas.putting}/5. ROUND DATA (Hole ${hole.number}): Score: ${currentStats.toPar >= 0 ? '+' + currentStats.toPar : currentStats.toPar}. Stats: ${currentStats.gir}% GIR, ${currentStats.ppg} PPG. NEXT 3: ${next3.map(h => `H${h.number}: P${h.par}, ${h.distance}y`).join('\n')}. INSTRUCTION: Give salient strategy for the next 3 holes comparing history to current play. End with 'single thought for the next three holes:'`;
-
-        const advice = await getAIAdvice(prompt);
-        r.cornerMessages.push({ role: 'coach', text: advice });
-        STATE.chatMessages.push({ role: 'coach', text: `Between Holes ${hole.number} & ${hole.number+1}: ${advice}` });
-        r.isCoachTyping = false;
         
-        setupNextHole(r);
+        const nextHolesStr = STATE.player.courseHoles.slice(r.holeIndex+1, r.holeIndex+4).map(h => `H${h.number}:P${h.par}`).join(',');
+        
+        const prompt = `Ability: Driving:${STATE.player.coreAreas.driving}/5, Appr:${STATE.player.coreAreas.approach}/5, Putt:${STATE.player.coreAreas.putting}/5. Playing:${r.holesLog.length} holes, GIR:${currentStats.gir}%, PPG:${currentStats.ppg}. Next 3: ${nextHolesStr}. Strategy for next 3? End with 'single thought for the next three holes:'`;
+        
+        const advice = await getAIAdvice(prompt); 
+        r.cornerMessages.push({ role: 'coach', text: advice }); 
+        STATE.chatMessages.push({ role: 'coach', text: `Between H${hole.number}&H${hole.number+1}: ${advice}` });
+        
+        r.isCoachTyping = false; 
+        setupNextHole(r); 
         render();
-    } else {
-        setupNextHole(r);
-        render();
+    } else { 
+        setupNextHole(r); 
+        render(); 
     }
-}
+};
 
 function setupNextHole(r) {
-    r.holeIndex++;
-    const nextHoleDist = STATE.player.courseHoles[r.holeIndex].distance;
-    r.currentHoleShots = []; r.penaltyStrokes = 0; 
-    r.selectedClubIndex = suggestClubIndex(nextHoleDist);
-    r.currentShotDistance = nextHoleDist;
-    r.holeState = 'fairway'; r.currentHoleIsGir = false;
+    r.holeIndex++; 
+    const nextDist = STATE.player.courseHoles[r.holeIndex].distance;
+    r.currentHoleShots = []; 
+    r.penaltyStrokes = 0; 
+    r.selectedClubIndex = suggestClubIndex(nextDist); 
+    r.currentShotDistance = nextDist; 
+    r.holeState = 'fairway'; 
+    r.currentHoleIsGir = false; 
     r.shotOutcomes = { dir: 'Straight', dist: 'At Dist', lie: 'Fairway', cont: 'Good Strike', ob: false };
 }
 
 window.sendCornerMessage = async function() {
-    const inputEl = document.getElementById('corner-chat-input');
-    const text = inputEl.value.trim();
-    if (!text) return;
-
-    STATE.activeRound.cornerMessages.push({ role: 'user', text: text });
-    STATE.chatMessages.push({ role: 'user', text: text });
-    inputEl.value = '';
-    STATE.activeRound.isCoachTyping = true;
+    const input = document.getElementById('corner-chat-input'); 
+    if (!input.value.trim()) return;
+    
+    STATE.activeRound.cornerMessages.push({ role: 'user', text: input.value }); 
+    input.value = ''; 
+    STATE.activeRound.isCoachTyping = true; 
     render();
-
-    const advice = await getAIAdvice(`The player replied to your last advice with: "${text}". Give a 1-2 sentence response.`);
-    STATE.activeRound.cornerMessages.push({ role: 'coach', text: advice });
-    STATE.chatMessages.push({ role: 'coach', text: advice });
-    STATE.activeRound.isCoachTyping = false;
+    
+    const advice = await getAIAdvice(`Player says: "${STATE.activeRound.cornerMessages[STATE.activeRound.cornerMessages.length-1].text}". Quick crisp coaching response.`);
+    STATE.activeRound.cornerMessages.push({ role: 'coach', text: advice }); 
+    STATE.activeRound.isCoachTyping = false; 
     render();
-}
+};
 
 window.returnToTee = function() {
     switchView('play_active');
-}
+};
 
-window.setCoachMode = function(mode) { STATE.coachMode = mode; render(); }
+window.setCoachMode = function(mode) {
+    STATE.coachMode = mode;
+    render();
+};
+
 window.sendChatMessage = async function() {
-    const text = STATE.chatInput;
-    if (!text || !text.trim()) return;
-    STATE.chatMessages.push({ role: 'user', text: text.trim() });
-    STATE.chatInput = ''; STATE.isTyping = true; render();
+    const input = document.getElementById('chat-input'); 
+    if (!input.value.trim()) return;
     
-    const advice = await getAIAdvice(`The player asks: "${text}". Give a 1-2 sentence coaching response.`);
-    STATE.chatMessages.push({ role: 'coach', text: advice });
-    STATE.isTyping = false; render();
-}
+    STATE.chatMessages.push({ role: 'user', text: input.value }); 
+    input.value = ''; 
+    STATE.isTyping = true; 
+    render();
+    
+    const advice = await getAIAdvice(`The player asks: "${STATE.chatMessages[STATE.chatMessages.length-1].text}". 1-2 sentence coaching response.`);
+    STATE.chatMessages.push({ role: 'coach', text: advice }); 
+    STATE.isTyping = false; 
+    render();
+};
 
 async function performFinalAnalysis() {
-    const r = STATE.activeRound;
-    const holeData = JSON.stringify(r.holesLog.map(h => ({
-        hole: h.number, strokes: h.totalStrokes, putts: h.putts, gir: h.isGir,
-        shots: h.shots.map(s => `${s.club}: ${s.distOut}, ${s.direction}, ${s.lie}`)
+    const r = STATE.activeRound; 
+    const holeData = JSON.stringify(r.holesLog.map(h => ({ 
+        hole: h.number, 
+        strokes: h.totalStrokes, 
+        putts: h.putts, 
+        shots: h.shots.map(s => `${s.club}:${s.lie}`) 
     })));
-
-    const currentPlan = `Learning: ${STATE.player.customPlan.learn.join(' | ') || 'None'}. Practicing: ${STATE.player.customPlan.practice.join(' | ') || 'None'}.`;
-
-    const prompt = `
-    PLAYER CONTEXT: 
-    - Baseline Abilities (1-5): Driving: ${STATE.player.coreAreas.driving}, Approach: ${STATE.player.coreAreas.approach}, Putting: ${STATE.player.coreAreas.putting}. 
-    - Current Active Plan: ${currentPlan}.
     
-    ROUND DATA: ${holeData}.
+    const prompt = `PLAYER Context: Driving:${STATE.player.coreAreas.driving}, Approach:${STATE.player.coreAreas.approach}. Round:${holeData}. Instruction: 1. Determine round proficiency (1-5) for core areas. 2. Give 1-3 new learn and 1-3 new practice topics. Return raw JSON: {"coreScores":{"driving":s,"longIrons":s,"approach":s,"aroundGreen":s,"putting":s,"recovery":s},"newLearn":[],"newPractice":[]}`;
     
-    INSTRUCTION: 
-    1. Analyze the round data comparing it to their baseline and current plan. 
-    2. Determine their round proficiency (1-5) for core areas FOR THIS ROUND ONLY.
-    3. Based on the biggest weaknesses shown IN THIS ROUND and taking into account what they are already practicing/learning, generate 1 to 3 specific, actionable NEW things to learn (e.g., reading/video topics) and 1 to 3 NEW things to practice (e.g., specific drills).
-    
-    Return ONLY a valid JSON object:
-    { 
-      "coreScores": { "driving": score, "longIrons": score, "approach": score, "aroundGreen": score, "putting": score, "recovery": score },
-      "newLearn": ["Specific learning topic 1"],
-      "newPractice": ["Specific drill 1"]
-    }`;
-
-    try {
-        let responseText = await getAIAdvice(prompt, true);
-        responseText = responseText.replace(/```json/gi, '').replace(/```/g, '').trim();
-        const analysis = JSON.parse(responseText);
-        r.roundProficiency = analysis.coreScores || { driving: 3, longIrons: 3, approach: 3, aroundGreen: 3, putting: 3, recovery: 3 };
-        r.newLearn = analysis.newLearn || [];
-        r.newPractice = analysis.newPractice || [];
-        render();
-    } catch(e) {
-        console.error("Proficiency Analysis Error", e);
-        r.roundProficiency = { driving: 3, longIrons: 3, approach: 3, aroundGreen: 3, putting: 3, recovery: 3 };
-        r.newLearn = ["Review course management basics."];
-        r.newPractice = ["Hit 20 balls focusing purely on tempo."];
-        render();
+    try { 
+        let res = await getAIAdvice(prompt, true); 
+        res = res.replace(/```json/gi, '').replace(/```/g, '').trim(); 
+        const analysis = JSON.parse(res); 
+        r.roundProficiency = analysis.coreScores; 
+        r.newLearn = analysis.newLearn; 
+        r.newPractice = analysis.newPractice; 
+        render(); 
+    } catch(e) { 
+        console.error(e);
+        r.roundProficiency = { driving: 3, longIrons: 3, approach: 3, aroundGreen: 3, putting: 3, recovery: 3 }; 
+        render(); 
     }
 }
 
-window.logout = () => { STATE.player = resetPlayerState(); switchView('welcome'); }
+window.logout = function() { 
+    STATE.player = resetPlayerState(); 
+    localStorage.removeItem('descent_phone');
+    switchView('welcome'); 
+};
 
-initFirebase().then(() => switchView('welcome'));
-
-document.querySelectorAll('.nav-btn').forEach(btn => btn.onclick = () => switchView(btn.dataset.tab));
+initFirebase().then(() => { 
+    const savedPhone = localStorage.getItem('descent_phone'); 
+    if(savedPhone) {
+        document.getElementById('welcome-phone').value = savedPhone;
+        verifyPhone(); 
+    } else {
+        switchView('welcome'); 
+    }
+});
 
 </script>
 </body>
