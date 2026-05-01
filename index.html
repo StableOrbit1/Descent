@@ -108,7 +108,6 @@ async function initFirebase() {
         app = initializeApp(firebaseConfig);
         
         // --- FIREBASE APP CHECK ---
-        self.FIREBASE_APPCHECK_DEBUG_TOKEN = true; 
         initializeAppCheck(app, {
             provider: new ReCaptchaV3Provider('6LfpHNMsAAAAANOgLk1nGJ-Ir9fpG5mD2xG7tl3X'), 
             isTokenAutoRefreshEnabled: true
@@ -156,10 +155,14 @@ async function saveRoundToFirebase(roundData) {
 }
 
 async function getAIAdvice(promptText, requiresJson = false) {
-    if (!vertexAI) return requiresJson ? "{}" : "Coach is offline.";
+    if (!vertexAI) {
+        console.error("Vertex AI SDK failed to initialize.");
+        return requiresJson ? "{}" : "Coach is offline. Vertex SDK not initialized.";
+    }
+    
     const instruction = requiresJson 
         ? "You are a professional golf data analyst. Return ONLY raw, valid JSON. Do not include markdown formatting or backticks."
-        : "You are a professional golf 'Corner Man'. Give SALIENT, CRISP coaching advice. End with - 'single thought for the next three holes:'";
+        : "You are a professional golf 'Corner Man'. Give SALIENT, CRISP coaching advice based on current stats vs historical player ability. End with - 'single thought for the next three holes:'";
 
     try {
         const model = getGenerativeModel(vertexAI, { 
@@ -169,8 +172,10 @@ async function getAIAdvice(promptText, requiresJson = false) {
         const result = await model.generateContent(promptText);
         return result.response.text();
     } catch (err) {
-        console.error("Vertex AI Error:", err);
-        return requiresJson ? "{}" : `AI Error.`;
+        console.error("==== VERTEX AI CRASH ====");
+        console.error("Error Message:", err.message);
+        console.error("Full Error Object:", err);
+        return requiresJson ? "{}" : `AI ERROR: ${err.message}.`;
     }
 }
 
@@ -1040,7 +1045,7 @@ function renderCheckIn() {
 }
 
 // ============================================================================
-// 6. EVENT HANDLERS & ACTIONS
+// 6. EVENT HANDLERS & ACTIONS (Fully Restored)
 // ============================================================================
 
 window.updateClubSlider = (idx) => { STATE.activeRound.selectedClubIndex = parseInt(idx); render(); }
@@ -1049,8 +1054,15 @@ window.checkWelcomePhone = () => { document.getElementById('welcome-next-btn').d
 window.checkWelcomeName = () => { document.getElementById('welcome-start-btn').disabled = document.getElementById('welcome-name').value.length < 2; }
 
 window.toggleTask = function(type, idx) {
-    const key = `${type}_${idx}`;
+    let key;
+    if (idx === 'default') {
+        key = `${type}_default`;
+    } else {
+        key = `${type}_${idx}`;
+    }
+    
     STATE.player.completedTasksSet[key] = !STATE.player.completedTasksSet[key];
+    
     if (STATE.player.completedTasksSet[key]) {
         STATE.player.drillsPassed++;
         STATE.player.sessionsCount++;
@@ -1204,7 +1216,6 @@ window.recordFairwayShot = () => {
     const out = r.shotOutcomes;
     const shotNumber = r.currentHoleShots.length + 1;
     
-    // Automatically track distance behind the scenes based on standard club yardages
     if (out.lie === 'Green') {
         if (shotNumber <= (hole.par - 2)) r.currentHoleIsGir = true;
         r.holeState = 'green';
