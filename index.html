@@ -78,7 +78,7 @@
 
 <script type="module">
 // ============================================================================
-// 1. FIREBASE INITIALIZATION
+// 1. FIREBASE INITIALIZATION & OFFLINE CACHING
 // ============================================================================
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
 import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
@@ -108,7 +108,7 @@ async function initFirebase() {
         app = initializeApp(firebaseConfig);
         
         // --- FIREBASE APP CHECK ---
-        self.FIREBASE_APPCHECK_DEBUG_TOKEN = true; 
+        // self.FIREBASE_APPCHECK_DEBUG_TOKEN = true; 
         initializeAppCheck(app, {
             provider: new ReCaptchaV3Provider('6LfpHNMsAAAAANOgLk1nGJ-Ir9fpG5mD2xG7tl3X'), 
             isTokenAutoRefreshEnabled: true
@@ -124,38 +124,106 @@ async function initFirebase() {
             await signInAnonymously(auth);
         }
 
-        onAuthStateChanged(auth, (user) => { currentUser = user; });
+        onAuthStateChanged(auth, (user) => { 
+            currentUser = user; 
+            if (user) {
+                // Fire off any background syncs when auth is confirmed
+                if (window.syncPendingRounds) window.syncPendingRounds();
+                if (localStorage.getItem('descent_pending_profile_sync') === 'true' && window.syncProfileToFirebase) {
+                    window.syncProfileToFirebase().then(() => localStorage.removeItem('descent_pending_profile_sync'));
+                }
+            }
+        });
     } catch (error) {
         console.warn("Firebase running in local memory mode.", error);
     }
 }
 
+// OFFLINE SYNC LISTENER
+window.addEventListener('online', () => {
+    console.log("Network restored. Syncing pending data...");
+    if (window.syncPendingRounds) window.syncPendingRounds();
+    if (localStorage.getItem('descent_pending_profile_sync') === 'true' && window.syncProfileToFirebase) {
+        window.syncProfileToFirebase().then(() => localStorage.removeItem('descent_pending_profile_sync'));
+    }
+});
+
 window.syncProfileToFirebase = async function() {
-    if (!db || !STATE.player.phone) return;
+    // 1. Always update local cache instantly for offline resilience
+    localStorage.setItem('descent_local_player', JSON.stringify(STATE.player));
+
+    if (!navigator.onLine || !db || !STATE.player.phone) {
+        localStorage.setItem('descent_pending_profile_sync', 'true');
+        return;
+    }
+
     try {
         const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'profiles', STATE.player.phone);
         await setDoc(docRef, STATE.player, { merge: true });
+        localStorage.removeItem('descent_pending_profile_sync');
     } catch (e) {
-        console.error("Failed to sync profile:", e);
+        console.error("Failed to sync profile. Queueing for later:", e);
+        localStorage.setItem('descent_pending_profile_sync', 'true');
     }
 }
 
+function savePendingRound(roundPayload) {
+    let pending = JSON.parse(localStorage.getItem('descent_pending_rounds') || '[]');
+    pending.push(roundPayload);
+    localStorage.setItem('descent_pending_rounds', JSON.stringify(pending));
+}
+
+window.syncPendingRounds = async function() {
+    if (!navigator.onLine || !db || !STATE.player.phone) return;
+    let pending = JSON.parse(localStorage.getItem('descent_pending_rounds') || '[]');
+    if (pending.length === 0) return;
+
+    let remaining = [];
+    for (let roundPayload of pending) {
+        try {
+            const roundsCol = collection(db, 'artifacts', appId, 'public', 'data', `rounds_${STATE.player.phone}`);
+            // Push to DB and mark syncedAt
+            await addDoc(roundsCol, { ...roundPayload, syncedAt: new Date().toISOString() });
+        } catch (e) {
+            console.error("Failed to sync queued round. Keeping in queue:", e);
+            remaining.push(roundPayload);
+        }
+    }
+    localStorage.setItem('descent_pending_rounds', JSON.stringify(remaining));
+}
+
 async function saveRoundToFirebase(roundData) {
-    if (!db || !STATE.player.phone) return;
+    // Optimistic state updates before any network calls
+    STATE.player.hasPlayedRound = true;
+    STATE.player.roundCount++;
+    window.checkAchievements(roundData);
+    
+    // Always cache locally instantly
+    localStorage.setItem('descent_local_player', JSON.stringify(STATE.player));
+    
+    const roundPayload = { ...roundData, timestamp: new Date().toISOString() };
+
+    // If offline, queue the round and bail gracefully
+    if (!navigator.onLine || !db || !STATE.player.phone) {
+        console.warn("Offline or DB unavailable. Queueing round locally.");
+        savePendingRound(roundPayload);
+        return;
+    }
+
     try {
         const roundsCol = collection(db, 'artifacts', appId, 'public', 'data', `rounds_${STATE.player.phone}`);
-        await addDoc(roundsCol, { ...roundData, timestamp: new Date().toISOString() });
-        
-        STATE.player.hasPlayedRound = true;
-        STATE.player.roundCount++;
-        window.checkAchievements(roundData);
+        await addDoc(roundsCol, roundPayload);
         await syncProfileToFirebase();
     } catch (e) {
-        console.error("Failed to save round:", e);
+        console.error("Failed to save round to Firebase, queueing locally:", e);
+        savePendingRound(roundPayload);
     }
 }
 
 async function getAIAdvice(promptText, requiresJson = false) {
+    if (!navigator.onLine) {
+        return requiresJson ? "{}" : "Coach is offline. Trust your swing and stick to your pre-shot routine.";
+    }
     if (!vertexAI) return requiresJson ? "{}" : "Coach is offline.";
     const instruction = requiresJson 
         ? "You are a professional golf data analyst. Return ONLY raw, valid JSON. Do not include markdown formatting or backticks."
@@ -262,7 +330,7 @@ window.getRatingLabel = function(rating, handicap) {
 };
 
 // ============================================================================
-// 3. APPLICATION STATE
+// 3. APPLICATION STATE & STROKES GAINED LOGIC
 // ============================================================================
 function resetPlayerState() {
     return {
@@ -275,7 +343,9 @@ function resetPlayerState() {
         courseHoles: JSON.parse(JSON.stringify(COURSE_DATABASE[0].holes)),
         customPlan: { learn: [], practice: [] },
         drillsPassed: 0, sessionsCount: 0, completedTasksSet: {},
-        achievements: [], settings: { silenceCoach: false }, clubInsights: {}
+        achievements: [], settings: { silenceCoach: false }, clubInsights: {},
+        sgStats: { putting: 0.0, approach: 0.0, shortGame: 0.0, offTee: 0.0 },
+        historicalMisses: {} // Tally of structural misses per club
     };
 }
 
@@ -292,6 +362,52 @@ function getWeeksRemaining() {
     const now = new Date();
     return Math.max(1, Math.ceil(((target - now) / (1000 * 60 * 60 * 24)) / 7));
 }
+
+window.calculateRoundSG = function(holes) {
+    let sg = { putting: 0, approach: 0, shortGame: 0, offTee: 0 };
+    
+    holes.forEach(h => {
+        let strokes_lost = h.par - h.totalStrokes;
+        
+        // 1. Putting SG (Assumes 2.0 putts per hole is baseline par for scratch)
+        let putting_sg = 2.0 - h.putts;
+        
+        // 2. Off Tee SG
+        let offTee_sg = 0;
+        if (h.par > 3 && h.shots.length > 0) {
+            let teeShot = h.shots[0];
+            if (teeShot.ob) offTee_sg = -2.0;
+            else if (teeShot.lie !== 'Fairway') offTee_sg = -0.5;
+        }
+        
+        // 3. Short Game SG
+        let shortGame_sg = 0;
+        let shortShots = h.shots.filter(s => s.distance <= 50 && s.club !== 'Putter');
+        if (shortShots.length > 1) {
+            // Penalize taking multiple shots inside 50y to get on the green
+            shortGame_sg = -(shortShots.length - 1);
+        }
+        shortShots.forEach(s => { if(s.ob) shortGame_sg -= 1.0; });
+        
+        // 4. Approach SG (Catch-all for remaining strokes lost)
+        let approach_sg = strokes_lost - (putting_sg + offTee_sg + shortGame_sg);
+
+        sg.putting += putting_sg;
+        sg.offTee += offTee_sg;
+        sg.shortGame += shortGame_sg;
+        sg.approach += approach_sg;
+    });
+    
+    // Normalize SG to an 18 hole equivalent (if playing partial rounds)
+    let scale = 18 / Math.max(1, holes.length);
+    return {
+        putting: sg.putting * scale,
+        offTee: sg.offTee * scale,
+        shortGame: sg.shortGame * scale,
+        approach: sg.approach * scale
+    };
+}
+
 
 // ============================================================================
 // 4. RENDERING ENGINE
@@ -786,6 +902,18 @@ function renderPostRound() {
         `;
     }
 
+    let pithyAdviceHTML = '';
+    if (r.pithyAdvice) {
+        pithyAdviceHTML = `
+            <div class="bg-[#1D7A5A]/20 p-6 rounded-2xl border border-[#2DCB8A]/40 mb-10 shadow-[0_0_15px_rgba(45,203,138,0.1)] text-center animate-fade-in">
+                <div class="text-3xl mb-3">💡</div>
+                <p class="text-[#F4F4F0] font-medium leading-relaxed italic text-lg">
+                    "${r.pithyAdvice}"
+                </p>
+            </div>
+        `;
+    }
+
     return `
     <div class="flex flex-col h-full bg-[#0D0D1E] animate-fade-in p-6 pb-24 overflow-y-auto hide-scrollbar">
         <div class="text-center mt-4 mb-8">
@@ -880,6 +1008,8 @@ function renderPostRound() {
             </div>
         </div>
 
+        ${pithyAdviceHTML}
+
         ${suggestionsHTML}
 
         <button onclick="switchView('progress')" class="w-full bg-[#1A1A3A] border border-white/10 text-white font-bold py-5 rounded-2xl uppercase tracking-widest shadow-lg">Finalize & Sync</button>
@@ -892,6 +1022,24 @@ window.updateSummaryFilter = (val) => {
 };
 
 function renderProgress() {
+    const pSg = STATE.player.sgStats || { putting: 0, approach: 0, shortGame: 0, offTee: 0 };
+    const statsArr = [
+        { label: 'Putting', value: pSg.putting, key: 'putting' },
+        { label: 'Approach', value: pSg.approach, key: 'approach' },
+        { label: 'Short Game', value: pSg.shortGame, key: 'shortGame' },
+        { label: 'Off the Tee', value: pSg.offTee, key: 'offTee' }
+    ];
+    
+    // Sort from worst (lowest) to best (highest) to highlight weak areas
+    statsArr.sort((a, b) => a.value - b.value);
+    
+    // Auto-assign heat map colors based on rank inside the sorted array
+    const rankColors = ['#E85030', '#E8A930', '#B8C830', '#2DCB8A'];
+    statsArr.forEach((s, i) => s.color = rankColors[i]);
+
+    // Calculate maximum absolute loss to scale widths proportionally
+    const maxAbsVal = Math.max(0.1, ...statsArr.map(s => Math.abs(s.value)));
+
     return `
     <div class="flex flex-col h-full p-6 animate-fade-in">
         <h1 class="text-2xl font-serif font-bold mb-6">Progress</h1>
@@ -903,14 +1051,14 @@ function renderProgress() {
             </div>
         ` : ''}
         <div class="bg-[#1A1A3A] border border-white/10 rounded-xl p-5 mb-4">
-            <h3 class="text-[10px] font-bold uppercase tracking-widest text-[#8890A0] mb-1">Strokes Gained vs ${STATE.player.targetHandicap.toFixed(1)} Benchmark</h3>
+            <h3 class="text-[10px] font-bold uppercase tracking-widest text-[#8890A0] mb-1">Estimated SG (vs Scratch)</h3>
             <p class="text-xs text-[#8890A0] mb-6">Where you're losing strokes per round</p>
             <div class="space-y-4">
-                ${[{ label: 'Putting', value: -2.1, color: '#E85030', width: '84%' }, { label: 'Approach', value: -0.8, color: '#E8A930', width: '32%' }, { label: 'Short Game', value: -0.4, color: '#B8C830', width: '16%' }, { label: 'Off the Tee', value: -0.2, color: '#2DCB8A', width: '8%' }].map(stat => `
+                ${statsArr.map(stat => `
                     <div class="flex items-center gap-3">
                         <span class="w-20 text-xs font-bold text-[#F4F4F0]">${stat.label}</span>
-                        <div class="flex-1 h-2 bg-[#404060] rounded-full relative"><div class="absolute top-0 left-0 h-full rounded-full" style="width: ${STATE.player.roundCount > 0 ? stat.width : '0%'}; background-color: ${stat.color}"></div></div>
-                        <span class="w-8 text-right text-xs font-bold" style="color: ${stat.color}">${STATE.player.roundCount > 0 ? stat.value : '0.0'}</span>
+                        <div class="flex-1 h-2 bg-[#404060] rounded-full relative"><div class="absolute top-0 left-0 h-full rounded-full transition-all duration-1000" style="width: ${STATE.player.roundCount > 0 ? (Math.min(100, Math.abs(stat.value / maxAbsVal) * 100)) + '%' : '0%'}; background-color: ${stat.color}"></div></div>
+                        <span class="w-10 text-right text-xs font-bold" style="color: ${stat.color}">${STATE.player.roundCount > 0 ? (stat.value > 0 ? '+' : '') + stat.value.toFixed(1) : '0.0'}</span>
                     </div>
                 `).join('')}
             </div>
@@ -1132,17 +1280,41 @@ window.verifyPhone = async function() {
     btn.innerText = "Checking...";
     btn.disabled = true;
 
+    // Fast-path offline check
+    if (!navigator.onLine) {
+        const localStr = localStorage.getItem('descent_local_player');
+        if (localStr) {
+            const localData = JSON.parse(localStr);
+            if (localData.phone === phone) {
+                STATE.player = localData;
+                switchView('learn');
+                return;
+            }
+        }
+    }
+
     if (db) {
         try {
             const snap = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'profiles', phone));
             if (snap.exists()) { 
                 STATE.player = { ...STATE.player, ...snap.data() }; 
                 localStorage.setItem('descent_phone', phone);
+                localStorage.setItem('descent_local_player', JSON.stringify(STATE.player));
                 switchView('learn'); 
                 return; 
             }
         } catch(e) {
-            console.error("Firebase verification bypassed:", e);
+            console.warn("Firebase check bypassed or failed:", e);
+            // Fallback to local profile on DB timeout/error
+            const localStr = localStorage.getItem('descent_local_player');
+            if (localStr) {
+                const localData = JSON.parse(localStr);
+                if (localData.phone === phone) {
+                    STATE.player = localData;
+                    switchView('learn');
+                    return;
+                }
+            }
         }
     }
     
@@ -1239,8 +1411,34 @@ window.finishHoleWithPutts = async (count) => {
 
     if (hole.number === 18) {
         switchView('post_round');
+        
+        // --- DYNAMIC STROKES GAINED UPDATE ---
+        const roundSG = window.calculateRoundSG(r.holesLog);
+        if (STATE.player.roundCount === 0) {
+            STATE.player.sgStats = roundSG;
+        } else {
+            // Apply a 70% Historical / 30% Recent weighting to SG tracking
+            STATE.player.sgStats.putting = (STATE.player.sgStats.putting * 0.7) + (roundSG.putting * 0.3);
+            STATE.player.sgStats.offTee = (STATE.player.sgStats.offTee * 0.7) + (roundSG.offTee * 0.3);
+            STATE.player.sgStats.shortGame = (STATE.player.sgStats.shortGame * 0.7) + (roundSG.shortGame * 0.3);
+            STATE.player.sgStats.approach = (STATE.player.sgStats.approach * 0.7) + (roundSG.approach * 0.3);
+        }
+
+        // --- HISTORICAL MISS TRACKER UPDATE ---
+        if (!STATE.player.historicalMisses) STATE.player.historicalMisses = {};
+        r.holesLog.forEach(h => {
+            h.shots.forEach(s => {
+                if (s.club === 'Putter') return;
+                if (!STATE.player.historicalMisses[s.club]) STATE.player.historicalMisses[s.club] = { Left:0, Right:0, Short:0, Long:0 };
+                if (s.direction === 'Left') STATE.player.historicalMisses[s.club].Left++;
+                if (s.direction === 'Right') STATE.player.historicalMisses[s.club].Right++;
+                if (s.distOut === 'Short') STATE.player.historicalMisses[s.club].Short++;
+                if (s.distOut === 'Long') STATE.player.historicalMisses[s.club].Long++;
+            });
+        });
+
         await performFinalAnalysis();
-        await saveRoundToFirebase({ course: STATE.player.courseName, holes: r.holesLog });
+        await saveRoundToFirebase({ course: STATE.player.courseName, holes: r.holesLog, roundSG: roundSG });
     } else if (hole.number % 3 === 0) {
         switchView('coach_corner');
         r.isCoachTyping = true;
@@ -1254,7 +1452,30 @@ window.finishHoleWithPutts = async (count) => {
             gir: Math.round((r.holesLog.filter(h => h.isGir).length / r.holesLog.length) * 100)
         };
 
-        const prompt = `PLAYER CONTEXT: Driving: ${STATE.player.coreAreas.driving}/5, Approach: ${STATE.player.coreAreas.approach}/5, Putting: ${STATE.player.coreAreas.putting}/5. ROUND DATA (Hole ${hole.number}): Score: ${currentStats.toPar >= 0 ? '+' + currentStats.toPar : currentStats.toPar}. Stats: ${currentStats.gir}% GIR, ${currentStats.ppg} PPG. NEXT 3: ${next3.map(h => `H${h.number}: P${h.par}, ${h.distance}y`).join('\n')}. INSTRUCTION: Give salient strategy for the next 3 holes comparing history to current play. End with 'single thought for the next three holes:'`;
+        // Gather current round tendencies
+        let roundMisses = { Left:0, Right:0, Short:0, Long:0 };
+        r.holesLog.forEach(h => h.shots.forEach(s => {
+            if(s.direction === 'Left') roundMisses.Left++;
+            if(s.direction === 'Right') roundMisses.Right++;
+            if(s.distOut === 'Short') roundMisses.Short++;
+            if(s.distOut === 'Long') roundMisses.Long++;
+        }));
+        let topRoundMiss = Object.keys(roundMisses).reduce((a, b) => roundMisses[a] > roundMisses[b] ? a : b);
+        let currentTendency = roundMisses[topRoundMiss] > 0 ? topRoundMiss : "None";
+        
+        // Gather historical tendencies
+        let histStr = [];
+        const hm = STATE.player.historicalMisses || {};
+        for (let club in hm) {
+            let maxMiss = ''; let maxCount = 0;
+            for (let miss in hm[club]) {
+                if (hm[club][miss] > maxCount) { maxCount = hm[club][miss]; maxMiss = miss; }
+            }
+            if (maxCount >= 2) histStr.push(`${club} tends to miss ${maxMiss}`);
+        }
+        let historyTendency = histStr.length > 0 ? histStr.slice(0, 3).join(', ') : "Not enough data.";
+
+        const prompt = `PLAYER CONTEXT: Driving: ${STATE.player.coreAreas.driving}/5, Approach: ${STATE.player.coreAreas.approach}/5, Putting: ${STATE.player.coreAreas.putting}/5. ROUND DATA (Hole ${hole.number}): Score: ${currentStats.toPar >= 0 ? '+' + currentStats.toPar : currentStats.toPar}. Stats: ${currentStats.gir}% GIR, ${currentStats.ppg} PPG. TENDENCIES - Today's primary miss: ${currentTendency}. Historical: ${historyTendency}. NEXT 3: ${next3.map(h => `H${h.number}: P${h.par}, ${h.distance}y`).join('\n')}. INSTRUCTION: Act as a caddy. Give salient, specific strategy for the next 3 holes addressing their specific misses. You MUST end your response exactly with: "Here's one thing to think about for the next three holes: " followed by a pithy summary of your advice based on their data.`;
 
         const advice = await getAIAdvice(prompt);
         r.cornerMessages.push({ role: 'coach', text: advice });
@@ -1333,12 +1554,14 @@ async function performFinalAnalysis() {
     1. Analyze the round data comparing it to their baseline and current plan. 
     2. Determine their round proficiency (1-5) for core areas FOR THIS ROUND ONLY.
     3. Based on the biggest weaknesses shown IN THIS ROUND and taking into account what they are already practicing/learning, generate 1 to 3 specific, actionable NEW things to learn (e.g., reading/video topics) and 1 to 3 NEW things to practice (e.g., specific drills).
+    4. Provide a single, pithy summarizing thought for the next round based on their data.
     
     Return ONLY a valid JSON object:
     { 
       "coreScores": { "driving": score, "longIrons": score, "approach": score, "aroundGreen": score, "putting": score, "recovery": score },
       "newLearn": ["Specific learning topic 1"],
-      "newPractice": ["Specific drill 1"]
+      "newPractice": ["Specific drill 1"],
+      "pithyAdvice": "Here's one thing to think about for the next round: [your pithy summary advice]"
     }`;
 
     try {
@@ -1348,12 +1571,14 @@ async function performFinalAnalysis() {
         r.roundProficiency = analysis.coreScores || { driving: 3, longIrons: 3, approach: 3, aroundGreen: 3, putting: 3, recovery: 3 };
         r.newLearn = analysis.newLearn || [];
         r.newPractice = analysis.newPractice || [];
+        r.pithyAdvice = analysis.pithyAdvice || "Here's one thing to think about for the next round: Trust your swing and stick to the process.";
         render();
     } catch(e) {
-        console.error("Proficiency Analysis Error", e);
+        console.error("Proficiency Analysis Error or Offline:", e);
         r.roundProficiency = { driving: 3, longIrons: 3, approach: 3, aroundGreen: 3, putting: 3, recovery: 3 };
         r.newLearn = ["Review course management basics."];
         r.newPractice = ["Hit 20 balls focusing purely on tempo."];
+        r.pithyAdvice = "Here's one thing to think about for the next round: Focus on tempo and balance.";
         render();
     }
 }
