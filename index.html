@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -278,6 +279,17 @@ async function getAIAdvice(promptText, requiresJson = false) {
         return `AI Error: ${err.message || String(err)}.`; // Surface in chat UI
     }
 }
+
+window.saveLocalRoundState = () => {
+    if (STATE.activeRound) {
+        localStorage.setItem('descent_active_round', JSON.stringify(STATE.activeRound));
+    }
+};
+
+window.clearLocalRoundState = () => {
+    localStorage.removeItem('descent_active_round');
+    STATE.activeRound = null;
+};
 
 // ============================================================================
 // 2. CONSTANTS & RESTORED DATA
@@ -768,7 +780,17 @@ function renderPractice() {
 }
 
 function renderPlayIntro() {
-    return `<div class="flex flex-col h-full p-6 animate-fade-in"><h1 class="text-2xl font-serif font-bold mb-2">Track Round</h1><p class="text-[#8890A0] mb-8">Play ${STATE.player.courseName} to gather Strokes Gained data.</p><button onclick="startRoundFlow()" class="w-full bg-[#2DCB8A] text-[#0D1A12] font-bold py-5 rounded-xl shadow-[0_0_20px_rgba(45,203,138,0.15)]">TEE OFF</button></div>`;
+    return `<div class="flex flex-col h-full p-6 animate-fade-in">
+        <h1 class="text-2xl font-serif font-bold mb-2">Track Round</h1>
+        <p class="text-[#8890A0] mb-8">Play ${STATE.player.courseName} to gather Strokes Gained data.</p>
+        
+        ${STATE.activeRound ? `
+            <button onclick="switchView('play_active')" class="w-full bg-[#E8A930] hover:bg-yellow-500 text-[#0D1A12] font-bold py-5 rounded-xl shadow-[0_0_20px_rgba(232,169,48,0.2)] mb-4 uppercase tracking-widest transition-transform active:scale-95">Resume Round (Hole ${STATE.player.courseHoles[STATE.activeRound.holeIndex].number})</button>
+            <button onclick="clearLocalRoundState(); render();" class="w-full bg-[#1A1A3A] border border-white/10 hover:border-[#E85030] text-[#8890A0] hover:text-[#E85030] font-bold py-4 rounded-xl transition-colors">Discard Saved Round</button>
+        ` : `
+            <button onclick="startRoundFlow()" class="w-full bg-[#2DCB8A] hover:bg-[#34e09a] text-[#0D1A12] font-bold py-5 rounded-xl shadow-[0_0_20px_rgba(45,203,138,0.15)] uppercase tracking-widest transition-transform active:scale-95">TEE OFF</button>
+        `}
+    </div>`;
 }
 
 function renderPlayActive() {
@@ -826,7 +848,7 @@ function renderPlayActive() {
                 <button onclick="setOutcome('ob', ${!outs.ob})" class="w-full py-2 text-[10px] uppercase font-bold rounded-lg border ${outs.ob?'bg-[#E85030] text-white border-[#E85030]':'bg-[#1A1A3A] text-[#8890A0] border-transparent'}">${outs.ob ? 'OB (Penalty Added)' : 'Mark as OB'}</button>
             </div>
 
-            <button onclick="recordFairwayShot()" class="w-full bg-[#2DCB8A] text-[#0D1A12] font-bold py-3 rounded-xl transition-transform active:scale-95 shadow-lg mt-auto uppercase tracking-widest">Record Shot</button>
+            <button onclick="recordFairwayShot()" class="w-full bg-[#2DCB8A] hover:bg-[#34e09a] text-[#0D1A12] font-bold py-3 rounded-xl transition-transform active:scale-95 shadow-lg mt-auto uppercase tracking-widest">Record Shot</button>
         `;
     } else {
         interactions = `
@@ -858,7 +880,16 @@ function renderPlayActive() {
                 <div><div class="text-[9px] uppercase font-bold text-[#404060] mb-1">Holes</div><div class="text-sm font-black text-white">${completedHoles}</div></div>
             </div>
         </div>
-        <div class="p-4 flex-1 flex flex-col hide-scrollbar overflow-y-auto pb-4">${interactions}</div>
+        <div class="p-4 flex-1 flex flex-col hide-scrollbar overflow-y-auto pb-4">
+            ${interactions}
+            ${round.currentHoleShots.length > 0 ? `
+                <div class="mt-4 text-center">
+                    <button onclick="undoLastShot()" class="text-[#8890A0] text-[10px] font-bold uppercase tracking-widest hover:text-white transition-colors">
+                        <svg class="inline w-3 h-3 mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 00-9-9 9 9 0 00-6 2.3L3 13"/></svg> Undo Last Shot
+                    </button>
+                </div>
+            ` : ''}
+        </div>
     </div>`;
 }
 
@@ -1295,7 +1326,7 @@ function renderCheckIn() {
 // ============================================================================
 
 window.updateClubSlider = (idx) => { STATE.activeRound.selectedClubIndex = parseInt(idx); render(); }
-window.setOutcome = (cat, val) => { STATE.activeRound.shotOutcomes[cat] = val; render(); }
+window.setOutcome = (cat, val) => { STATE.activeRound.shotOutcomes[cat] = val; saveLocalRoundState(); render(); }
 window.checkWelcomePhone = () => { document.getElementById('welcome-next-btn').disabled = document.getElementById('welcome-phone').value.length < 5; }
 window.checkWelcomeName = () => { document.getElementById('welcome-start-btn').disabled = document.getElementById('welcome-name').value.length < 2; }
 
@@ -1409,14 +1440,20 @@ window.verifyPhone = async function() {
     btn.innerText = "Checking...";
     btn.disabled = true;
 
-    // Fast-path offline check
+    // Fast-path offline check & Mid-round resume hook
+    const checkLocalResumption = (localData) => {
+        STATE.player = localData;
+        const activeRoundStr = localStorage.getItem('descent_active_round');
+        if (activeRoundStr) STATE.activeRound = JSON.parse(activeRoundStr);
+        switchView('learn');
+    };
+
     if (!navigator.onLine) {
         const localStr = localStorage.getItem('descent_local_player');
         if (localStr) {
             const localData = JSON.parse(localStr);
             if (localData.phone === phone) {
-                STATE.player = localData;
-                switchView('learn');
+                checkLocalResumption(localData);
                 return;
             }
         }
@@ -1429,18 +1466,20 @@ window.verifyPhone = async function() {
                 STATE.player = { ...STATE.player, ...snap.data() }; 
                 localStorage.setItem('descent_phone', phone);
                 localStorage.setItem('descent_local_player', JSON.stringify(STATE.player));
+                
+                const activeRoundStr = localStorage.getItem('descent_active_round');
+                if (activeRoundStr) STATE.activeRound = JSON.parse(activeRoundStr);
+                
                 switchView('learn'); 
                 return; 
             }
         } catch(e) {
             console.warn("Firebase check bypassed or failed:", e);
-            // Fallback to local profile on DB timeout/error
             const localStr = localStorage.getItem('descent_local_player');
             if (localStr) {
                 const localData = JSON.parse(localStr);
                 if (localData.phone === phone) {
-                    STATE.player = localData;
-                    switchView('learn');
+                    checkLocalResumption(localData);
                     return;
                 }
             }
@@ -1495,6 +1534,7 @@ window.startRoundFlow = () => {
         holeState: 'fairway', cornerMessages: [],
         currentHoleIsGir: false, isCoachTyping: false, summaryFilter: 'All', roundProficiency: null
     };
+    saveLocalRoundState();
     switchView('play_active');
 }
 
@@ -1505,6 +1545,10 @@ window.recordFairwayShot = () => {
     const out = r.shotOutcomes;
     const shotNumber = r.currentHoleShots.length + 1;
     
+    // Capture state for Undo functionality before mutating
+    const _previousDistance = r.currentShotDistance;
+    const _previousPenalties = r.penaltyStrokes;
+
     // Automatically track distance behind the scenes based on standard club yardages
     if (out.lie === 'Green') {
         if (shotNumber <= (hole.par - 2)) r.currentHoleIsGir = true;
@@ -1512,7 +1556,8 @@ window.recordFairwayShot = () => {
     }
 
     r.currentHoleShots.push({ 
-        club: club.name, direction: out.dir, distOut: out.dist, lie: out.lie, contact: out.cont, ob: out.ob, distance: club.distance
+        club: club.name, direction: out.dir, distOut: out.dist, lie: out.lie, contact: out.cont, ob: out.ob, distance: club.distance,
+        _previousDistance, _previousPenalties
     });
 
     if (out.ob) r.penaltyStrokes += 1;
@@ -1523,6 +1568,29 @@ window.recordFairwayShot = () => {
         r.selectedClubIndex = suggestClubIndex(remaining);
         r.shotOutcomes = { dir: 'Straight', dist: 'At Dist', lie: 'Fairway', cont: 'Good Strike', ob: false };
     }
+    
+    saveLocalRoundState();
+    render();
+}
+
+window.undoLastShot = () => {
+    const r = STATE.activeRound;
+    if (!r || r.currentHoleShots.length === 0) return;
+
+    if (r.holeState === 'green') {
+        r.holeState = 'fairway';
+        r.currentHoleIsGir = false;
+    }
+
+    const lastShot = r.currentHoleShots.pop();
+    r.currentShotDistance = lastShot._previousDistance;
+    r.penaltyStrokes = lastShot._previousPenalties;
+    r.selectedClubIndex = suggestClubIndex(r.currentShotDistance);
+    
+    // Reset inputs
+    r.shotOutcomes = { dir: 'Straight', dist: 'At Dist', lie: 'Fairway', cont: 'Good Strike', ob: false };
+    
+    saveLocalRoundState();
     render();
 }
 
@@ -1539,6 +1607,8 @@ window.finishHoleWithPutts = async (count) => {
     });
 
     if (hole.number === 18) {
+        clearLocalRoundState(); // Finalize round locally
+        
         // Calculate Round SG purely locally first so it exists for the prompt
         const roundSG = window.calculateRoundSG(r.holesLog);
         
@@ -1573,6 +1643,7 @@ window.finishHoleWithPutts = async (count) => {
         await saveRoundToFirebase({ course: STATE.player.courseName, holes: r.holesLog, roundSG: roundSG });
     } else if (hole.number % 3 === 0) {
         r.isCoachTyping = true;
+        saveLocalRoundState();
         switchView('coach_corner'); // Swap view BEFORE await so typing indicator renders instantly
         
         const last3 = r.holesLog.slice(-3);
@@ -1615,9 +1686,11 @@ window.finishHoleWithPutts = async (count) => {
         r.isCoachTyping = false;
         
         setupNextHole(r);
+        saveLocalRoundState();
         render();
     } else {
         setupNextHole(r);
+        saveLocalRoundState();
         render();
     }
 }
@@ -1641,17 +1714,20 @@ window.sendCornerMessage = async function() {
     STATE.chatMessages.push({ role: 'user', text: text });
     inputEl.value = '';
     STATE.activeRound.isCoachTyping = true;
+    saveLocalRoundState();
     render();
 
     const advice = await getAIAdvice(`The player replied to your last advice with: "${text}". Give a 1-2 sentence response.`);
     STATE.activeRound.cornerMessages.push({ role: 'coach', text: advice });
     STATE.chatMessages.push({ role: 'coach', text: advice });
     STATE.activeRound.isCoachTyping = false;
+    saveLocalRoundState();
     render();
 }
 
 window.returnToTee = function() {
     STATE.activeRound.cornerMessages = []; // Clears the UI text so it doesn't linger for the next check-in
+    saveLocalRoundState();
     switchView('play_active');
 }
 
