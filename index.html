@@ -231,7 +231,7 @@ async function getAIAdvice(promptText, requiresJson = false) {
     }
     
     const instruction = requiresJson 
-        ? "You are a professional golf data analyst. Return ONLY raw, valid JSON. Do not include markdown formatting or backticks."
+        ? "You are a professional golf data analyst. Return ONLY valid JSON. Strictly adhere to the requested schema. No prose."
         : "You are a professional golf 'Corner Man'. Give SALIENT, CRISP coaching advice.";
 
     // Use gemini-2.5-flash since 1.5 is officially retired in Vertex AI
@@ -991,17 +991,21 @@ function renderPostRound() {
         <div class="mb-10">
             <h3 class="text-xs font-black uppercase tracking-widest text-[#8890A0] mb-4">Round Proficiency (AI Score)</h3>
             <div class="bg-[#1A1A3A] p-6 rounded-2xl border border-[#2DCB8A]/20 space-y-4">
-                ${r.roundProficiency ? Object.keys(r.roundProficiency).map(area => `
+                ${r.roundProficiency ? Object.keys(STATE.player.coreAreas).map(area => {
+                    const rawScore = r.roundProficiency[area];
+                    const score = (typeof rawScore === 'number' && !isNaN(rawScore)) ? Math.max(1, Math.min(5, rawScore)) : 3;
+                    return `
                     <div>
                         <div class="flex justify-between text-[10px] font-bold uppercase mb-1.5">
-                            <span class="text-[#8890A0]">${area.replace(/([A-Z])/g, ' $1').trim()}</span>
-                            <span class="text-[#2DCB8A]">${r.roundProficiency[area]}/5</span>
+                            <span class="text-[#8890A0]">${CORE_AREA_INFO[area] ? area.replace(/([A-Z])/g, ' $1').trim() : area}</span>
+                            <span class="text-[#2DCB8A]">${score}/5</span>
                         </div>
                         <div class="prof-bar-bg">
-                            <div class="prof-bar-fill" style="width: ${(r.roundProficiency[area] / 5) * 100}%"></div>
+                            <div class="prof-bar-fill" style="width: ${(score / 5) * 100}%"></div>
                         </div>
                     </div>
-                `).join('') : `
+                    `
+                }).join('') : `
                     <div class="flex gap-2 items-center text-[#8890A0] py-4">
                         <div class="w-2 h-2 bg-[#2DCB8A] rounded-full animate-pulse"></div>
                         <span class="text-[10px] uppercase font-bold tracking-widest">Generating Proficiency Scores...</span>
@@ -1527,7 +1531,7 @@ window.finishHoleWithPutts = async (count) => {
         }
         let historyTendency = histStr.length > 0 ? histStr.slice(0, 3).join(', ') : "Not enough data.";
 
-        const prompt = `PLAYER CONTEXT: Driving: ${STATE.player.coreAreas.driving}/5, Approach: ${STATE.player.coreAreas.approach}/5, Putting: ${STATE.player.coreAreas.putting}/5. ROUND DATA (Hole ${hole.number}): Score: ${currentStats.toPar >= 0 ? '+' + currentStats.toPar : currentStats.toPar}. Stats: ${currentStats.gir}% GIR, ${currentStats.ppg} PPG. TENDENCIES - Today's primary miss: ${currentTendency}. Historical: ${historyTendency}. NEXT 3: ${next3.map(h => `H${h.number}: P${h.par}, ${h.distance}y`).join('\n')}. INSTRUCTION: Act as a caddy. Give salient, specific strategy for the next 3 holes addressing their specific misses. You MUST end your response exactly with: "Here's one thing to think about for the next three holes: " followed by a pithy summary of your advice based on their data.`;
+        const prompt = `PLAYER CONTEXT: Driving: ${STATE.player.coreAreas.driving}/5, Approach: ${STATE.player.coreAreas.approach}/5, Putting: ${STATE.player.coreAreas.putting}/5. ROUND DATA (Hole ${hole.number}): Score: ${currentStats.toPar >= 0 ? '+' + currentStats.toPar : currentStats.toPar}. Stats: ${currentStats.gir}% GIR, ${currentStats.ppg} Putts Per Hole (CRITICAL: >2.0 is poor putting). TENDENCIES - Today's primary miss: ${currentTendency}. Historical: ${historyTendency}. NEXT 3: ${next3.map(h => `H${h.number}: P${h.par}, ${h.distance}y`).join('\n')}. INSTRUCTION: Act as a caddy. Give salient, specific strategy for the next 3 holes addressing their specific misses. If Putts Per Hole is high, be tough on their putting and suggest pace control. You MUST end your response exactly with: "Here's one thing to think about for the next three holes: " followed by a pithy summary of your advice based on their data.`;
 
         const advice = await getAIAdvice(prompt);
         r.cornerMessages.push({ role: 'coach', text: advice });
@@ -1603,14 +1607,14 @@ async function performFinalAnalysis() {
     ROUND DATA: ${holeData}.
     
     INSTRUCTION: 
-    1. Analyze the round data comparing it to their baseline and current plan. 
-    2. Determine their round proficiency (1-5) for core areas FOR THIS ROUND ONLY.
+    1. Analyze the round data comparing it to their baseline and current plan. CRITICAL: 3 or 4 putts on a hole represents terrible putting. Acknowledge this heavily.
+    2. Determine their round proficiency (1-5) for core areas FOR THIS ROUND ONLY. (1=Terrible, 5=Excellent). Be harsh if they have many putts or OBs.
     3. Based on the biggest weaknesses shown IN THIS ROUND and taking into account what they are already practicing/learning, generate 1 to 3 specific, actionable NEW things to learn (e.g., reading/video topics) and 1 to 3 NEW things to practice (e.g., specific drills).
     4. Provide a single, pithy summarizing thought for the next round based on their data.
     
-    Return ONLY a valid JSON object:
+    Return ONLY a valid JSON object using exactly this format:
     { 
-      "coreScores": { "driving": score, "longIrons": score, "approach": score, "aroundGreen": score, "putting": score, "recovery": score },
+      "coreScores": { "driving": 3, "longIrons": 3, "approach": 3, "aroundGreen": 3, "putting": 3, "recovery": 3 },
       "newLearn": ["Specific learning topic 1"],
       "newPractice": ["Specific drill 1"],
       "pithyAdvice": "Here's one thing to think about for the next round: [your pithy summary advice]"
@@ -1622,9 +1626,22 @@ async function performFinalAnalysis() {
 
         responseText = responseText.replace(/```json/gi, '').replace(/```/g, '').trim();
         const analysis = JSON.parse(responseText);
-        r.roundProficiency = analysis.coreScores || { driving: 3, longIrons: 3, approach: 3, aroundGreen: 3, putting: 3, recovery: 3 };
-        r.newLearn = analysis.newLearn || [];
-        r.newPractice = analysis.newPractice || [];
+        
+        // Strict key parsing to guarantee UI never crashes due to LLM hallucinating capitalized keys
+        const rawScores = analysis.coreScores || {};
+        const getScore = (key1, key2) => Number(rawScores[key1] || rawScores[key2]) || 3;
+        
+        r.roundProficiency = {
+            driving: getScore('driving', 'Driving'),
+            longIrons: getScore('longIrons', 'LongIrons'),
+            approach: getScore('approach', 'Approach'),
+            aroundGreen: getScore('aroundGreen', 'AroundGreen'),
+            putting: getScore('putting', 'Putting'),
+            recovery: getScore('recovery', 'Recovery')
+        };
+        
+        r.newLearn = Array.isArray(analysis.newLearn) ? analysis.newLearn : [];
+        r.newPractice = Array.isArray(analysis.newPractice) ? analysis.newPractice : [];
         r.pithyAdvice = analysis.pithyAdvice || "Here's one thing to think about for the next round: Trust your swing and stick to the process.";
         r.aiFailed = false;
         r.aiErrorMessage = null;
