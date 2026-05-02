@@ -41,6 +41,12 @@
         /* Proficiency Bars */
         .prof-bar-bg { height: 4px; background: #1A1A3A; border-radius: 2px; width: 100%; overflow: hidden; }
         .prof-bar-fill { height: 100%; background: #2DCB8A; transition: width 1s ease-out; }
+
+        /* Fix contrast for native number input spinners on dark background */
+        input[type="number"]::-webkit-inner-spin-button, 
+        input[type="number"]::-webkit-outer-spin-button { 
+            filter: invert(1); 
+        }
     </style>
 </head>
 <body class="h-screen w-full flex justify-center overflow-hidden">
@@ -550,7 +556,26 @@ function renderOnboarding() {
             </div>
         </div>`;
     else if (step === 3) content = `<div class="animate-fade-in space-y-6"><h2 class="text-2xl font-serif font-bold">Course Setup</h2><select onchange="window.updateCourseSelection(this.value)" class="w-full bg-[#1A1A3A] border border-white/10 rounded-xl p-4 text-lg font-bold outline-none text-[#F4F4F0]">${COURSE_DATABASE.map(c => `<option value="${c.name}">${c.name}</option>`).join('')}</select></div>`;
-    else if (step === 4) content = `<div class="animate-fade-in space-y-6"><h2 class="text-2xl font-serif font-bold">Bag Map</h2>${STATE.player.bag.map((club, idx) => `<div class="flex items-center gap-4 bg-[#1A1A3A] p-3 rounded-xl border border-white/10"><span class="flex-1 text-[#8890A0] font-semibold">${club.name}</span><input type="number" value="${club.distance}" onchange="window.updateBagDistance('${club.name}', parseInt(this.value)||0);" class="w-20 bg-[#0D0D1E] border border-white/10 rounded p-2 text-center text-[#2DCB8A] font-bold outline-none"></div>`).join('')}</div>`;
+    else if (step === 4) content = `
+        <div class="animate-fade-in space-y-6">
+            <h2 class="text-2xl font-serif font-bold">Bag Map</h2>
+            <div class="space-y-2">
+                ${STATE.player.bag.map((club) => `
+                    <div class="flex items-center gap-4 bg-[#1A1A3A] p-3 rounded-xl border border-white/10">
+                        <span class="flex-1 text-[#8890A0] font-semibold">${club.name}</span>
+                        <input type="number" value="${club.distance}" onchange="window.updateBagDistance('${club.name}', parseInt(this.value)||0);" class="w-20 bg-[#0D0D1E] border border-white/10 rounded p-2 text-center text-[#2DCB8A] font-bold outline-none">
+                        <button onclick="window.removeBagClub('${club.name}')" class="text-[#E85030] hover:text-red-400 opacity-80 hover:opacity-100 p-2 shrink-0">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                        </button>
+                    </div>
+                `).join('')}
+            </div>
+            <div class="bg-[#1A1A3A] p-3 rounded-xl border border-white/10 flex gap-2 items-center mt-4">
+                <input type="text" id="ob-new-club-name" placeholder="New Club Name" class="flex-1 bg-[#0D0D1E] border border-white/10 rounded p-2 text-sm text-[#F4F4F0] outline-none">
+                <input type="number" id="ob-new-club-dist" placeholder="Yds" class="w-20 bg-[#0D0D1E] border border-white/10 rounded p-2 text-sm text-center text-[#2DCB8A] outline-none">
+                <button onclick="window.addNewBagClub('ob')" class="bg-[#2DCB8A] text-[#0D1A12] px-3 py-2 rounded font-bold text-sm uppercase">Add</button>
+            </div>
+        </div>`;
     else if (step === 5) content = `<div class="animate-fade-in flex flex-col justify-center h-full text-center"><h2 class="text-3xl font-serif font-bold mb-2">Plan Ready.</h2><p class="text-[#8890A0]">Targeting ${getDescentNumber()} strokes down over ${getWeeksRemaining()} weeks.</p></div>`;
 
     return `<div class="flex flex-col h-full p-6"><div class="h-1 bg-[#404060] rounded-full overflow-hidden mb-4"><div class="h-full bg-[#2DCB8A] transition-all" style="width: ${pct}%"></div></div><div class="flex-1 overflow-y-auto hide-scrollbar">${content}</div><div class="shrink-0 py-6"><button onclick="nextOBStep()" class="w-full bg-[#2DCB8A] text-[#0D1A12] font-bold py-4 rounded-xl shadow-[0_0_15px_rgba(45,203,138,0.2)]">${step === 5 ? 'Enter Descent' : 'Continue'}</button></div></div>`;
@@ -1223,14 +1248,22 @@ function renderCheckIn() {
                     <span class="text-[10px] uppercase tracking-wider text-[#404060]">Yards</span>
                 </div>
                 <div class="bg-[#1A1A3A] rounded-xl border border-white/10 p-2 space-y-1">
-                    ${STATE.player.bag.map((club, idx) => `
+                    ${STATE.player.bag.map((club) => `
                         <div class="flex flex-col gap-1 hover:bg-[#14142E] p-2 rounded-lg transition-colors border border-transparent">
                             <div class="flex items-center gap-4">
                                 <span class="flex-1 text-sm font-semibold text-[#8890A0]">${club.name}</span>
                                 <input type="number" id="bag-club-${club.name}" value="${club.distance}" onchange="window.updateBagDistance('${club.name}', parseInt(this.value) || 0);" class="w-16 bg-[#0D0D1E] border border-white/10 rounded p-1 text-center text-[#2DCB8A] font-bold outline-none focus:border-[#2DCB8A]">
+                                <button onclick="window.removeBagClub('${club.name}')" class="text-[#E85030] hover:text-red-400 opacity-80 hover:opacity-100 p-1 shrink-0">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                                </button>
                             </div>
                         </div>
                     `).join('')}
+                    <div class="flex items-center gap-2 p-2 mt-2 border-t border-white/5 pt-3">
+                        <input type="text" id="ci-new-club-name" placeholder="New Club" class="flex-1 bg-[#0D0D1E] border border-white/10 rounded p-1.5 text-xs text-[#F4F4F0] outline-none">
+                        <input type="number" id="ci-new-club-dist" placeholder="Yds" class="w-16 bg-[#0D0D1E] border border-white/10 rounded p-1.5 text-xs text-center text-[#2DCB8A] outline-none">
+                        <button onclick="window.addNewBagClub('ci')" class="bg-[#2DCB8A] text-[#0D1A12] px-2 py-1.5 rounded font-bold text-xs uppercase">Add</button>
+                    </div>
                 </div>
             </section>
 
@@ -1282,8 +1315,34 @@ window.updateBagDistance = function(clubName, dist) {
     const idx = STATE.player.bag.findIndex(c => c.name === clubName);
     if(idx >= 0) {
         STATE.player.bag[idx].distance = dist;
+        STATE.player.bag.sort((a, b) => b.distance - a.distance);
         syncProfileToFirebase();
         render();
+    }
+}
+
+window.removeBagClub = function(clubName) {
+    STATE.player.bag = STATE.player.bag.filter(c => c.name !== clubName);
+    syncProfileToFirebase();
+    render();
+}
+
+window.addNewBagClub = function(prefix) {
+    const nameInput = document.getElementById(`${prefix}-new-club-name`);
+    const distInput = document.getElementById(`${prefix}-new-club-dist`);
+    if (!nameInput || !distInput) return;
+
+    const name = nameInput.value.trim();
+    const dist = parseInt(distInput.value) || 0;
+
+    if (name && dist > 0) {
+        if (!STATE.player.bag.some(c => c.name.toLowerCase() === name.toLowerCase())) {
+            const id = name.toLowerCase().replace(/[^a-z0-9]/g, '');
+            STATE.player.bag.push({ id, name, distance: dist });
+            STATE.player.bag.sort((a, b) => b.distance - a.distance);
+            syncProfileToFirebase();
+            render();
+        }
     }
 }
 
