@@ -504,7 +504,7 @@ function renderWelcome() {
         <h1 class="text-5xl font-black tracking-widest text-[#F4F4F0] mb-4">DESCENT</h1>
         <p class="text-[#8890A0] text-sm mb-10 max-w-xs">The science-backed path to lowering your handicap.</p>
         <div id="welcome-step-1" class="w-full max-w-xs space-y-3 mb-8 text-left animate-fade-in">
-            <input type="tel" id="welcome-phone" placeholder="Phone Number" oninput="checkWelcomePhone()" class="w-full bg-[#1A1A3A] border border-white/10 rounded-xl p-4 text-[#F4F4F0] font-semibold outline-none focus:border-[#2DCB8A]">
+            <input type="tel" id="welcome-phone" placeholder="Phone Number (7 digits, no dashes)" oninput="checkWelcomePhone()" class="w-full bg-[#1A1A3A] border border-white/10 rounded-xl p-4 text-[#F4F4F0] font-semibold outline-none focus:border-[#2DCB8A]">
             <button id="welcome-next-btn" disabled onclick="verifyPhone()" class="w-full bg-[#2DCB8A] disabled:opacity-50 text-[#0D1A12] font-bold py-4 rounded-xl shadow-[0_0_20px_rgba(45,203,138,0.2)]">Next &rarr;</button>
         </div>
         <div id="welcome-step-2" class="w-full max-w-xs space-y-3 mb-8 text-left hidden animate-fade-in">
