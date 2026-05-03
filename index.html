@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1223,7 +1224,7 @@ function renderPostRound() {
 
         ${suggestionsHTML}
 
-        <button onclick="switchView('progress')" class="w-full bg-[#1A1A3A] border border-white/10 text-white font-bold py-5 rounded-2xl uppercase tracking-widest shadow-lg">Finalize & Sync</button>
+        <button onclick="finalizeRound()" class="w-full bg-[#1A1A3A] border border-white/10 text-white font-bold py-5 rounded-2xl uppercase tracking-widest shadow-lg transition-transform active:scale-95">Finalize & Sync</button>
     </div>`;
 }
 
@@ -1813,7 +1814,8 @@ window.commitHole = async () => {
     });
 
     if (hole.number === 18) {
-        clearLocalRoundState(); // Finalize round locally
+        // IMMEDATE SAVE: Push the completed 18th hole to cloud backup before doing anything else
+        saveLocalRoundState(); 
         
         // Calculate Round SG purely locally first so it exists for the prompt
         const roundSG = window.calculateRoundSG(r.holesLog);
@@ -1864,9 +1866,12 @@ window.commitHole = async () => {
             fairwayPct: fairwayPct
         });
 
-        // Trigger AI analysis with simplified round Summary
-        await performFinalAnalysis(roundSG);
+        // 1. SAVE PERMANENTLY FIRST to prevent data loss if AI fails
         await saveRoundToFirebase({ course: STATE.player.courseName, holes: r.holesLog, roundSG: roundSG });
+        
+        // 2. TRIGGER AI ANALYSIS SECOND
+        await performFinalAnalysis(roundSG);
+        
     } else if (hole.number % 3 === 0) {
         r.isCoachTyping = true;
         saveLocalRoundState();
@@ -1988,6 +1993,11 @@ window.sendChatMessage = async function() {
     STATE.chatMessages.push({ role: 'coach', text: advice });
     STATE.isTyping = false; render();
 }
+
+window.finalizeRound = function() {
+    clearLocalRoundState(); // NOW we safely clear the cloud backup and active session
+    switchView('progress');
+};
 
 async function performFinalAnalysis(roundSG) {
     const r = STATE.activeRound;
