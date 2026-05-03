@@ -402,14 +402,15 @@ function resetPlayerState() {
         drillsPassed: 0, sessionsCount: 0, completedTasksSet: {},
         achievements: [], settings: { silenceCoach: false }, clubInsights: {},
         sgStats: { putting: 0.0, approach: 0.0, shortGame: 0.0, offTee: 0.0 },
-        historicalMisses: {} // Tally of structural misses per club
+        historicalMisses: {}, // Tally of structural misses per club
+        roundHistory: []
     };
 }
 
 window.STATE = {
     currentView: 'welcome', onboardingStep: 1, welcomeStep: 1,
     activeInfo: null, player: resetPlayerState(), activeRound: null,
-    coachMode: 'accountability', isTyping: false,
+    coachMode: 'accountability', isTyping: false, checkinSelectedRoundIdx: 0,
     chatMessages: [{ role: 'coach', text: "Welcome to Descent. Let's get to work." }]
 };
 
@@ -650,7 +651,7 @@ function renderLearn() {
         tasksHTML = STATE.player.customPlan.learn.map((task, idx) => {
             const isDone = STATE.player.completedTasksSet[`learn_${idx}`];
             return `
-            <div class="bg-[#1A1A3A] p-4 rounded-xl border border-white/10 flex gap-4 items-start cursor-pointer shadow-sm transition-all" onclick="toggleTask('learn', ${idx})">
+            <div class="bg-[#1A1A3A] p-4 rounded-xl border border-white/10 flex gap-4 items-start cursor-pointer shadow-sm transition-all" onclick="toggleTask(event, 'learn', ${idx})">
                 <div class="mt-1 flex-shrink-0">
                     ${isDone ? `<svg class="text-[#2DCB8A]" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>` 
                              : `<div class="w-6 h-6 rounded-full border-2 border-white/20"></div>`}
@@ -670,7 +671,7 @@ function renderLearn() {
         
         const isDone = STATE.player.completedTasksSet[`learn_default`];
         tasksHTML = `
-        <div class="bg-[#1A1A3A] p-4 rounded-xl border border-white/10 flex gap-4 items-start shadow-sm transition-all cursor-pointer" onclick="toggleTask('learn', 'default')">
+        <div class="bg-[#1A1A3A] p-4 rounded-xl border border-white/10 flex gap-4 items-start shadow-sm transition-all cursor-pointer" onclick="toggleTask(event, 'learn', 'default')">
             <div class="mt-1 flex-shrink-0">
                 ${isDone ? `<svg class="text-[#2DCB8A]" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>` 
                          : `<div class="w-6 h-6 rounded-full border-2 border-white/20"></div>`}
@@ -731,7 +732,7 @@ function renderPractice() {
             ${STATE.player.customPlan.practice.map((task, idx) => {
                 const isDone = STATE.player.completedTasksSet[`practice_${idx}`];
                 return `
-                <div class="bg-[#1A1A3A] p-4 rounded-xl border border-white/10 flex gap-4 items-start cursor-pointer shadow-sm transition-all" onclick="toggleTask('practice', ${idx})">
+                <div class="bg-[#1A1A3A] p-4 rounded-xl border border-white/10 flex gap-4 items-start cursor-pointer shadow-sm transition-all" onclick="toggleTask(event, 'practice', ${idx})">
                     <div class="mt-1 flex-shrink-0">
                         ${isDone ? `<svg class="text-[#2DCB8A]" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>` 
                                  : `<div class="w-6 h-6 rounded-full border-2 border-white/20"></div>`}
@@ -760,7 +761,7 @@ function renderPractice() {
                 <strong class="text-[#2DCB8A]">Baseline Practice.</strong> Until you log a round, your drills are based on your self-assessment.
             </p>
         </div>
-        <div class="bg-[#1A1A3A] p-4 rounded-xl border border-white/10 flex gap-4 items-start shadow-sm transition-all cursor-pointer" onclick="toggleTask('practice', 'default')">
+        <div class="bg-[#1A1A3A] p-4 rounded-xl border border-white/10 flex gap-4 items-start shadow-sm transition-all cursor-pointer" onclick="toggleTask(event, 'practice', 'default')">
             <div class="mt-1 flex-shrink-0">
                 ${isDone ? `<svg class="text-[#2DCB8A]" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>` 
                          : `<div class="w-6 h-6 rounded-full border-2 border-white/20"></div>`}
@@ -1025,11 +1026,20 @@ function renderPostRound() {
     holes.forEach(h => h.shots.forEach(s => allShots.push(s)));
     if (filteredClub !== 'All') allShots = allShots.filter(s => s.club === filteredClub);
 
-    const getDistPct = (dir, dist) => {
-        if (allShots.length === 0) return '0%';
-        const count = allShots.filter(s => s.direction === dir && s.distOut === dist).length;
-        return Math.round((count / allShots.length) * 100) + '%';
-    };
+    const getPct = (condFn) => allShots.length > 0 ? Math.round((allShots.filter(condFn).length / allShots.length) * 100) : 0;
+
+    const renderCategory = (title, items) => `
+        <div class="mb-3">
+            <div class="text-[9px] font-black text-[#8890A0] uppercase tracking-widest mb-1.5">${title}</div>
+            <div class="flex gap-2">
+                ${items.map(item => `
+                    <div class="flex-1 bg-[#0D0D1E] border border-white/5 rounded-lg p-2 text-center">
+                        <div class="text-lg font-black" style="color: ${item.color}">${item.pct}%</div>
+                        <div class="text-[8px] uppercase font-bold text-[#404060] mt-0.5">${item.label}</div>
+                    </div>
+                `).join('')}
+            </div>
+        </div>`;
 
     const clubsInBag = [...new Set(STATE.player.bag.map(c => c.name))];
     const isPutter = filteredClub === 'Putter';
@@ -1163,20 +1173,33 @@ function renderPostRound() {
                     <div class="text-3xl font-black text-[#2DCB8A]">${ppg} PPG</div>
                 </div>
             ` : `
-                <div class="grid grid-cols-3 gap-2 mb-4">
-                    <div class="stat-grid-box"><span class="stat-grid-label">Short L</span><span class="stat-grid-value">${getDistPct('Left', 'Short')}</span></div>
-                    <div class="stat-grid-box"><span class="stat-grid-label">Short M</span><span class="stat-grid-value">${getDistPct('Straight', 'Short')}</span></div>
-                    <div class="stat-grid-box"><span class="stat-grid-label">Short R</span><span class="stat-grid-value">${getDistPct('Right', 'Short')}</span></div>
-                    <div class="stat-grid-box"><span class="stat-grid-label">At Dist L</span><span class="stat-grid-value">${getDistPct('Left', 'At Dist')}</span></div>
-                    <div class="stat-grid-box stat-grid-active"><span class="stat-grid-label">Target</span><span class="stat-grid-value">${getDistPct('Straight', 'At Dist')}</span></div>
-                    <div class="stat-grid-box"><span class="stat-grid-label">At Dist R</span><span class="stat-grid-value">${getDistPct('Right', 'At Dist')}</span></div>
-                    <div class="stat-grid-box"><span class="stat-grid-label">Long L</span><span class="stat-grid-value">${getDistPct('Left', 'Long')}</span></div>
-                    <div class="stat-grid-box"><span class="stat-grid-label">Long M</span><span class="stat-grid-value">${getDistPct('Straight', 'Long')}</span></div>
-                    <div class="stat-grid-box"><span class="stat-grid-label">Long R</span><span class="stat-grid-value">${getDistPct('Right', 'Long')}</span></div>
-                </div>
-                <div class="bg-[#1A1A3A] p-4 rounded-xl flex justify-between items-center border border-white/5">
-                    <span class="text-[10px] font-black text-[#404060] uppercase tracking-widest">OB Hits</span>
-                    <span class="text-sm font-black text-[#E85030]">${allShots.filter(s => s.ob).length}</span>
+                <div class="bg-[#1A1A3A] p-4 rounded-xl border border-white/5 space-y-4">
+                    ${allShots.length === 0 ? `<div class="text-center text-xs text-[#8890A0] py-4">No shots recorded for this selection.</div>` : `
+                        ${renderCategory('Direction', [
+                            {label: 'Left', pct: getPct(s => s.direction === 'Left'), color: 'white'},
+                            {label: 'Straight', pct: getPct(s => s.direction === 'Straight'), color: '#2DCB8A'},
+                            {label: 'Right', pct: getPct(s => s.direction === 'Right'), color: 'white'}
+                        ])}
+                        ${renderCategory('Distance', [
+                            {label: 'Short', pct: getPct(s => s.distOut === 'Short'), color: 'white'},
+                            {label: 'At Dist', pct: getPct(s => s.distOut === 'At Dist'), color: '#2DCB8A'},
+                            {label: 'Long', pct: getPct(s => s.distOut === 'Long'), color: 'white'}
+                        ])}
+                        ${renderCategory('Contact', [
+                            {label: 'Miss-hit', pct: getPct(s => s.contact === 'Miss-hit'), color: '#E85030'},
+                            {label: 'Good', pct: getPct(s => s.contact === 'Good Strike'), color: '#2DCB8A'},
+                            {label: 'Dreamy', pct: getPct(s => s.contact === 'Dreamy'), color: '#2DCB8A'}
+                        ])}
+                        ${renderCategory('Resulting Lie', [
+                            {label: 'Rough', pct: getPct(s => s.lie === 'Rough'), color: '#E8A930'},
+                            {label: 'Fairway', pct: getPct(s => s.lie === 'Fairway'), color: '#2DCB8A'},
+                            {label: 'Green', pct: getPct(s => s.lie === 'Green'), color: '#2DCB8A'}
+                        ])}
+                        <div class="flex justify-between items-center pt-2 border-t border-white/5">
+                            <span class="text-[10px] font-black text-[#404060] uppercase tracking-widest">OB Hits</span>
+                            <span class="text-sm font-black text-[#E85030]">${allShots.filter(s => s.ob).length} (${getPct(s => s.ob)}%)</span>
+                        </div>
+                    `}
                 </div>
             `}
         </div>
@@ -1318,6 +1341,39 @@ function renderCoach() {
 }
 
 function renderCheckIn() {
+    let historySection = '';
+    const history = STATE.player.roundHistory || [];
+    if (history.length > 0) {
+        const selectedIdx = STATE.checkinSelectedRoundIdx || 0;
+        const activeHist = history[selectedIdx];
+        historySection = `
+            <section>
+                <div class="flex justify-between items-end mb-4">
+                    <h2 class="text-lg font-bold">Past Rounds</h2>
+                    <span class="text-[10px] uppercase tracking-wider text-[#404060]">Review summaries</span>
+                </div>
+                <div class="bg-[#1A1A3A] rounded-xl border border-white/10 p-4">
+                    <select onchange="window.selectHistoryRound(this.value)" class="w-full bg-[#0D0D1E] border border-white/10 rounded-lg p-2.5 text-xs text-[#F4F4F0] font-semibold outline-none focus:border-[#2DCB8A] mb-4">
+                        ${history.map((h, i) => {
+                            const d = new Date(h.date);
+                            const dateStr = d.toLocaleDateString(undefined, {month:'short', day:'numeric'});
+                            const timeStr = d.toLocaleTimeString(undefined, {hour:'numeric', minute:'2-digit'});
+                            return \`<option value="\${i}" \${i === selectedIdx ? 'selected' : ''}>\${dateStr} @ \${timeStr} - \${h.course}</option>\`;
+                        }).join('')}
+                    </select>
+                    ${activeHist ? `
+                    <div class="grid grid-cols-4 gap-2 text-center">
+                        <div><div class="text-[9px] uppercase font-bold text-[#404060] mb-1">Score</div><div class="text-lg font-black text-white">${activeHist.score}</div></div>
+                        <div><div class="text-[9px] uppercase font-bold text-[#404060] mb-1">To Par</div><div class="text-lg font-black ${activeHist.toPar > 0 ? 'text-[#E85030]' : 'text-[#2DCB8A]'}">${activeHist.toPar > 0 ? '+' + activeHist.toPar : activeHist.toPar === 0 ? 'E' : activeHist.toPar}</div></div>
+                        <div><div class="text-[9px] uppercase font-bold text-[#404060] mb-1">PPG</div><div class="text-lg font-black text-white">${activeHist.ppg}</div></div>
+                        <div><div class="text-[9px] uppercase font-bold text-[#404060] mb-1">Fwy %</div><div class="text-lg font-black text-[#2DCB8A]">${activeHist.fairwayPct}%</div></div>
+                    </div>
+                    ` : ''}
+                </div>
+            </section>
+        `;
+    }
+
     return `
     <div class="flex flex-col h-full p-6 animate-fade-in">
         <header class="mb-6">
@@ -1328,6 +1384,8 @@ function renderCheckIn() {
         </header>
 
         <div class="flex-1 overflow-y-auto hide-scrollbar space-y-8 pb-8">
+            ${historySection}
+            
             <section>
                 <div class="flex justify-between items-end mb-4">
                     <h2 class="text-lg font-bold">Current Handicap</h2>
@@ -1405,8 +1463,11 @@ window.updateClubSlider = (idx) => { STATE.activeRound.selectedClubIndex = parse
 window.setOutcome = (cat, val) => { STATE.activeRound.shotOutcomes[cat] = val; saveLocalRoundState(); render(); }
 window.checkWelcomePhone = () => { document.getElementById('welcome-next-btn').disabled = document.getElementById('welcome-phone').value.length < 5; }
 window.checkWelcomeName = () => { document.getElementById('welcome-start-btn').disabled = document.getElementById('welcome-name').value.length < 2; }
+window.selectHistoryRound = (idx) => { STATE.checkinSelectedRoundIdx = parseInt(idx); render(); }
 
-window.toggleTask = function(type, idx) {
+window.toggleTask = function(event, type, idx) {
+    if (event && event.target && event.target.tagName && event.target.tagName.toLowerCase() === 'a') return; // Do not toggle if the user clicked a link
+    
     const key = `${type}_${idx}`;
     STATE.player.completedTasksSet[key] = !STATE.player.completedTasksSet[key];
     if (STATE.player.completedTasksSet[key]) {
@@ -1616,6 +1677,7 @@ window.handlePlanAction = (type, index, action) => {
 window.startRoundFlow = () => {
     const firstHoleDist = STATE.player.courseHoles[0].distance;
     STATE.activeRound = {
+        startTime: new Date().toISOString(),
         holeIndex: 0, holesLog: [], currentHoleShots: [], penaltyStrokes: 0,
         selectedClubIndex: suggestClubIndex(firstHoleDist), tempPuttCount: 0,
         currentShotDistance: firstHoleDist,
@@ -1782,6 +1844,26 @@ window.commitHole = async () => {
             });
         });
 
+        // --- ROUND HISTORY UPDATE ---
+        const totalStrokes = r.holesLog.reduce((s, h) => s + h.totalStrokes, 0);
+        const totalPar = r.holesLog.reduce((s, h) => s + h.par, 0);
+        const toPar = totalStrokes - totalPar;
+        const totalPutts = r.holesLog.reduce((s, h) => s + h.putts, 0);
+        const ppg = (totalPutts / r.holesLog.length).toFixed(1);
+        const drivableHoles = r.holesLog.filter(h => h.par > 3);
+        const fairwaysHit = drivableHoles.filter(h => h.shots[0]?.lie === 'Fairway').length;
+        const fairwayPct = drivableHoles.length > 0 ? Math.round((fairwaysHit / drivableHoles.length) * 100) : 0;
+
+        if (!STATE.player.roundHistory) STATE.player.roundHistory = [];
+        STATE.player.roundHistory.unshift({
+            date: r.startTime || new Date().toISOString(),
+            course: STATE.player.courseName,
+            score: totalStrokes,
+            toPar: toPar,
+            ppg: ppg,
+            fairwayPct: fairwayPct
+        });
+
         // Trigger AI analysis with simplified round Summary
         await performFinalAnalysis(roundSG);
         await saveRoundToFirebase({ course: STATE.player.courseName, holes: r.holesLog, roundSG: roundSG });
@@ -1916,10 +1998,24 @@ async function performFinalAnalysis(roundSG) {
     const toPar = r.holesLog.reduce((s, h) => s + (h.totalStrokes - h.par), 0);
     const totalPutts = r.holesLog.reduce((s, h) => s + h.putts, 0);
     
+    // Compile overarching shot tendencies for AI
+    let allShots = [];
+    r.holesLog.forEach(h => h.shots.forEach(s => { if (s.club !== 'Putter') allShots.push(s); }));
+    const getPct = (condFn) => allShots.length > 0 ? Math.round((allShots.filter(condFn).length / allShots.length) * 100) : 0;
+    
+    const shotTendencies = {
+        direction: `Left: ${getPct(s => s.direction === 'Left')}%, Straight: ${getPct(s => s.direction === 'Straight')}%, Right: ${getPct(s => s.direction === 'Right')}%`,
+        distance: `Short: ${getPct(s => s.distOut === 'Short')}%, Target: ${getPct(s => s.distOut === 'At Dist')}%, Long: ${getPct(s => s.distOut === 'Long')}%`,
+        contact: `Miss-hit: ${getPct(s => s.contact === 'Miss-hit')}%, Good: ${getPct(s => s.contact === 'Good Strike')}%, Dreamy: ${getPct(s => s.contact === 'Dreamy')}%`,
+        resultingLie: `Rough: ${getPct(s => s.lie === 'Rough')}%, Fairway: ${getPct(s => s.lie === 'Fairway')}%, Green: ${getPct(s => s.lie === 'Green')}%`,
+        obPercentage: `${getPct(s => s.ob)}%`
+    };
+
     const roundSummaryJSON = JSON.stringify({
         scoreToPar: toPar > 0 ? `+${toPar}` : toPar,
         totalPutts: totalPutts,
-        strokesGained: roundSG
+        strokesGained: roundSG,
+        shotTendencies: shotTendencies
     });
 
     const prompt = `
@@ -1930,16 +2026,17 @@ async function performFinalAnalysis(roundSG) {
     ROUND SUMMARY: ${roundSummaryJSON}.
     
     INSTRUCTION: 
-    1. Analyze the round's Strokes Gained data. CRITICAL: 36+ putts is terrible.
-    2. Determine round proficiency (1-5) for core areas (1=Terrible, 5=Excellent).
-    3. Generate 1 to 2 specific NEW things to learn and 1 to 2 NEW things to practice. Be concise.
+    1. Analyze the round's Strokes Gained AND shotTendencies data. 
+    2. Determine round proficiency (1-5) for core areas (1=Terrible, 5=Excellent). CRITICAL: If Putts are >36, putting score MUST be low. If contact/direction is poor, adjust driving/irons accordingly.
+    3. Generate 1 to 2 specific NEW things to learn and 1 to 2 NEW things to practice. Base these explicitly on their primary shot tendencies (e.g., if high "Miss-hit" %, suggest contact drills; if mostly "Right", suggest face control). 
+    CRITICAL HYPERLINK INSTRUCTION: You MUST include real, clickable HTML links in your suggestions (e.g., <a href="https://www.youtube.com/results?search_query=fix+golf+slice+drill" target="_blank" class="text-[#2DCB8A] underline">Watch on YouTube</a>). Do NOT guess specific YouTube video IDs (they will 404). Always use YouTube search query URLs or link to real, well-known root domains like golfdigest.com or golf.com.
     4. Provide a single, pithy summarizing thought for the next round.
     
     Return ONLY a valid JSON object using exactly this format:
     { 
       "coreScores": { "driving": 3, "longIrons": 3, "approach": 3, "aroundGreen": 3, "putting": 3, "recovery": 3 },
-      "newLearn": ["Specific learning topic"],
-      "newPractice": ["Specific drill"],
+      "newLearn": ["Specific learning topic with <a href='...'>link</a>"],
+      "newPractice": ["Specific drill with <a href='...'>link</a>"],
       "pithyAdvice": "Here's one thing to think about for the next round: [your pithy summary advice]"
     }`;
 
