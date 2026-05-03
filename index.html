@@ -1358,7 +1358,7 @@ function renderCheckIn() {
                             const d = new Date(h.date);
                             const dateStr = d.toLocaleDateString(undefined, {month:'short', day:'numeric'});
                             const timeStr = d.toLocaleTimeString(undefined, {hour:'numeric', minute:'2-digit'});
-                            return \`<option value="\${i}" \${i === selectedIdx ? 'selected' : ''}>\${dateStr} @ \${timeStr} - \${h.course}</option>\`;
+                            return `<option value="${i}" ${i === selectedIdx ? 'selected' : ''}>${dateStr} @ ${timeStr} - ${h.course}</option>`;
                         }).join('')}
                     </select>
                     ${activeHist ? `
