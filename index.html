@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -89,7 +88,7 @@
 // ============================================================================
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
 import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-import { getFirestore, doc, setDoc, getDoc, collection, addDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+import { getFirestore, doc, setDoc, getDoc, collection, addDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 import { getVertexAI, getGenerativeModel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-vertexai.js";
 import { initializeAppCheck, ReCaptchaEnterpriseProvider } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app-check.js";
 
@@ -283,12 +282,21 @@ async function getAIAdvice(promptText, requiresJson = false) {
 window.saveLocalRoundState = () => {
     if (STATE.activeRound) {
         localStorage.setItem('descent_active_round', JSON.stringify(STATE.activeRound));
+        if (navigator.onLine && db && STATE.player.phone) {
+            // Fire and forget cloud sync to protect against local storage wipes
+            setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'active_rounds', STATE.player.phone), STATE.activeRound)
+                .catch(e => console.warn("Background active round sync failed:", e));
+        }
     }
 };
 
 window.clearLocalRoundState = () => {
     localStorage.removeItem('descent_active_round');
     STATE.activeRound = null;
+    if (navigator.onLine && db && STATE.player.phone) {
+        deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'active_rounds', STATE.player.phone))
+            .catch(e => console.warn("Failed to clear cloud active round:", e));
+    }
 };
 
 // ============================================================================
@@ -850,18 +858,86 @@ function renderPlayActive() {
 
             <button onclick="recordFairwayShot()" class="w-full bg-[#2DCB8A] hover:bg-[#34e09a] text-[#0D1A12] font-bold py-3 rounded-xl transition-transform active:scale-95 shadow-lg mt-auto uppercase tracking-widest">Record Shot</button>
         `;
-    } else {
+    } else if (round.holeState === 'green') {
         interactions = `
             <div class="text-center mb-4 mt-2">
                 <div class="text-[#2DCB8A] text-xs font-bold uppercase tracking-widest mb-4">On the Green</div>
                 <div class="grid grid-cols-2 gap-2 mb-4">
-                    <button onclick="finishHoleWithPutts(0)" class="col-span-2 py-4 text-sm font-bold uppercase tracking-widest rounded-2xl border-2 ${round.tempPuttCount===0?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#F4F4F0] border-white/5'}">Hole Out (0 Putts)</button>
-                    <button onclick="finishHoleWithPutts(1)" class="py-3 text-xl font-bold rounded-2xl border-2 ${round.tempPuttCount===1?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#F4F4F0] border-white/5'}">1</button>
-                    <button onclick="finishHoleWithPutts(2)" class="py-3 text-xl font-bold rounded-2xl border-2 ${round.tempPuttCount===2?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#F4F4F0] border-white/5'}">2</button>
-                    <button onclick="finishHoleWithPutts(3)" class="py-3 text-xl font-bold rounded-2xl border-2 ${round.tempPuttCount===3?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#F4F4F0] border-white/5'}">3</button>
-                    <button onclick="finishHoleWithPutts(4)" class="py-3 text-xl font-bold rounded-2xl border-2 ${round.tempPuttCount===4?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#F4F4F0] border-white/5'}">4+</button>
+                    <button onclick="reviewHole(0)" class="col-span-2 py-4 text-sm font-bold uppercase tracking-widest rounded-2xl border-2 ${round.tempPuttCount===0?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#F4F4F0] border-white/5'}">Hole Out (0 Putts)</button>
+                    <button onclick="reviewHole(1)" class="py-3 text-xl font-bold rounded-2xl border-2 ${round.tempPuttCount===1?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#F4F4F0] border-white/5'}">1</button>
+                    <button onclick="reviewHole(2)" class="py-3 text-xl font-bold rounded-2xl border-2 ${round.tempPuttCount===2?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#F4F4F0] border-white/5'}">2</button>
+                    <button onclick="reviewHole(3)" class="py-3 text-xl font-bold rounded-2xl border-2 ${round.tempPuttCount===3?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#F4F4F0] border-white/5'}">3</button>
+                    <button onclick="reviewHole(4)" class="py-3 text-xl font-bold rounded-2xl border-2 ${round.tempPuttCount===4?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#F4F4F0] border-white/5'}">4+</button>
                 </div>
                 <textarea id="hole-comment" placeholder="Any notes on this hole?" class="w-full bg-[#1A1A3A] border border-white/10 rounded-xl p-3 text-sm text-[#F4F4F0] outline-none h-20 resize-none mb-2"></textarea>
+            </div>
+        `;
+    } else if (round.holeState === 'review') {
+        interactions = `
+            <div class="mb-4">
+                <div class="text-[#2DCB8A] text-xs font-bold uppercase tracking-widest mb-4 text-center">Review & Edit Hole</div>
+                <div class="space-y-3 mb-4">
+                    ${round.currentHoleShots.length === 0 ? '<div class="text-center text-xs text-[#8890A0]">No shots recorded.</div>' : ''}
+                    ${round.currentHoleShots.map((shot, idx) => `
+                        <div class="bg-[#1A1A3A] p-3 rounded-xl border border-white/5 relative">
+                            <div class="flex justify-between items-center mb-3">
+                                <span class="text-xs font-bold text-white uppercase tracking-widest">Shot ${idx + 1}</span>
+                                <div class="flex items-center gap-3">
+                                    <label class="flex items-center gap-1 text-[10px] uppercase ${shot.ob ? 'text-[#E85030]' : 'text-[#8890A0]'} font-bold cursor-pointer">
+                                        <input type="checkbox" ${shot.ob ? 'checked' : ''} onchange="updateReviewShot(${idx}, 'ob', this.checked)" class="accent-[#E85030]"> OB
+                                    </label>
+                                    <button onclick="deleteReviewShot(${idx})" class="text-[#E85030] hover:text-white transition-colors">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2 text-xs">
+                                <div>
+                                    <div class="text-[9px] text-[#404060] uppercase font-bold mb-1">Club</div>
+                                    <select onchange="updateReviewShot(${idx}, 'club', this.value)" class="w-full bg-[#0D0D1E] text-[#F4F4F0] p-1.5 rounded border border-white/10 outline-none">
+                                        ${STATE.player.bag.map(c => `<option value="${c.name}" ${c.name === shot.club ? 'selected' : ''}>${c.name}</option>`).join('')}
+                                    </select>
+                                </div>
+                                <div>
+                                    <div class="text-[9px] text-[#404060] uppercase font-bold mb-1">Lie</div>
+                                    <select onchange="updateReviewShot(${idx}, 'lie', this.value)" class="w-full bg-[#0D0D1E] text-[#F4F4F0] p-1.5 rounded border border-white/10 outline-none">
+                                        <option value="Fairway" ${shot.lie === 'Fairway' ? 'selected' : ''}>Fairway</option>
+                                        <option value="Rough" ${shot.lie === 'Rough' ? 'selected' : ''}>Rough</option>
+                                        <option value="Green" ${shot.lie === 'Green' ? 'selected' : ''}>Green</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <div class="text-[9px] text-[#404060] uppercase font-bold mb-1">Direction</div>
+                                    <select onchange="updateReviewShot(${idx}, 'direction', this.value)" class="w-full bg-[#0D0D1E] text-[#F4F4F0] p-1.5 rounded border border-white/10 outline-none">
+                                        <option value="Left" ${shot.direction === 'Left' ? 'selected' : ''}>Left</option>
+                                        <option value="Straight" ${shot.direction === 'Straight' ? 'selected' : ''}>Straight</option>
+                                        <option value="Right" ${shot.direction === 'Right' ? 'selected' : ''}>Right</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <div class="text-[9px] text-[#404060] uppercase font-bold mb-1">Distance</div>
+                                    <select onchange="updateReviewShot(${idx}, 'distOut', this.value)" class="w-full bg-[#0D0D1E] text-[#F4F4F0] p-1.5 rounded border border-white/10 outline-none">
+                                        <option value="Short" ${shot.distOut === 'Short' ? 'selected' : ''}>Short</option>
+                                        <option value="At Dist" ${shot.distOut === 'At Dist' ? 'selected' : ''}>At Dist</option>
+                                        <option value="Long" ${shot.distOut === 'Long' ? 'selected' : ''}>Long</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+
+                <div class="bg-[#1A1A3A] p-4 rounded-xl border border-white/5 mb-4 flex items-center justify-between">
+                    <span class="text-xs font-bold text-white uppercase tracking-widest">Total Putts</span>
+                    <div class="flex items-center gap-3">
+                        <button onclick="updateReviewPutts(-1)" class="w-8 h-8 rounded-full bg-[#0D0D1E] text-white flex items-center justify-center border border-white/10 active:scale-95 transition-transform">-</button>
+                        <span class="text-xl font-black text-[#2DCB8A] w-6 text-center">${round.tempPuttCount}</span>
+                        <button onclick="updateReviewPutts(1)" class="w-8 h-8 rounded-full bg-[#0D0D1E] text-white flex items-center justify-center border border-white/10 active:scale-95 transition-transform">+</button>
+                    </div>
+                </div>
+
+                <button onclick="commitHole()" class="w-full bg-[#2DCB8A] hover:bg-[#34e09a] text-[#0D1A12] font-bold py-4 rounded-xl transition-transform active:scale-95 shadow-[0_0_15px_rgba(45,203,138,0.2)] uppercase tracking-widest">Commit Hole Data</button>
+                <button onclick="backToGreen()" class="w-full mt-3 bg-transparent text-[#8890A0] text-xs font-bold uppercase tracking-widest hover:text-white transition-colors">Back to Green</button>
             </div>
         `;
     }
@@ -882,7 +958,7 @@ function renderPlayActive() {
         </div>
         <div class="p-4 flex-1 flex flex-col hide-scrollbar overflow-y-auto pb-4">
             ${interactions}
-            ${round.currentHoleShots.length > 0 ? `
+            ${round.holeState === 'fairway' && round.currentHoleShots.length > 0 ? `
                 <div class="mt-4 text-center">
                     <button onclick="undoLastShot()" class="text-[#8890A0] text-[10px] font-bold uppercase tracking-widest hover:text-white transition-colors">
                         <svg class="inline w-3 h-3 mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 00-9-9 9 9 0 00-6 2.3L3 13"/></svg> Undo Last Shot
@@ -1467,8 +1543,21 @@ window.verifyPhone = async function() {
                 localStorage.setItem('descent_phone', phone);
                 localStorage.setItem('descent_local_player', JSON.stringify(STATE.player));
                 
-                const activeRoundStr = localStorage.getItem('descent_active_round');
-                if (activeRoundStr) STATE.activeRound = JSON.parse(activeRoundStr);
+                // Cloud Sync Override: Check for cloud active round first
+                try {
+                    const activeSnap = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'active_rounds', phone));
+                    if (activeSnap.exists()) {
+                        STATE.activeRound = activeSnap.data();
+                        localStorage.setItem('descent_active_round', JSON.stringify(STATE.activeRound));
+                    } else {
+                        const activeRoundStr = localStorage.getItem('descent_active_round');
+                        if (activeRoundStr) STATE.activeRound = JSON.parse(activeRoundStr);
+                    }
+                } catch(e) {
+                    console.warn("Cloud active round check bypassed:", e);
+                    const activeRoundStr = localStorage.getItem('descent_active_round');
+                    if (activeRoundStr) STATE.activeRound = JSON.parse(activeRoundStr);
+                }
                 
                 switchView('learn'); 
                 return; 
@@ -1594,16 +1683,71 @@ window.undoLastShot = () => {
     render();
 }
 
-window.finishHoleWithPutts = async (count) => {
+window.reviewHole = (count) => {
+    const r = STATE.activeRound;
+    r.tempPuttCount = count;
+    r.tempComment = document.getElementById('hole-comment')?.value || "";
+    r.holeState = 'review';
+    saveLocalRoundState();
+    render();
+};
+
+window.updateReviewShot = (idx, field, val) => {
+    const r = STATE.activeRound;
+    r.currentHoleShots[idx][field] = val;
+    if (field === 'club') {
+        const clubObj = STATE.player.bag.find(c => c.name === val);
+        if (clubObj) r.currentHoleShots[idx].distance = clubObj.distance;
+    }
+    if (field === 'ob') {
+        r.penaltyStrokes = r.currentHoleShots.filter(s => s.ob).length;
+    }
+    saveLocalRoundState();
+    render();
+};
+
+window.deleteReviewShot = (idx) => {
+    const r = STATE.activeRound;
+    r.currentHoleShots.splice(idx, 1);
+    r.penaltyStrokes = r.currentHoleShots.filter(s => s.ob).length;
+    saveLocalRoundState();
+    render();
+};
+
+window.updateReviewPutts = (change) => {
+    const r = STATE.activeRound;
+    r.tempPuttCount = Math.max(0, r.tempPuttCount + change);
+    saveLocalRoundState();
+    render();
+};
+
+window.backToGreen = () => {
+    STATE.activeRound.holeState = 'green';
+    saveLocalRoundState();
+    render();
+};
+
+window.commitHole = async () => {
     const r = STATE.activeRound;
     const hole = STATE.player.courseHoles[r.holeIndex];
-    const comment = document.getElementById('hole-comment')?.value || "";
+
+    // Recalculate penalties and GIR from potentially edited shots
+    r.penaltyStrokes = r.currentHoleShots.filter(s => s.ob).length;
+    r.currentHoleIsGir = false;
+    r.currentHoleShots.forEach((s, idx) => {
+        if (s.lie === 'Green' && (idx + 1) <= (hole.par - 2)) {
+            r.currentHoleIsGir = true;
+        }
+    });
 
     r.holesLog.push({
         number: hole.number, par: hole.par,
-        shots: [...r.currentHoleShots], putts: count, penalties: r.penaltyStrokes,
-        totalStrokes: r.currentHoleShots.length + count + r.penaltyStrokes,
-        isGir: r.currentHoleIsGir, comment: comment
+        shots: JSON.parse(JSON.stringify(r.currentHoleShots)), 
+        putts: r.tempPuttCount, 
+        penalties: r.penaltyStrokes,
+        totalStrokes: r.currentHoleShots.length + r.tempPuttCount + r.penaltyStrokes,
+        isGir: r.currentHoleIsGir, 
+        comment: r.tempComment
     });
 
     if (hole.number === 18) {
@@ -1648,11 +1792,22 @@ window.finishHoleWithPutts = async (count) => {
         
         const last3 = r.holesLog.slice(-3);
         const next3 = STATE.player.courseHoles.slice(r.holeIndex + 1, r.holeIndex + 4);
+        
+        // Calculate dynamic Corner Man metrics
+        const drivableHoles = r.holesLog.filter(h => h.par > 3);
+        const fairwaysHit = drivableHoles.filter(h => h.shots[0]?.lie === 'Fairway').length;
+        const fairwayPct = drivableHoles.length > 0 ? Math.round((fairwaysHit / drivableHoles.length) * 100) : 0;
+        
+        let obCount = 0;
+        r.holesLog.forEach(h => h.shots.forEach(s => { if (s.ob) obCount++; }));
+
         const currentStats = {
             totalStrokes: r.holesLog.reduce((s, h) => s + h.totalStrokes, 0),
             toPar: r.holesLog.reduce((s, h) => s + (h.totalStrokes - h.par), 0),
             ppg: (r.holesLog.reduce((s, h) => s + h.putts, 0) / r.holesLog.length).toFixed(1),
-            gir: Math.round((r.holesLog.filter(h => h.isGir).length / r.holesLog.length) * 100)
+            gir: Math.round((r.holesLog.filter(h => h.isGir).length / r.holesLog.length) * 100),
+            fairwayPct: fairwayPct,
+            obCount: obCount
         };
 
         // Gather current round tendencies
@@ -1678,7 +1833,16 @@ window.finishHoleWithPutts = async (count) => {
         }
         let historyTendency = histStr.length > 0 ? histStr.slice(0, 3).join(', ') : "Not enough data.";
 
-        const prompt = `PLAYER CONTEXT: Driving: ${STATE.player.coreAreas.driving}/5, Approach: ${STATE.player.coreAreas.approach}/5, Putting: ${STATE.player.coreAreas.putting}/5. ROUND DATA (Hole ${hole.number}): Score: ${currentStats.toPar >= 0 ? '+' + currentStats.toPar : currentStats.toPar}. Stats: ${currentStats.gir}% GIR, ${currentStats.ppg} Putts Per Hole (CRITICAL: >2.0 is poor putting). TENDENCIES - Today's primary miss: ${currentTendency}. Historical: ${historyTendency}. NEXT 3: ${next3.map(h => `H${h.number}: P${h.par}, ${h.distance}y`).join('\n')}. INSTRUCTION: Act as a caddy. Give salient, specific strategy for the next 3 holes addressing their specific misses. If Putts Per Hole is high, be tough on their putting and suggest pace control. You MUST end your response exactly with: "<br><br><strong>Here's one thing to think about for the next three holes:</strong> " followed by a pithy summary of your advice.`;
+        const prompt = `PLAYER CONTEXT: Driving: ${STATE.player.coreAreas.driving}/5, Putting: ${STATE.player.coreAreas.putting}/5. 
+        ROUND DATA (Hole ${hole.number}): Score: ${currentStats.toPar >= 0 ? '+' + currentStats.toPar : currentStats.toPar}. 
+        Stats: ${currentStats.fairwayPct}% Fairways, ${currentStats.gir}% GIR, ${currentStats.ppg} Putts/Hole, ${currentStats.obCount} OBs. 
+        MISSES: ${currentTendency}. NEXT 3: ${next3.map(h => `H${h.number}: P${h.par}, ${h.distance}y`).join(', ')}. 
+        INSTRUCTION: Act as a gritty caddy. Keep it SHORT (max 3 sentences total before the final thought). 
+        CRITICAL INPUTS: Weigh Fairway %, Putts Per Green, and OBs heavily. 
+        - If OB > 0: Demand they club down or aim for fat parts of the fairway. 
+        - If Putts > 2.0: Demand focus on lag putting pace. 
+        - If Fairway % < 50: Demand a conservative tee strategy. 
+        Format with emojis for bullet points. You MUST end your response exactly with: "<br><br><strong>Here's one thing to think about for the next three holes:</strong> " followed by ONE short, punchy sentence.`;
 
         const advice = await getAIAdvice(prompt);
         r.cornerMessages.push({ role: 'coach', text: advice });
@@ -1817,9 +1981,51 @@ async function performFinalAnalysis(roundSG) {
     }
 }
 
-window.logout = () => { STATE.player = resetPlayerState(); switchView('welcome'); }
+window.logout = () => { 
+    STATE.player = resetPlayerState(); 
+    window.clearLocalRoundState(); // Clear any active round
+    localStorage.removeItem('descent_local_player'); // Forget the profile
+    localStorage.removeItem('descent_phone');
+    switchView('welcome'); 
+}
 
-initFirebase().then(() => switchView('welcome'));
+initFirebase().then(() => {
+    // Check for a locally saved session to bypass the login screen
+    const localStr = localStorage.getItem('descent_local_player');
+    if (localStr) {
+        try {
+            const localData = JSON.parse(localStr);
+            if (localData && localData.phone) {
+                STATE.player = localData;
+                
+                // Restore active round if they closed the app mid-round
+                const activeRoundStr = localStorage.getItem('descent_active_round');
+                if (activeRoundStr) STATE.activeRound = JSON.parse(activeRoundStr);
+                
+                switchView('learn');
+                
+                // Background sync: Fetch freshest data from Firebase if online
+                if (navigator.onLine && db) {
+                    const appId = typeof __app_id !== 'undefined' ? __app_id : 'descent-app-id';
+                    getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'profiles', localData.phone))
+                        .then(snap => {
+                            if (snap.exists()) {
+                                STATE.player = { ...STATE.player, ...snap.data() };
+                                localStorage.setItem('descent_local_player', JSON.stringify(STATE.player));
+                                render();
+                            }
+                        }).catch(e => console.warn("Background profile sync failed", e));
+                }
+                return;
+            }
+        } catch(e) {
+            console.warn("Failed to parse local profile:", e);
+        }
+    }
+    
+    // No saved session found, show the welcome screen
+    switchView('welcome');
+});
 
 document.querySelectorAll('.nav-btn').forEach(btn => btn.onclick = () => switchView(btn.dataset.tab));
 
