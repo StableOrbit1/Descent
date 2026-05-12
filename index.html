@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -9,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #000; color: #F4F4F0; }
+        body { font-family: 'Inter', sans-serif; background-color: #000; color: #FFFFFF; }
         .font-serif { font-family: Georgia, serif; }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
@@ -19,11 +18,11 @@
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
         /* Custom Large Range Slider */
-        input[type="range"] { -webkit-appearance: none; background: #1A1A3A; height: 12px; border-radius: 6px; outline: none; border: 1px solid rgba(255,255,255,0.1); }
-        input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 32px; height: 32px; border-radius: 50%; background: #2DCB8A; cursor: pointer; box-shadow: 0 0 15px rgba(45,203,138,0.4); border: 2px solid white; }
+        input[type="range"] { -webkit-appearance: none; background: #1A1A3A; height: 12px; border-radius: 6px; outline: none; border: 1px solid rgba(255,255,255,0.3); }
+        input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 32px; height: 32px; border-radius: 50%; background: #00E5FF; cursor: pointer; box-shadow: 0 0 15px rgba(0,229,255,0.4); border: 2px solid white; }
         
         /* Chat Typing Indicator */
-        .typing-dot { animation: typingBounce 1.2s ease-in-out infinite; }
+        .typing-dot { animation: typingBounce 1.2s ease-in-out infinite; background-color: #D1D5DB; }
         .typing-dot:nth-child(2) { animation-delay: 0.15s; }
         .typing-dot:nth-child(3) { animation-delay: 0.3s; }
         @keyframes typingBounce { 0%, 60%, 100% { transform: translateY(0); } 30% { transform: translateY(-4px); } }
@@ -31,17 +30,17 @@
         .animate-pulse-slow { animation: pulseSlow 2.5s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
         @keyframes pulseSlow { 0%, 100% { opacity: 1; transform: translateY(0); } 50% { opacity: .5; transform: translateY(6px); } }
         
-        .task-completed { text-decoration: line-through; color: #404060; transition: all 0.3s ease; }
+        .task-completed { text-decoration: line-through; color: #9CA3AF; transition: all 0.3s ease; }
         
         /* Summary Grid Styling */
-        .stat-grid-box { background: #1A1A3A; border: 1px solid rgba(255,255,255,0.05); aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 8px; }
-        .stat-grid-label { font-size: 8px; font-weight: 800; color: #404060; text-transform: uppercase; margin-bottom: 2px; }
-        .stat-grid-value { font-size: 14px; font-weight: 900; color: #F4F4F0; }
-        .stat-grid-active { border-color: #2DCB8A; background: rgba(45,203,138,0.1); }
+        .stat-grid-box { background: #1A1A3A; border: 1px solid rgba(255,255,255,0.2); aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 8px; }
+        .stat-grid-label { font-size: 8px; font-weight: 800; color: #9CA3AF; text-transform: uppercase; margin-bottom: 2px; }
+        .stat-grid-value { font-size: 14px; font-weight: 900; color: #FFFFFF; }
+        .stat-grid-active { border-color: #00E5FF; background: rgba(0,229,255,0.1); }
 
         /* Proficiency Bars */
-        .prof-bar-bg { height: 4px; background: #1A1A3A; border-radius: 2px; width: 100%; overflow: hidden; }
-        .prof-bar-fill { height: 100%; background: #2DCB8A; transition: width 1s ease-out; }
+        .prof-bar-bg { height: 4px; background: #1A1A3A; border-radius: 2px; width: 100%; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); }
+        .prof-bar-fill { height: 100%; background: #00E5FF; transition: width 1s ease-out; }
 
         /* Fix contrast for native number input spinners on dark background */
         input[type="number"]::-webkit-inner-spin-button, 
@@ -55,28 +54,28 @@
     <div class="w-full max-w-md h-full bg-[#0D0D1E] relative flex flex-col shadow-2xl overflow-hidden border-x border-[#1A1A3A]">
         <div id="app-root" class="flex-1 overflow-y-auto overflow-x-hidden hide-scrollbar relative pb-24"></div>
 
-        <nav id="bottom-nav" class="hidden absolute bottom-0 w-full bg-[#14142E] border-t border-white/10 flex justify-between items-center px-2 py-3 pb-6 z-50">
-            <button class="nav-btn flex flex-col items-center gap-1 transition-colors flex-1 text-[#404060] hover:text-[#8890A0]" data-tab="learn">
+        <nav id="bottom-nav" class="hidden absolute bottom-0 w-full bg-[#14142E] border-t border-white/30 flex justify-between items-center px-2 py-3 pb-6 z-50">
+            <button class="nav-btn flex flex-col items-center gap-1 transition-colors flex-1 text-[#9CA3AF] hover:text-[#D1D5DB]" data-tab="learn">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
                 <span class="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider">Learn</span>
             </button>
-            <button class="nav-btn flex flex-col items-center gap-1 transition-colors flex-1 text-[#404060] hover:text-[#8890A0]" data-tab="practice">
+            <button class="nav-btn flex flex-col items-center gap-1 transition-colors flex-1 text-[#9CA3AF] hover:text-[#D1D5DB]" data-tab="practice">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
                 <span class="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider">Practice</span>
             </button>
-            <button class="nav-btn flex flex-col items-center gap-1 transition-colors flex-1 text-[#404060] hover:text-[#8890A0]" data-tab="play">
+            <button class="nav-btn flex flex-col items-center gap-1 transition-colors flex-1 text-[#9CA3AF] hover:text-[#D1D5DB]" data-tab="play">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
                 <span class="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider">Play</span>
             </button>
-            <button class="nav-btn flex flex-col items-center gap-1 transition-colors flex-1 text-[#404060] hover:text-[#8890A0]" data-tab="progress">
+            <button class="nav-btn flex flex-col items-center gap-1 transition-colors flex-1 text-[#9CA3AF] hover:text-[#D1D5DB]" data-tab="progress">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
                 <span class="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider">Progress</span>
             </button>
-            <button class="nav-btn flex flex-col items-center gap-1 transition-colors flex-1 text-[#404060] hover:text-[#8890A0]" data-tab="coach">
+            <button class="nav-btn flex flex-col items-center gap-1 transition-colors flex-1 text-[#9CA3AF] hover:text-[#D1D5DB]" data-tab="coach">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 21 1.9-5.7a8.5 8.5 0 1 1 3.8 3.8z"/></svg>
                 <span class="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider">Coach</span>
             </button>
-            <button class="nav-btn flex flex-col items-center gap-1 transition-colors flex-1 text-[#404060] hover:text-[#8890A0]" data-tab="checkin">
+            <button class="nav-btn flex flex-col items-center gap-1 transition-colors flex-1 text-[#9CA3AF] hover:text-[#D1D5DB]" data-tab="checkin">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg>
                 <span class="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider">Check-in</span>
             </button>
@@ -90,12 +89,14 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
 import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 import { getFirestore, doc, setDoc, getDoc, collection, addDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+import { getStorage, ref as storageRef, uploadBytes } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
 import { getVertexAI, getGenerativeModel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-vertexai.js";
 import { initializeAppCheck, ReCaptchaEnterpriseProvider } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app-check.js";
 
 let app = null;
 let db = null;
 let auth = null;
+let storage = null;
 let vertexAI = null;
 let currentUser = null;
 const appId = typeof __app_id !== 'undefined' ? __app_id : 'descent-app-id';
@@ -123,6 +124,7 @@ async function initFirebase() {
 
         auth = getAuth(app);
         db = getFirestore(app);
+        storage = getStorage(app);
         vertexAI = getVertexAI(app);
 
         if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
@@ -134,7 +136,6 @@ async function initFirebase() {
         onAuthStateChanged(auth, (user) => { 
             currentUser = user; 
             if (user) {
-                // Fire off any background syncs when auth is confirmed
                 if (window.syncPendingRounds) window.syncPendingRounds();
                 if (localStorage.getItem('descent_pending_profile_sync') === 'true' && window.syncProfileToFirebase) {
                     window.syncProfileToFirebase().then(() => localStorage.removeItem('descent_pending_profile_sync'));
@@ -156,7 +157,6 @@ window.addEventListener('online', () => {
 });
 
 window.syncProfileToFirebase = async function() {
-    // 1. Always update local cache instantly for offline resilience
     localStorage.setItem('descent_local_player', JSON.stringify(STATE.player));
 
     if (!navigator.onLine || !db || !STATE.player.phone) {
@@ -189,7 +189,6 @@ window.syncPendingRounds = async function() {
     for (let roundPayload of pending) {
         try {
             const roundsCol = collection(db, 'artifacts', appId, 'public', 'data', `rounds_${STATE.player.phone}`);
-            // Push to DB and mark syncedAt
             await addDoc(roundsCol, { ...roundPayload, syncedAt: new Date().toISOString() });
         } catch (e) {
             console.error("Failed to sync queued round. Keeping in queue:", e);
@@ -200,17 +199,14 @@ window.syncPendingRounds = async function() {
 }
 
 async function saveRoundToFirebase(roundData) {
-    // Optimistic state updates before any network calls
     STATE.player.hasPlayedRound = true;
     STATE.player.roundCount++;
     window.checkAchievements(roundData);
     
-    // Always cache locally instantly
     localStorage.setItem('descent_local_player', JSON.stringify(STATE.player));
     
     const roundPayload = { ...roundData, timestamp: new Date().toISOString() };
 
-    // If offline, queue the round and bail gracefully
     if (!navigator.onLine || !db || !STATE.player.phone) {
         console.warn("Offline or DB unavailable. Queueing round locally.");
         savePendingRound(roundPayload);
@@ -241,7 +237,6 @@ async function getAIAdvice(promptText, requiresJson = false) {
         ? "You are a professional golf data analyst. Return ONLY valid JSON. Strictly adhere to the requested schema. No prose."
         : "You are a professional golf 'Corner Man'. Give SALIENT, CRISP coaching advice. Format your response using basic HTML (like <strong> and <br>) for beautiful readability in a web app. Use emojis for bullet points instead of <ul>/<li>.";
 
-    // Use gemini-2.5-flash since 1.5 is officially retired in Vertex AI
     const modelConfig = { 
         model: "gemini-2.5-flash",
         systemInstruction: instruction
@@ -254,29 +249,27 @@ async function getAIAdvice(promptText, requiresJson = false) {
     try {
         const model = getGenerativeModel(vertexAI, modelConfig);
         
-        // Implement exponential backoff for cold starts and API rate limits
         const generate = async (retries = 3, delay = 1000) => {
             try {
                 const result = await model.generateContent(promptText);
                 const text = result.response.text();
                 if (!text) throw new Error("Empty response from AI");
                 return text;
-                
             } catch (error) {
                 console.warn(`AI Retry Attempt Failed (${3 - retries}/3):`, error.message);
                 if (retries > 0) {
                     await new Promise(res => setTimeout(res, delay));
                     return generate(retries - 1, delay * 2);
                 }
-                throw error; // Throw the actual error up after retries exhausted
+                throw error;
             }
         };
 
         return await generate();
     } catch (err) {
         console.error("Detailed AI Error:", err);
-        if (requiresJson) throw err; // Pass real error to performFinalAnalysis
-        return `AI Error: ${err.message || String(err)}.`; // Surface in chat UI
+        if (requiresJson) throw err;
+        return `AI Error: ${err.message || String(err)}.`;
     }
 }
 
@@ -284,7 +277,6 @@ window.saveLocalRoundState = () => {
     if (STATE.activeRound) {
         localStorage.setItem('descent_active_round', JSON.stringify(STATE.activeRound));
         if (navigator.onLine && db && STATE.player.phone) {
-            // Fire and forget cloud sync to protect against local storage wipes
             setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'active_rounds', STATE.player.phone), STATE.activeRound)
                 .catch(e => console.warn("Background active round sync failed:", e));
         }
@@ -334,8 +326,6 @@ const COURSE_DATABASE = [
     }
 ];
 
-const SHOT_TYPES = ['Full', '3/4', 'Half', 'Knock Down', 'Draw', 'Fade'];
-
 const CORE_AREA_INFO = {
     driving: "Accuracy and distance off the tee.", longIrons: "Approach shots from 175+ yards.",
     approach: "Mid/short irons and wedges (100-175y).", aroundGreen: "Chipping, pitching, and bunkers (<30y).",
@@ -343,36 +333,12 @@ const CORE_AREA_INFO = {
 };
 
 const PRACTICE_DRILLS = {
-    driving: { 
-        home: "Mirror work: Practice slow-motion takeaways focusing strictly on clubface control and maintaining spine angle.",
-        range: "Hit 10 drives focusing solely on holding a balanced finish until the ball lands. Ignore distance.",
-        video: "https://www.youtube.com/results?search_query=golf+driving+accuracy+drill+beginner"
-    },
-    longIrons: { 
-        home: "Core rotations: Use a medicine ball or resistance band to build rotational speed.",
-        range: "Tee up long irons slightly. Focus on sweeping the ball to build confidence with the strike.",
-        video: "https://www.youtube.com/results?search_query=golf+long+iron+drills+beginner"
-    },
-    approach: { 
-        home: "Carpet chipping: Practice putting-stroke chips with an 8-iron to feel low-point control.",
-        range: "Clock system: Hit 10 shots mapping exactly how far your 9:00 swing goes.",
-        video: "https://www.youtube.com/results?search_query=golf+wedge+clock+system"
-    },
-    aroundGreen: { 
-        home: "Coin drill: Place a coin under the ball and practice clipping it without digging.",
-        range: "Bump and run: Practice exclusively with a 7 or 8 iron from off the fringe to understand rollout.",
-        video: "https://www.youtube.com/results?search_query=golf+chipping+drills+beginner"
-    },
-    putting: { 
-        home: "Gate drill: Putt through two heavy books set 1-putter head apart. Forces a square face.",
-        range: "Lag putting: Hit 10 putts from 40 feet to within a 3-foot circle.",
-        video: "https://www.youtube.com/results?search_query=golf+putting+drills+beginner"
-    },
-    recovery: { 
-        home: "Visualize punch shots: Take stance in front of mirror, practice abbreviated follow-throughs.",
-        range: "Hit 5-iron punch shots keeping the ball below the height of the range picker.",
-        video: "https://www.youtube.com/results?search_query=golf+punch+shot+drills"
-    }
+    driving: { range: "Hit 10 drives focusing solely on holding a balanced finish until the ball lands. Ignore distance." },
+    longIrons: { range: "Tee up long irons slightly. Focus on sweeping the ball to build confidence with the strike." },
+    approach: { range: "Clock system: Hit 10 shots mapping exactly how far your 9:00 swing goes." },
+    aroundGreen: { range: "Bump and run: Practice exclusively with a 7 or 8 iron from off the fringe to understand rollout." },
+    putting: { range: "Lag putting: Hit 10 putts from 40 feet to within a 3-foot circle." },
+    recovery: { range: "Hit 5-iron punch shots keeping the ball below the height of the range picker." }
 };
 
 window.getRatingLabel = function(rating, handicap) {
@@ -403,7 +369,7 @@ function resetPlayerState() {
         drillsPassed: 0, sessionsCount: 0, completedTasksSet: {},
         achievements: [], settings: { silenceCoach: false }, clubInsights: {},
         sgStats: { putting: 0.0, approach: 0.0, shortGame: 0.0, offTee: 0.0 },
-        historicalMisses: {}, // Tally of structural misses per club
+        historicalMisses: {},
         roundHistory: []
     };
 }
@@ -412,7 +378,13 @@ window.STATE = {
     currentView: 'welcome', onboardingStep: 1, welcomeStep: 1,
     activeInfo: null, player: resetPlayerState(), activeRound: null,
     coachMode: 'accountability', isTyping: false, checkinSelectedRoundIdx: 0,
-    chatMessages: [{ role: 'coach', text: "Welcome to Descent. Let's get to work." }]
+    chatMessages: [{ role: 'coach', text: "Welcome to Descent. Let's get to work." }],
+    // Garmin Upload State
+    garminLoading: false, garminAILoading: false, garminError: null,
+    garminAverages: null, garminSummary: null, garminLearn: [], garminPractice: [],
+    // Video Analysis State
+    videoAnalysisLoading: false, videoAnalysisStatus: '', videoAnalysisError: null,
+    videoSummary: null, videoLearn: [], videoPractice: []
 };
 
 function getDescentNumber() { return (STATE.player.currentHandicap - STATE.player.targetHandicap).toFixed(1); }
@@ -427,28 +399,17 @@ window.calculateRoundSG = function(holes) {
     
     holes.forEach(h => {
         let strokes_lost = h.par - h.totalStrokes;
-        
-        // 1. Putting SG (Assumes 2.0 putts per hole is baseline par for scratch)
         let putting_sg = 2.0 - h.putts;
-        
-        // 2. Off Tee SG
         let offTee_sg = 0;
         if (h.par > 3 && h.shots.length > 0) {
             let teeShot = h.shots[0];
             if (teeShot.ob) offTee_sg = -2.0;
             else if (teeShot.lie !== 'Fairway') offTee_sg = -0.5;
         }
-        
-        // 3. Short Game SG
         let shortGame_sg = 0;
         let shortShots = h.shots.filter(s => s.distance <= 50 && s.club !== 'Putter');
-        if (shortShots.length > 1) {
-            // Penalize taking multiple shots inside 50y to get on the green
-            shortGame_sg = -(shortShots.length - 1);
-        }
+        if (shortShots.length > 1) { shortGame_sg = -(shortShots.length - 1); }
         shortShots.forEach(s => { if(s.ob) shortGame_sg -= 1.0; });
-        
-        // 4. Approach SG (Catch-all for remaining strokes lost)
         let approach_sg = strokes_lost - (putting_sg + offTee_sg + shortGame_sg);
 
         sg.putting += putting_sg;
@@ -457,7 +418,6 @@ window.calculateRoundSG = function(holes) {
         sg.approach += approach_sg;
     });
     
-    // Normalize SG to an 18 hole equivalent (if playing partial rounds)
     let scale = 18 / Math.max(1, holes.length);
     return {
         putting: sg.putting * scale,
@@ -483,9 +443,9 @@ window.switchView = function(viewName) {
         nav.classList.remove('hidden');
         document.querySelectorAll('.nav-btn').forEach(btn => {
             if(btn.dataset.tab === viewName) {
-                btn.classList.remove('text-[#404060]'); btn.classList.add('text-[#2DCB8A]');
+                btn.classList.remove('text-[#9CA3AF]'); btn.classList.add('text-[#00E5FF]');
             } else {
-                btn.classList.add('text-[#404060]'); btn.classList.remove('text-[#2DCB8A]');
+                btn.classList.add('text-[#9CA3AF]'); btn.classList.remove('text-[#00E5FF]');
             }
         });
     }
@@ -524,20 +484,20 @@ function render() {
 function renderWelcome() {
     return `
     <div class="flex flex-col items-center justify-center h-full p-8 text-center animate-fade-in">
-        <div class="text-[#2DCB8A] mb-8 animate-pulse-slow">
+        <div class="text-[#00E5FF] mb-8 animate-pulse-slow">
             <svg width="72" height="72" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <polyline points="22 17 13.5 8.5 8.5 13.5 2 7" /><polyline points="16 17 22 17 22 11" />
             </svg>
         </div>
-        <h1 class="text-5xl font-black tracking-widest text-[#F4F4F0] mb-4">DESCENT</h1>
-        <p class="text-[#8890A0] text-sm mb-10 max-w-xs">The science-backed path to lowering your handicap.</p>
+        <h1 class="text-5xl font-black tracking-widest text-white mb-4">DESCENT</h1>
+        <p class="text-[#D1D5DB] text-sm mb-10 max-w-xs">The science-backed path to lowering your handicap.</p>
         <div id="welcome-step-1" class="w-full max-w-xs space-y-3 mb-8 text-left animate-fade-in">
-            <input type="tel" id="welcome-phone" placeholder="Phone Number (7 digits, no dashes)" oninput="checkWelcomePhone()" class="w-full bg-[#1A1A3A] border border-white/10 rounded-xl p-4 text-[#F4F4F0] font-semibold outline-none focus:border-[#2DCB8A]">
-            <button id="welcome-next-btn" disabled onclick="verifyPhone()" class="w-full bg-[#2DCB8A] disabled:opacity-50 text-[#0D1A12] font-bold py-4 rounded-xl shadow-[0_0_20px_rgba(45,203,138,0.2)]">Next &rarr;</button>
+            <input type="tel" id="welcome-phone" placeholder="Phone Number (7 digits, no dashes)" oninput="checkWelcomePhone()" class="w-full bg-[#1A1A3A] border border-white/30 rounded-xl p-4 text-white font-semibold outline-none focus:border-[#00E5FF]">
+            <button id="welcome-next-btn" disabled onclick="verifyPhone()" class="w-full bg-[#00E5FF] disabled:opacity-50 text-[#000000] font-bold py-4 rounded-xl shadow-[0_0_20px_rgba(0,229,255,0.2)]">Next &rarr;</button>
         </div>
         <div id="welcome-step-2" class="w-full max-w-xs space-y-3 mb-8 text-left hidden animate-fade-in">
-            <input type="text" id="welcome-name" placeholder="Your Name" oninput="checkWelcomeName()" class="w-full bg-[#1A1A3A] border border-white/10 rounded-xl p-4 text-[#F4F4F0] font-semibold outline-none focus:border-[#2DCB8A]">
-            <button id="welcome-start-btn" disabled onclick="startNewProfile()" class="w-full bg-[#2DCB8A] text-[#0D1A12] font-bold py-4 rounded-xl shadow-[0_0_20px_rgba(45,203,138,0.2)]">Begin Setup &rarr;</button>
+            <input type="text" id="welcome-name" placeholder="Your Name" oninput="checkWelcomeName()" class="w-full bg-[#1A1A3A] border border-white/30 rounded-xl p-4 text-white font-semibold outline-none focus:border-[#00E5FF]">
+            <button id="welcome-start-btn" disabled onclick="startNewProfile()" class="w-full bg-[#00E5FF] text-[#000000] font-bold py-4 rounded-xl shadow-[0_0_20px_rgba(0,229,255,0.2)]">Begin Setup &rarr;</button>
         </div>
     </div>`;
 }
@@ -548,59 +508,59 @@ function renderOnboarding() {
     let content = '';
     if (step === 1) content = `
         <div class="animate-fade-in space-y-8">
-            <h2 class="text-2xl font-serif font-bold">Your Goals</h2>
-            <div class="bg-[#1A1A3A] p-4 rounded-xl border border-white/10">
-                <h3 class="text-xs font-bold uppercase tracking-widest text-[#8890A0] mb-2">Current Handicap</h3>
-                <div class="text-4xl font-serif font-bold text-[#E8A930] mb-2" id="ob-hdcp-val">${STATE.player.currentHandicap.toFixed(1)}</div>
+            <h2 class="text-2xl font-serif font-bold text-white">Your Goals</h2>
+            <div class="bg-[#1A1A3A] p-4 rounded-xl border border-white/30">
+                <h3 class="text-xs font-bold uppercase tracking-widest text-[#D1D5DB] mb-2">Current Handicap</h3>
+                <div class="text-4xl font-serif font-bold text-[#FFD700] mb-2" id="ob-hdcp-val">${STATE.player.currentHandicap.toFixed(1)}</div>
                 <input type="range" min="0" max="36" step="0.1" value="${STATE.player.currentHandicap}" oninput="STATE.player.currentHandicap = parseFloat(this.value); document.getElementById('ob-hdcp-val').innerText = parseFloat(this.value).toFixed(1);" class="w-full">
             </div>
-            <div class="bg-[#1A1A3A] p-4 rounded-xl border border-white/10">
-                <h3 class="text-xs font-bold uppercase tracking-widest text-[#8890A0] mb-2">Goal Handicap</h3>
-                <div class="text-4xl font-serif font-bold text-[#2DCB8A] mb-2" id="ob-target-val">${STATE.player.targetHandicap.toFixed(1)}</div>
+            <div class="bg-[#1A1A3A] p-4 rounded-xl border border-white/30">
+                <h3 class="text-xs font-bold uppercase tracking-widest text-[#D1D5DB] mb-2">Goal Handicap</h3>
+                <div class="text-4xl font-serif font-bold text-[#00E5FF] mb-2" id="ob-target-val">${STATE.player.targetHandicap.toFixed(1)}</div>
                 <input type="range" min="0" max="36" step="0.1" value="${STATE.player.targetHandicap}" oninput="STATE.player.targetHandicap = parseFloat(this.value); document.getElementById('ob-target-val').innerText = parseFloat(this.value).toFixed(1);" class="w-full">
             </div>
         </div>`;
     else if (step === 2) content = `
         <div class="animate-fade-in space-y-8">
-            <h2 class="text-2xl font-serif font-bold">Assess Yourself</h2>
+            <h2 class="text-2xl font-serif font-bold text-white">Assess Yourself</h2>
             <div class="grid grid-cols-2 gap-3">
                 ${Object.keys(STATE.player.coreAreas).map(area => `
-                    <div class="bg-[#1A1A3A] p-3 rounded-xl border border-white/10 text-center relative">
-                        <button onclick="toggleInfo('${area}')" class="absolute top-2 right-2 text-[#8890A0] hover:text-[#2DCB8A]">
+                    <div class="bg-[#1A1A3A] p-3 rounded-xl border border-white/30 text-center relative">
+                        <button onclick="toggleInfo('${area}')" class="absolute top-2 right-2 text-[#D1D5DB] hover:text-[#00E5FF]">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
                         </button>
-                        <div class="text-xs text-[#8890A0] capitalize mb-2">${area.replace(/([A-Z])/g, ' $1').trim()}</div>
-                        ${STATE.activeInfo === area ? `<div class="text-[9px] text-[#2DCB8A] mb-2 leading-tight px-1">${CORE_AREA_INFO[area]}</div>` : ''}
+                        <div class="text-xs text-[#D1D5DB] capitalize mb-2">${area.replace(/([A-Z])/g, ' $1').trim()}</div>
+                        ${STATE.activeInfo === area ? `<div class="text-[9px] text-[#00E5FF] mb-2 leading-tight px-1">${CORE_AREA_INFO[area]}</div>` : ''}
                         <input type="range" min="1" max="5" value="${STATE.player.coreAreas[area]}" oninput="STATE.player.coreAreas['${area}'] = parseInt(this.value); document.getElementById('v-${area}').innerText = this.value; document.getElementById('l-${area}').innerText = getRatingLabel(this.value, STATE.player.currentHandicap);" class="w-full">
-                        <div id="v-${area}" class="text-[#2DCB8A] font-bold text-lg mt-1">${STATE.player.coreAreas[area]}</div>
-                        <div id="l-${area}" class="text-[8px] text-[#8890A0] uppercase tracking-wider font-bold mt-1">${getRatingLabel(STATE.player.coreAreas[area], STATE.player.currentHandicap)}</div>
+                        <div id="v-${area}" class="text-[#00E5FF] font-bold text-lg mt-1">${STATE.player.coreAreas[area]}</div>
+                        <div id="l-${area}" class="text-[8px] text-[#D1D5DB] uppercase tracking-wider font-bold mt-1">${getRatingLabel(STATE.player.coreAreas[area], STATE.player.currentHandicap)}</div>
                     </div>`).join('')}
             </div>
         </div>`;
-    else if (step === 3) content = `<div class="animate-fade-in space-y-6"><h2 class="text-2xl font-serif font-bold">Course Setup</h2><select onchange="window.updateCourseSelection(this.value)" class="w-full bg-[#1A1A3A] border border-white/10 rounded-xl p-4 text-lg font-bold outline-none text-[#F4F4F0]">${COURSE_DATABASE.map(c => `<option value="${c.name}">${c.name}</option>`).join('')}</select></div>`;
+    else if (step === 3) content = `<div class="animate-fade-in space-y-6"><h2 class="text-2xl font-serif font-bold text-white">Course Setup</h2><select onchange="window.updateCourseSelection(this.value)" class="w-full bg-[#1A1A3A] border border-white/30 rounded-xl p-4 text-lg font-bold outline-none text-white focus:border-[#00E5FF]">${COURSE_DATABASE.map(c => `<option value="${c.name}">${c.name}</option>`).join('')}</select></div>`;
     else if (step === 4) content = `
         <div class="animate-fade-in space-y-6">
-            <h2 class="text-2xl font-serif font-bold">Bag Map</h2>
+            <h2 class="text-2xl font-serif font-bold text-white">Bag Map</h2>
             <div class="space-y-2">
                 ${STATE.player.bag.map((club) => `
-                    <div class="flex items-center gap-4 bg-[#1A1A3A] p-3 rounded-xl border border-white/10">
-                        <span class="flex-1 text-[#8890A0] font-semibold">${club.name}</span>
-                        <input type="number" value="${club.distance}" onchange="window.updateBagDistance('${club.name}', parseInt(this.value)||0);" class="w-20 bg-[#0D0D1E] border border-white/10 rounded p-2 text-center text-[#2DCB8A] font-bold outline-none">
-                        <button onclick="window.removeBagClub('${club.name}')" class="text-[#E85030] hover:text-red-400 opacity-80 hover:opacity-100 p-2 shrink-0">
+                    <div class="flex items-center gap-4 bg-[#1A1A3A] p-3 rounded-xl border border-white/20">
+                        <span class="flex-1 text-[#D1D5DB] font-semibold">${club.name}</span>
+                        <input type="number" value="${club.distance}" onchange="window.updateBagDistance('${club.name}', parseInt(this.value)||0);" class="w-20 bg-[#0D0D1E] border border-white/30 rounded p-2 text-center text-[#00E5FF] font-bold outline-none focus:border-[#00E5FF]">
+                        <button onclick="window.removeBagClub('${club.name}')" class="text-[#FF4444] hover:text-red-400 opacity-80 hover:opacity-100 p-2 shrink-0">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                         </button>
                     </div>
                 `).join('')}
             </div>
-            <div class="bg-[#1A1A3A] p-3 rounded-xl border border-white/10 flex gap-2 items-center mt-4">
-                <input type="text" id="ob-new-club-name" placeholder="New Club Name" class="flex-1 bg-[#0D0D1E] border border-white/10 rounded p-2 text-sm text-[#F4F4F0] outline-none">
-                <input type="number" id="ob-new-club-dist" placeholder="Yds" class="w-20 bg-[#0D0D1E] border border-white/10 rounded p-2 text-sm text-center text-[#2DCB8A] outline-none">
-                <button onclick="window.addNewBagClub('ob')" class="bg-[#2DCB8A] text-[#0D1A12] px-3 py-2 rounded font-bold text-sm uppercase">Add</button>
+            <div class="bg-[#1A1A3A] p-3 rounded-xl border border-white/20 flex gap-2 items-center mt-4">
+                <input type="text" id="ob-new-club-name" placeholder="New Club Name" class="flex-1 bg-[#0D0D1E] border border-white/30 rounded p-2 text-sm text-white outline-none focus:border-[#00E5FF]">
+                <input type="number" id="ob-new-club-dist" placeholder="Yds" class="w-20 bg-[#0D0D1E] border border-white/30 rounded p-2 text-sm text-center text-[#00E5FF] outline-none focus:border-[#00E5FF]">
+                <button onclick="window.addNewBagClub('ob')" class="bg-[#00E5FF] text-[#000000] px-3 py-2 rounded font-bold text-sm uppercase hover:bg-[#33EEFF]">Add</button>
             </div>
         </div>`;
-    else if (step === 5) content = `<div class="animate-fade-in flex flex-col justify-center h-full text-center"><h2 class="text-3xl font-serif font-bold mb-2">Plan Ready.</h2><p class="text-[#8890A0]">Targeting ${getDescentNumber()} strokes down over ${getWeeksRemaining()} weeks.</p></div>`;
+    else if (step === 5) content = `<div class="animate-fade-in flex flex-col justify-center h-full text-center"><h2 class="text-3xl font-serif font-bold mb-2 text-white">Plan Ready.</h2><p class="text-[#D1D5DB]">Targeting <strong class="text-[#FFD700]">${getDescentNumber()}</strong> strokes down over ${getWeeksRemaining()} weeks.</p></div>`;
 
-    return `<div class="flex flex-col h-full p-6"><div class="h-1 bg-[#404060] rounded-full overflow-hidden mb-4"><div class="h-full bg-[#2DCB8A] transition-all" style="width: ${pct}%"></div></div><div class="flex-1 overflow-y-auto hide-scrollbar">${content}</div><div class="shrink-0 py-6"><button onclick="nextOBStep()" class="w-full bg-[#2DCB8A] text-[#0D1A12] font-bold py-4 rounded-xl shadow-[0_0_15px_rgba(45,203,138,0.2)]">${step === 5 ? 'Enter Descent' : 'Continue'}</button></div></div>`;
+    return `<div class="flex flex-col h-full p-6"><div class="h-1 bg-[#1A1A3A] rounded-full overflow-hidden mb-4 border border-white/20"><div class="h-full bg-[#00E5FF] transition-all" style="width: ${pct}%"></div></div><div class="flex-1 overflow-y-auto hide-scrollbar">${content}</div><div class="shrink-0 py-6"><button onclick="nextOBStep()" class="w-full bg-[#00E5FF] hover:bg-[#33EEFF] text-[#000000] font-bold py-4 rounded-xl shadow-[0_0_15px_rgba(0,229,255,0.2)]">${step === 5 ? 'Enter Descent' : 'Continue'}</button></div></div>`;
 }
 
 function renderWelcomeSequence() {
@@ -608,27 +568,27 @@ function renderWelcomeSequence() {
     let content = '';
     
     if (s === 1) {
-        content = `<h2 class="text-5xl font-serif font-bold text-[#F4F4F0] animate-pulse-slow">Welcome.</h2>`;
+        content = `<h2 class="text-5xl font-serif font-bold text-white animate-pulse-slow">Welcome.</h2>`;
     } else if (s === 2) {
         content = `
         <div class="text-center px-4">
-            <svg class="mx-auto text-[#2DCB8A] w-16 h-16 mb-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
-            <p class="text-xl text-[#F4F4F0] leading-relaxed">The more you <strong>Learn</strong>, <strong>Practice</strong> and <strong>Play</strong>...</p>
-            <p class="text-[#8890A0] mt-4">The more Descent can narrow in on what will most impact your progress.</p>
+            <svg class="mx-auto text-[#00E5FF] w-16 h-16 mb-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+            <p class="text-xl text-white leading-relaxed">The more you <strong class="text-[#00E5FF]">Learn</strong>, <strong class="text-[#00E5FF]">Practice</strong> and <strong class="text-[#00E5FF]">Play</strong>...</p>
+            <p class="text-[#D1D5DB] mt-4">The more Descent can narrow in on what will most impact your progress.</p>
         </div>`;
     } else if (s === 3) {
         content = `
         <div class="text-center px-4">
-            <svg class="mx-auto text-[#7060C0] w-16 h-16 mb-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
-            <p class="text-xl text-[#F4F4F0] leading-relaxed">You can toggle between modes at any time.</p>
-            <p class="text-[#8890A0] mt-4">Just use the menu at the bottom of your screen.</p>
+            <svg class="mx-auto text-[#B066FF] w-16 h-16 mb-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+            <p class="text-xl text-white leading-relaxed">You can toggle between modes at any time.</p>
+            <p class="text-[#D1D5DB] mt-4">Just use the menu at the bottom of your screen.</p>
         </div>`;
     } else if (s === 4) {
         content = `
         <div class="text-center px-4">
-            <svg class="mx-auto text-[#E8A930] w-16 h-16 mb-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-            <p class="text-xl text-[#F4F4F0] leading-relaxed">Check your Progress.</p>
-            <p class="text-[#8890A0] mt-4">See a clear evaluation of strokes gained and lost, your practice progress, and your learning plan.</p>
+            <svg class="mx-auto text-[#FFD700] w-16 h-16 mb-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+            <p class="text-xl text-white leading-relaxed">Check your Progress.</p>
+            <p class="text-[#D1D5DB] mt-4">See a clear evaluation of strokes gained and lost, your practice progress, and your learning plan.</p>
         </div>`;
     }
 
@@ -638,7 +598,7 @@ function renderWelcomeSequence() {
             ${content}
         </div>
         <div class="shrink-0 py-6">
-            <button onclick="nextWelcomeSequence()" class="w-full bg-[#1A1A3A] border border-white/10 hover:bg-[#14142E] text-[#F4F4F0] font-bold py-4 rounded-xl transition-colors">
+            <button onclick="nextWelcomeSequence()" class="w-full bg-[#1A1A3A] border border-white/30 hover:border-white text-white font-bold py-4 rounded-xl transition-colors">
                 ${s === 4 ? "Let's Get Started" : "Continue"}
             </button>
         </div>
@@ -652,14 +612,14 @@ function renderLearn() {
         tasksHTML = STATE.player.customPlan.learn.map((task, idx) => {
             const isDone = STATE.player.completedTasksSet[`learn_${idx}`];
             return `
-            <div class="bg-[#1A1A3A] p-4 rounded-xl border border-white/10 flex gap-4 items-start cursor-pointer shadow-sm transition-all" onclick="toggleTask(event, 'learn', ${idx})">
+            <div class="bg-[#1A1A3A] p-4 rounded-xl border border-white/20 flex gap-4 items-start cursor-pointer shadow-sm transition-all hover:border-white/40" onclick="toggleTask(event, 'learn', ${idx})">
                 <div class="mt-1 flex-shrink-0">
-                    ${isDone ? `<svg class="text-[#2DCB8A]" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>` 
-                             : `<div class="w-6 h-6 rounded-full border-2 border-white/20"></div>`}
+                    ${isDone ? `<svg class="text-[#00E5FF]" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>` 
+                             : `<div class="w-6 h-6 rounded-full border-2 border-white/30"></div>`}
                 </div>
                 <div>
-                    <span class="uppercase text-[10px] font-bold tracking-widest ${isDone ? 'text-[#8890A0]' : 'text-[#2DCB8A]'} mb-1 block">Coach Plan</span>
-                    <p class="text-sm leading-relaxed ${isDone ? 'task-completed text-[#8890A0]' : 'text-[#F4F4F0]'}">${task}</p>
+                    <span class="uppercase text-[10px] font-bold tracking-widest ${isDone ? 'text-[#9CA3AF]' : 'text-[#00E5FF]'} mb-1 block">Coach Plan</span>
+                    <p class="text-sm leading-relaxed ${isDone ? 'task-completed text-[#9CA3AF]' : 'text-white'}">${task}</p>
                 </div>
             </div>`;
         }).join('');
@@ -672,14 +632,14 @@ function renderLearn() {
         
         const isDone = STATE.player.completedTasksSet[`learn_default`];
         tasksHTML = `
-        <div class="bg-[#1A1A3A] p-4 rounded-xl border border-white/10 flex gap-4 items-start shadow-sm transition-all cursor-pointer" onclick="toggleTask(event, 'learn', 'default')">
+        <div class="bg-[#1A1A3A] p-4 rounded-xl border border-white/20 flex gap-4 items-start shadow-sm transition-all cursor-pointer hover:border-white/40" onclick="toggleTask(event, 'learn', 'default')">
             <div class="mt-1 flex-shrink-0">
-                ${isDone ? `<svg class="text-[#2DCB8A]" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>` 
-                         : `<div class="w-6 h-6 rounded-full border-2 border-white/20"></div>`}
+                ${isDone ? `<svg class="text-[#00E5FF]" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>` 
+                         : `<div class="w-6 h-6 rounded-full border-2 border-white/30"></div>`}
             </div>
             <div>
-                <span class="uppercase text-[10px] font-bold tracking-widest ${isDone ? 'text-[#8890A0]' : 'text-[#2DCB8A]'} mb-1 block">Reading</span>
-                <p class="text-sm leading-relaxed ${isDone ? 'task-completed text-[#8890A0]' : 'text-[#F4F4F0]'}">
+                <span class="uppercase text-[10px] font-bold tracking-widest ${isDone ? 'text-[#9CA3AF]' : 'text-[#00E5FF]'} mb-1 block">Reading</span>
+                <p class="text-sm leading-relaxed ${isDone ? 'task-completed text-[#9CA3AF]' : 'text-white'}">
                     Read "Golf is Not a Game of Perfect" by Bob Rotella. Focus on visualization.
                 </p>
             </div>
@@ -690,24 +650,24 @@ function renderLearn() {
     <div class="flex flex-col h-full p-6 animate-fade-in">
         <header class="flex justify-between items-center mb-8">
             <div>
-                <h1 class="text-2xl font-serif font-bold text-[#2DCB8A] flex items-center gap-2 tracking-widest">
+                <h1 class="text-2xl font-serif font-bold text-[#00E5FF] flex items-center gap-2 tracking-widest">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg> LEARN
                 </h1>
-                <p class="text-[#8890A0] text-sm mt-1">Your knowledge & strategy</p>
+                <p class="text-[#D1D5DB] text-sm mt-1">Your knowledge & strategy</p>
             </div>
-            <div class="bg-[#1A1A3A] p-2 rounded-lg border border-white/10 text-center min-w-[80px]">
-                <span class="block text-2xl font-bold text-[#F4F4F0]">${STATE.player.currentHandicap.toFixed(1)}</span>
-                <span class="block text-[10px] uppercase text-[#8890A0] tracking-wider mt-0.5">Current</span>
+            <div class="bg-[#1A1A3A] p-2 rounded-lg border border-white/20 text-center min-w-[80px]">
+                <span class="block text-2xl font-bold text-white">${STATE.player.currentHandicap.toFixed(1)}</span>
+                <span class="block text-[10px] uppercase text-[#D1D5DB] tracking-wider mt-0.5">Current</span>
             </div>
         </header>
 
         <section>
-            <h2 class="text-xl font-serif font-bold mb-4 flex items-center gap-2">
-                <svg class="text-[#2DCB8A] w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg> Focus Areas
+            <h2 class="text-xl font-serif font-bold mb-4 flex items-center gap-2 text-white">
+                <svg class="text-[#00E5FF] w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg> Focus Areas
             </h2>
             ${STATE.player.roundCount === 0 ? `
-                <div class="bg-[#E8A930]/10 p-3 rounded-xl border border-[#E8A930]/30 mb-4 shadow-sm">
-                    <p class="text-[#E8A930] text-xs leading-relaxed">
+                <div class="bg-[#FFD700]/10 p-3 rounded-xl border border-[#FFD700]/30 mb-4 shadow-sm">
+                    <p class="text-[#FFD700] text-xs leading-relaxed">
                         <strong>Note:</strong> Since you haven't played a round yet, your plan is based on your initial self-assessment.
                     </p>
                 </div>
@@ -724,23 +684,23 @@ function renderPractice() {
     
     if (STATE.player.customPlan.practice.length > 0) {
         content = `
-        <div class="bg-[#1D7A5A]/20 p-4 rounded-xl border border-[#2DCB8A]/30 mb-6 shadow-sm">
-            <p class="text-[#F4F4F0] text-sm leading-relaxed">
-                <strong class="text-[#2DCB8A]">Data-driven Focus.</strong> Your Coach assigned the following drills based on your recent round performance.
+        <div class="bg-[#00E5FF]/10 p-4 rounded-xl border border-[#00E5FF]/30 mb-6 shadow-sm">
+            <p class="text-white text-sm leading-relaxed">
+                <strong class="text-[#00E5FF]">Data-driven Focus.</strong> Your Coach assigned the following drills based on your recent round performance.
             </p>
         </div>
         <div class="space-y-4">
             ${STATE.player.customPlan.practice.map((task, idx) => {
                 const isDone = STATE.player.completedTasksSet[`practice_${idx}`];
                 return `
-                <div class="bg-[#1A1A3A] p-4 rounded-xl border border-white/10 flex gap-4 items-start cursor-pointer shadow-sm transition-all" onclick="toggleTask(event, 'practice', ${idx})">
+                <div class="bg-[#1A1A3A] p-4 rounded-xl border border-white/20 flex gap-4 items-start cursor-pointer shadow-sm transition-all hover:border-white/40" onclick="toggleTask(event, 'practice', ${idx})">
                     <div class="mt-1 flex-shrink-0">
-                        ${isDone ? `<svg class="text-[#2DCB8A]" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>` 
-                                 : `<div class="w-6 h-6 rounded-full border-2 border-white/20"></div>`}
+                        ${isDone ? `<svg class="text-[#00E5FF]" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>` 
+                                 : `<div class="w-6 h-6 rounded-full border-2 border-white/30"></div>`}
                     </div>
                     <div>
-                        <span class="uppercase text-[10px] font-bold tracking-widest ${isDone ? 'text-[#8890A0]' : 'text-[#2DCB8A]'} mb-1 block">Coach Assignment</span>
-                        <p class="text-sm leading-relaxed ${isDone ? 'task-completed text-[#8890A0]' : 'text-[#F4F4F0]'}">${task}</p>
+                        <span class="uppercase text-[10px] font-bold tracking-widest ${isDone ? 'text-[#9CA3AF]' : 'text-[#00E5FF]'} mb-1 block">Coach Assignment</span>
+                        <p class="text-sm leading-relaxed ${isDone ? 'task-completed text-[#9CA3AF]' : 'text-white'}">${task}</p>
                     </div>
                 </div>
                 `;
@@ -757,19 +717,19 @@ function renderPractice() {
         const isDone = STATE.player.completedTasksSet[`practice_default`];
         
         content = `
-        <div class="bg-[#1A1A3A] p-4 rounded-xl border border-white/10 mb-6 shadow-sm">
-            <p class="text-[#F4F4F0] text-sm leading-relaxed">
-                <strong class="text-[#2DCB8A]">Baseline Practice.</strong> Until you log a round, your drills are based on your self-assessment.
+        <div class="bg-[#1A1A3A] p-4 rounded-xl border border-white/20 mb-6 shadow-sm">
+            <p class="text-white text-sm leading-relaxed">
+                <strong class="text-[#00E5FF]">Baseline Practice.</strong> Until you log a round, your drills are based on your self-assessment.
             </p>
         </div>
-        <div class="bg-[#1A1A3A] p-4 rounded-xl border border-white/10 flex gap-4 items-start shadow-sm transition-all cursor-pointer" onclick="toggleTask(event, 'practice', 'default')">
+        <div class="bg-[#1A1A3A] p-4 rounded-xl border border-white/20 flex gap-4 items-start shadow-sm transition-all cursor-pointer hover:border-white/40" onclick="toggleTask(event, 'practice', 'default')">
             <div class="mt-1 flex-shrink-0">
-                ${isDone ? `<svg class="text-[#2DCB8A]" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>` 
-                         : `<div class="w-6 h-6 rounded-full border-2 border-white/20"></div>`}
+                ${isDone ? `<svg class="text-[#00E5FF]" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>` 
+                         : `<div class="w-6 h-6 rounded-full border-2 border-white/30"></div>`}
             </div>
             <div>
-                <span class="uppercase text-[10px] font-bold tracking-widest ${isDone ? 'text-[#8890A0]' : 'text-[#2DCB8A]'} mb-1 block">Baseline Drill</span>
-                <p class="text-sm leading-relaxed ${isDone ? 'task-completed text-[#8890A0]' : 'text-[#F4F4F0]'}">${drill}</p>
+                <span class="uppercase text-[10px] font-bold tracking-widest ${isDone ? 'text-[#9CA3AF]' : 'text-[#00E5FF]'} mb-1 block">Baseline Drill</span>
+                <p class="text-sm leading-relaxed ${isDone ? 'task-completed text-[#9CA3AF]' : 'text-white'}">${drill}</p>
             </div>
         </div>
         `;
@@ -778,10 +738,10 @@ function renderPractice() {
     return `
     <div class="flex flex-col h-full p-6 animate-fade-in pb-0">
         <header class="mb-6 shrink-0">
-            <h1 class="text-2xl font-serif font-bold text-[#F4F4F0] flex items-center gap-2 tracking-widest">
-                <svg class="text-[#2DCB8A] w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg> PRACTICE
+            <h1 class="text-2xl font-serif font-bold text-white flex items-center gap-2 tracking-widest">
+                <svg class="text-[#00E5FF] w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg> PRACTICE
             </h1>
-            <p class="text-[#8890A0] text-sm mt-1">Targeted drills for your core areas.</p>
+            <p class="text-[#D1D5DB] text-sm mt-1">Targeted drills for your core areas.</p>
         </header>
         <div class="flex-1 overflow-y-auto hide-scrollbar pb-8">
             ${content}
@@ -791,14 +751,14 @@ function renderPractice() {
 
 function renderPlayIntro() {
     return `<div class="flex flex-col h-full p-6 animate-fade-in">
-        <h1 class="text-2xl font-serif font-bold mb-2">Track Round</h1>
-        <p class="text-[#8890A0] mb-8">Play ${STATE.player.courseName} to gather Strokes Gained data.</p>
+        <h1 class="text-2xl font-serif font-bold mb-2 text-white">Track Round</h1>
+        <p class="text-[#D1D5DB] mb-8">Play ${STATE.player.courseName} to gather Strokes Gained data.</p>
         
         ${STATE.activeRound ? `
-            <button onclick="switchView('play_active')" class="w-full bg-[#E8A930] hover:bg-yellow-500 text-[#0D1A12] font-bold py-5 rounded-xl shadow-[0_0_20px_rgba(232,169,48,0.2)] mb-4 uppercase tracking-widest transition-transform active:scale-95">Resume Round (Hole ${STATE.player.courseHoles[STATE.activeRound.holeIndex].number})</button>
-            <button onclick="clearLocalRoundState(); render();" class="w-full bg-[#1A1A3A] border border-white/10 hover:border-[#E85030] text-[#8890A0] hover:text-[#E85030] font-bold py-4 rounded-xl transition-colors">Discard Saved Round</button>
+            <button onclick="switchView('play_active')" class="w-full bg-[#FFD700] hover:bg-yellow-400 text-[#000000] font-bold py-5 rounded-xl shadow-[0_0_20px_rgba(255,215,0,0.2)] mb-4 uppercase tracking-widest transition-transform active:scale-95">Resume Round (Hole ${STATE.player.courseHoles[STATE.activeRound.holeIndex].number})</button>
+            <button onclick="clearLocalRoundState(); render();" class="w-full bg-[#1A1A3A] border border-white/30 hover:border-[#FF4444] text-[#D1D5DB] hover:text-[#FF4444] font-bold py-4 rounded-xl transition-colors">Discard Saved Round</button>
         ` : `
-            <button onclick="startRoundFlow()" class="w-full bg-[#2DCB8A] hover:bg-[#34e09a] text-[#0D1A12] font-bold py-5 rounded-xl shadow-[0_0_20px_rgba(45,203,138,0.15)] uppercase tracking-widest transition-transform active:scale-95">TEE OFF</button>
+            <button onclick="startRoundFlow()" class="w-full bg-[#00E5FF] hover:bg-[#33EEFF] text-[#000000] font-bold py-5 rounded-xl shadow-[0_0_20px_rgba(0,229,255,0.15)] uppercase tracking-widest transition-transform active:scale-95">TEE OFF</button>
         `}
     </div>`;
 }
@@ -823,11 +783,11 @@ function renderPlayActive() {
     if (round.holeState === 'fairway') {
         interactions = `
             <div class="mb-4 text-center">
-                <div class="text-[#8890A0] font-bold uppercase tracking-widest text-[11px] mb-2">Choose Club</div>
-                <div class="text-3xl font-serif font-bold text-[#2DCB8A] mb-4">${club.name}</div>
+                <div class="text-[#D1D5DB] font-bold uppercase tracking-widest text-[11px] mb-2">Choose Club</div>
+                <div class="text-3xl font-serif font-bold text-[#00E5FF] mb-4">${club.name}</div>
                 <div class="px-2">
                     <input type="range" min="0" max="${STATE.player.bag.length - 2}" value="${round.selectedClubIndex}" oninput="updateClubSlider(this.value)" class="w-full">
-                    <div class="flex justify-between mt-2 text-[10px] font-bold text-[#404060] uppercase tracking-wider">
+                    <div class="flex justify-between mt-2 text-[10px] font-bold text-[#9CA3AF] uppercase tracking-wider">
                         <span>${STATE.player.bag[0].name}</span>
                         <span>${STATE.player.bag[STATE.player.bag.length-2].name}</span>
                     </div>
@@ -836,89 +796,89 @@ function renderPlayActive() {
 
             <div class="space-y-2 mb-4">
                 <div class="flex gap-2">
-                    <button onclick="setOutcome('dir', 'Left')" class="flex-1 py-2 text-[10px] uppercase font-bold rounded-lg border ${outs.dir==='Left'?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#8890A0] border-transparent'}">Left</button>
-                    <button onclick="setOutcome('dir', 'Straight')" class="flex-1 py-2 text-[10px] uppercase font-bold rounded-lg border ${outs.dir==='Straight'?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#8890A0] border-transparent'}">Straight</button>
-                    <button onclick="setOutcome('dir', 'Right')" class="flex-1 py-2 text-[10px] uppercase font-bold rounded-lg border ${outs.dir==='Right'?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#8890A0] border-transparent'}">Right</button>
+                    <button onclick="setOutcome('dir', 'Left')" class="flex-1 py-2 text-[10px] uppercase font-bold rounded-lg border ${outs.dir==='Left'?'bg-[#00E5FF] text-[#000000] border-[#00E5FF]':'bg-[#1A1A3A] text-[#D1D5DB] border-transparent hover:border-white/30'}">Left</button>
+                    <button onclick="setOutcome('dir', 'Straight')" class="flex-1 py-2 text-[10px] uppercase font-bold rounded-lg border ${outs.dir==='Straight'?'bg-[#00E5FF] text-[#000000] border-[#00E5FF]':'bg-[#1A1A3A] text-[#D1D5DB] border-transparent hover:border-white/30'}">Straight</button>
+                    <button onclick="setOutcome('dir', 'Right')" class="flex-1 py-2 text-[10px] uppercase font-bold rounded-lg border ${outs.dir==='Right'?'bg-[#00E5FF] text-[#000000] border-[#00E5FF]':'bg-[#1A1A3A] text-[#D1D5DB] border-transparent hover:border-white/30'}">Right</button>
                 </div>
                 <div class="flex gap-2">
-                    <button onclick="setOutcome('dist', 'Short')" class="flex-1 py-2 text-[10px] uppercase font-bold rounded-lg border ${outs.dist==='Short'?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#8890A0] border-transparent'}">Short</button>
-                    <button onclick="setOutcome('dist', 'At Dist')" class="flex-1 py-2 text-[10px] uppercase font-bold rounded-lg border ${outs.dist==='At Dist'?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#8890A0] border-transparent'}">At Dist</button>
-                    <button onclick="setOutcome('dist', 'Long')" class="flex-1 py-2 text-[10px] uppercase font-bold rounded-lg border ${outs.dist==='Long'?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#8890A0] border-transparent'}">Long</button>
+                    <button onclick="setOutcome('dist', 'Short')" class="flex-1 py-2 text-[10px] uppercase font-bold rounded-lg border ${outs.dist==='Short'?'bg-[#00E5FF] text-[#000000] border-[#00E5FF]':'bg-[#1A1A3A] text-[#D1D5DB] border-transparent hover:border-white/30'}">Short</button>
+                    <button onclick="setOutcome('dist', 'At Dist')" class="flex-1 py-2 text-[10px] uppercase font-bold rounded-lg border ${outs.dist==='At Dist'?'bg-[#00E5FF] text-[#000000] border-[#00E5FF]':'bg-[#1A1A3A] text-[#D1D5DB] border-transparent hover:border-white/30'}">At Dist</button>
+                    <button onclick="setOutcome('dist', 'Long')" class="flex-1 py-2 text-[10px] uppercase font-bold rounded-lg border ${outs.dist==='Long'?'bg-[#00E5FF] text-[#000000] border-[#00E5FF]':'bg-[#1A1A3A] text-[#D1D5DB] border-transparent hover:border-white/30'}">Long</button>
                 </div>
                 <div class="flex gap-2">
-                    <button onclick="setOutcome('lie', 'Rough')" class="flex-1 py-2 text-[10px] uppercase font-bold rounded-lg border ${outs.lie==='Rough'?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#8890A0] border-transparent'}">Rough</button>
-                    <button onclick="setOutcome('lie', 'Fairway')" class="flex-1 py-2 text-[10px] uppercase font-bold rounded-lg border ${outs.lie==='Fairway'?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#8890A0] border-transparent'}">Fairway</button>
-                    <button onclick="setOutcome('lie', 'Green')" class="flex-1 py-2 text-[10px] uppercase font-bold rounded-lg border ${outs.lie==='Green'?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#8890A0] border-transparent'}">Green</button>
+                    <button onclick="setOutcome('lie', 'Rough')" class="flex-1 py-2 text-[10px] uppercase font-bold rounded-lg border ${outs.lie==='Rough'?'bg-[#00E5FF] text-[#000000] border-[#00E5FF]':'bg-[#1A1A3A] text-[#D1D5DB] border-transparent hover:border-white/30'}">Rough</button>
+                    <button onclick="setOutcome('lie', 'Fairway')" class="flex-1 py-2 text-[10px] uppercase font-bold rounded-lg border ${outs.lie==='Fairway'?'bg-[#00E5FF] text-[#000000] border-[#00E5FF]':'bg-[#1A1A3A] text-[#D1D5DB] border-transparent hover:border-white/30'}">Fairway</button>
+                    <button onclick="setOutcome('lie', 'Green')" class="flex-1 py-2 text-[10px] uppercase font-bold rounded-lg border ${outs.lie==='Green'?'bg-[#00E5FF] text-[#000000] border-[#00E5FF]':'bg-[#1A1A3A] text-[#D1D5DB] border-transparent hover:border-white/30'}">Green</button>
                 </div>
                 <div class="flex gap-2">
-                    <button onclick="setOutcome('cont', 'Miss-hit')" class="flex-1 py-2 text-[10px] uppercase font-bold rounded-lg border ${outs.cont==='Miss-hit'?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#8890A0] border-transparent'}">Miss-hit</button>
-                    <button onclick="setOutcome('cont', 'Good Strike')" class="flex-1 py-2 text-[10px] uppercase font-bold rounded-lg border ${outs.cont==='Good Strike'?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#8890A0] border-transparent'}">Good Strike</button>
-                    <button onclick="setOutcome('cont', 'Dreamy')" class="flex-1 py-2 text-[10px] uppercase font-bold rounded-lg border ${outs.cont==='Dreamy'?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#8890A0] border-transparent'}">Dreamy</button>
+                    <button onclick="setOutcome('cont', 'Miss-hit')" class="flex-1 py-2 text-[10px] uppercase font-bold rounded-lg border ${outs.cont==='Miss-hit'?'bg-[#00E5FF] text-[#000000] border-[#00E5FF]':'bg-[#1A1A3A] text-[#D1D5DB] border-transparent hover:border-white/30'}">Miss-hit</button>
+                    <button onclick="setOutcome('cont', 'Good Strike')" class="flex-1 py-2 text-[10px] uppercase font-bold rounded-lg border ${outs.cont==='Good Strike'?'bg-[#00E5FF] text-[#000000] border-[#00E5FF]':'bg-[#1A1A3A] text-[#D1D5DB] border-transparent hover:border-white/30'}">Good</button>
+                    <button onclick="setOutcome('cont', 'Dreamy')" class="flex-1 py-2 text-[10px] uppercase font-bold rounded-lg border ${outs.cont==='Dreamy'?'bg-[#00E5FF] text-[#000000] border-[#00E5FF]':'bg-[#1A1A3A] text-[#D1D5DB] border-transparent hover:border-white/30'}">Dreamy</button>
                 </div>
-                <button onclick="setOutcome('ob', ${!outs.ob})" class="w-full py-2 text-[10px] uppercase font-bold rounded-lg border ${outs.ob?'bg-[#E85030] text-white border-[#E85030]':'bg-[#1A1A3A] text-[#8890A0] border-transparent'}">${outs.ob ? 'OB (Penalty Added)' : 'Mark as OB'}</button>
+                <button onclick="setOutcome('ob', ${!outs.ob})" class="w-full py-2 text-[10px] uppercase font-bold rounded-lg border ${outs.ob?'bg-[#FF4444] text-white border-[#FF4444]':'bg-[#1A1A3A] text-[#D1D5DB] border-transparent hover:border-white/30'}">${outs.ob ? 'OB (Penalty Added)' : 'Mark as OB'}</button>
             </div>
 
-            <button onclick="recordFairwayShot()" class="w-full bg-[#2DCB8A] hover:bg-[#34e09a] text-[#0D1A12] font-bold py-3 rounded-xl transition-transform active:scale-95 shadow-lg mt-auto uppercase tracking-widest">Record Shot</button>
+            <button onclick="recordFairwayShot()" class="w-full bg-[#00E5FF] hover:bg-[#33EEFF] text-[#000000] font-bold py-3 rounded-xl transition-transform active:scale-95 shadow-lg mt-auto uppercase tracking-widest">Record Shot</button>
         `;
     } else if (round.holeState === 'green') {
         interactions = `
             <div class="text-center mb-4 mt-2">
-                <div class="text-[#2DCB8A] text-xs font-bold uppercase tracking-widest mb-4">On the Green</div>
+                <div class="text-[#00E5FF] text-xs font-bold uppercase tracking-widest mb-4">On the Green</div>
                 <div class="grid grid-cols-2 gap-2 mb-4">
-                    <button onclick="reviewHole(0)" class="col-span-2 py-4 text-sm font-bold uppercase tracking-widest rounded-2xl border-2 ${round.tempPuttCount===0?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#F4F4F0] border-white/5'}">Hole Out (0 Putts)</button>
-                    <button onclick="reviewHole(1)" class="py-3 text-xl font-bold rounded-2xl border-2 ${round.tempPuttCount===1?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#F4F4F0] border-white/5'}">1</button>
-                    <button onclick="reviewHole(2)" class="py-3 text-xl font-bold rounded-2xl border-2 ${round.tempPuttCount===2?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#F4F4F0] border-white/5'}">2</button>
-                    <button onclick="reviewHole(3)" class="py-3 text-xl font-bold rounded-2xl border-2 ${round.tempPuttCount===3?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#F4F4F0] border-white/5'}">3</button>
-                    <button onclick="reviewHole(4)" class="py-3 text-xl font-bold rounded-2xl border-2 ${round.tempPuttCount===4?'bg-[#2DCB8A] text-[#0D1A12] border-[#2DCB8A]':'bg-[#1A1A3A] text-[#F4F4F0] border-white/5'}">4+</button>
+                    <button onclick="reviewHole(0)" class="col-span-2 py-4 text-sm font-bold uppercase tracking-widest rounded-2xl border-2 ${round.tempPuttCount===0?'bg-[#00E5FF] text-[#000000] border-[#00E5FF]':'bg-[#1A1A3A] text-white border-white/20 hover:border-white/40'}">Hole Out (0 Putts)</button>
+                    <button onclick="reviewHole(1)" class="py-3 text-xl font-bold rounded-2xl border-2 ${round.tempPuttCount===1?'bg-[#00E5FF] text-[#000000] border-[#00E5FF]':'bg-[#1A1A3A] text-white border-white/20 hover:border-white/40'}">1</button>
+                    <button onclick="reviewHole(2)" class="py-3 text-xl font-bold rounded-2xl border-2 ${round.tempPuttCount===2?'bg-[#00E5FF] text-[#000000] border-[#00E5FF]':'bg-[#1A1A3A] text-white border-white/20 hover:border-white/40'}">2</button>
+                    <button onclick="reviewHole(3)" class="py-3 text-xl font-bold rounded-2xl border-2 ${round.tempPuttCount===3?'bg-[#00E5FF] text-[#000000] border-[#00E5FF]':'bg-[#1A1A3A] text-white border-white/20 hover:border-white/40'}">3</button>
+                    <button onclick="reviewHole(4)" class="py-3 text-xl font-bold rounded-2xl border-2 ${round.tempPuttCount===4?'bg-[#00E5FF] text-[#000000] border-[#00E5FF]':'bg-[#1A1A3A] text-white border-white/20 hover:border-white/40'}">4+</button>
                 </div>
-                <textarea id="hole-comment" placeholder="Any notes on this hole?" class="w-full bg-[#1A1A3A] border border-white/10 rounded-xl p-3 text-sm text-[#F4F4F0] outline-none h-20 resize-none mb-2"></textarea>
+                <textarea id="hole-comment" placeholder="Any notes on this hole?" class="w-full bg-[#1A1A3A] border border-white/30 focus:border-[#00E5FF] rounded-xl p-3 text-sm text-white outline-none h-20 resize-none mb-2"></textarea>
             </div>
         `;
     } else if (round.holeState === 'review') {
         interactions = `
             <div class="mb-4">
-                <div class="text-[#2DCB8A] text-xs font-bold uppercase tracking-widest mb-4 text-center">Review & Edit Hole</div>
+                <div class="text-[#00E5FF] text-xs font-bold uppercase tracking-widest mb-4 text-center">Review & Edit Hole</div>
                 <div class="space-y-3 mb-4">
-                    ${round.currentHoleShots.length === 0 ? '<div class="text-center text-xs text-[#8890A0]">No shots recorded.</div>' : ''}
+                    ${round.currentHoleShots.length === 0 ? '<div class="text-center text-xs text-[#9CA3AF]">No shots recorded.</div>' : ''}
                     ${round.currentHoleShots.map((shot, idx) => `
-                        <div class="bg-[#1A1A3A] p-3 rounded-xl border border-white/5 relative">
+                        <div class="bg-[#1A1A3A] p-3 rounded-xl border border-white/20 relative">
                             <div class="flex justify-between items-center mb-3">
                                 <span class="text-xs font-bold text-white uppercase tracking-widest">Shot ${idx + 1}</span>
                                 <div class="flex items-center gap-3">
-                                    <label class="flex items-center gap-1 text-[10px] uppercase ${shot.ob ? 'text-[#E85030]' : 'text-[#8890A0]'} font-bold cursor-pointer">
-                                        <input type="checkbox" ${shot.ob ? 'checked' : ''} onchange="updateReviewShot(${idx}, 'ob', this.checked)" class="accent-[#E85030]"> OB
+                                    <label class="flex items-center gap-1 text-[10px] uppercase ${shot.ob ? 'text-[#FF4444]' : 'text-[#D1D5DB]'} font-bold cursor-pointer">
+                                        <input type="checkbox" ${shot.ob ? 'checked' : ''} onchange="updateReviewShot(${idx}, 'ob', this.checked)" class="accent-[#FF4444]"> OB
                                     </label>
-                                    <button onclick="deleteReviewShot(${idx})" class="text-[#E85030] hover:text-white transition-colors">
+                                    <button onclick="deleteReviewShot(${idx})" class="text-[#FF4444] hover:text-white transition-colors">
                                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                                     </button>
                                 </div>
                             </div>
                             <div class="grid grid-cols-2 gap-2 text-xs">
                                 <div>
-                                    <div class="text-[9px] text-[#404060] uppercase font-bold mb-1">Club</div>
-                                    <select onchange="updateReviewShot(${idx}, 'club', this.value)" class="w-full bg-[#0D0D1E] text-[#F4F4F0] p-1.5 rounded border border-white/10 outline-none">
+                                    <div class="text-[9px] text-[#9CA3AF] uppercase font-bold mb-1">Club</div>
+                                    <select onchange="updateReviewShot(${idx}, 'club', this.value)" class="w-full bg-[#0D0D1E] text-white p-1.5 rounded border border-white/30 outline-none focus:border-[#00E5FF]">
                                         ${STATE.player.bag.map(c => `<option value="${c.name}" ${c.name === shot.club ? 'selected' : ''}>${c.name}</option>`).join('')}
                                     </select>
                                 </div>
                                 <div>
-                                    <div class="text-[9px] text-[#404060] uppercase font-bold mb-1">Lie</div>
-                                    <select onchange="updateReviewShot(${idx}, 'lie', this.value)" class="w-full bg-[#0D0D1E] text-[#F4F4F0] p-1.5 rounded border border-white/10 outline-none">
+                                    <div class="text-[9px] text-[#9CA3AF] uppercase font-bold mb-1">Lie</div>
+                                    <select onchange="updateReviewShot(${idx}, 'lie', this.value)" class="w-full bg-[#0D0D1E] text-white p-1.5 rounded border border-white/30 outline-none focus:border-[#00E5FF]">
                                         <option value="Fairway" ${shot.lie === 'Fairway' ? 'selected' : ''}>Fairway</option>
                                         <option value="Rough" ${shot.lie === 'Rough' ? 'selected' : ''}>Rough</option>
                                         <option value="Green" ${shot.lie === 'Green' ? 'selected' : ''}>Green</option>
                                     </select>
                                 </div>
                                 <div>
-                                    <div class="text-[9px] text-[#404060] uppercase font-bold mb-1">Direction</div>
-                                    <select onchange="updateReviewShot(${idx}, 'direction', this.value)" class="w-full bg-[#0D0D1E] text-[#F4F4F0] p-1.5 rounded border border-white/10 outline-none">
+                                    <div class="text-[9px] text-[#9CA3AF] uppercase font-bold mb-1">Direction</div>
+                                    <select onchange="updateReviewShot(${idx}, 'direction', this.value)" class="w-full bg-[#0D0D1E] text-white p-1.5 rounded border border-white/30 outline-none focus:border-[#00E5FF]">
                                         <option value="Left" ${shot.direction === 'Left' ? 'selected' : ''}>Left</option>
                                         <option value="Straight" ${shot.direction === 'Straight' ? 'selected' : ''}>Straight</option>
                                         <option value="Right" ${shot.direction === 'Right' ? 'selected' : ''}>Right</option>
                                     </select>
                                 </div>
                                 <div>
-                                    <div class="text-[9px] text-[#404060] uppercase font-bold mb-1">Distance</div>
-                                    <select onchange="updateReviewShot(${idx}, 'distOut', this.value)" class="w-full bg-[#0D0D1E] text-[#F4F4F0] p-1.5 rounded border border-white/10 outline-none">
+                                    <div class="text-[9px] text-[#9CA3AF] uppercase font-bold mb-1">Distance</div>
+                                    <select onchange="updateReviewShot(${idx}, 'distOut', this.value)" class="w-full bg-[#0D0D1E] text-white p-1.5 rounded border border-white/30 outline-none focus:border-[#00E5FF]">
                                         <option value="Short" ${shot.distOut === 'Short' ? 'selected' : ''}>Short</option>
                                         <option value="At Dist" ${shot.distOut === 'At Dist' ? 'selected' : ''}>At Dist</option>
                                         <option value="Long" ${shot.distOut === 'Long' ? 'selected' : ''}>Long</option>
@@ -929,40 +889,40 @@ function renderPlayActive() {
                     `).join('')}
                 </div>
 
-                <div class="bg-[#1A1A3A] p-4 rounded-xl border border-white/5 mb-4 flex items-center justify-between">
+                <div class="bg-[#1A1A3A] p-4 rounded-xl border border-white/20 mb-4 flex items-center justify-between">
                     <span class="text-xs font-bold text-white uppercase tracking-widest">Total Putts</span>
                     <div class="flex items-center gap-3">
-                        <button onclick="updateReviewPutts(-1)" class="w-8 h-8 rounded-full bg-[#0D0D1E] text-white flex items-center justify-center border border-white/10 active:scale-95 transition-transform">-</button>
-                        <span class="text-xl font-black text-[#2DCB8A] w-6 text-center">${round.tempPuttCount}</span>
-                        <button onclick="updateReviewPutts(1)" class="w-8 h-8 rounded-full bg-[#0D0D1E] text-white flex items-center justify-center border border-white/10 active:scale-95 transition-transform">+</button>
+                        <button onclick="updateReviewPutts(-1)" class="w-8 h-8 rounded-full bg-[#0D0D1E] text-white flex items-center justify-center border border-white/30 active:scale-95 transition-transform hover:border-white">-</button>
+                        <span class="text-xl font-black text-[#00E5FF] w-6 text-center">${round.tempPuttCount}</span>
+                        <button onclick="updateReviewPutts(1)" class="w-8 h-8 rounded-full bg-[#0D0D1E] text-white flex items-center justify-center border border-white/30 active:scale-95 transition-transform hover:border-white">+</button>
                     </div>
                 </div>
 
-                <button onclick="commitHole()" class="w-full bg-[#2DCB8A] hover:bg-[#34e09a] text-[#0D1A12] font-bold py-4 rounded-xl transition-transform active:scale-95 shadow-[0_0_15px_rgba(45,203,138,0.2)] uppercase tracking-widest">Commit Hole Data</button>
-                <button onclick="backToGreen()" class="w-full mt-3 bg-transparent text-[#8890A0] text-xs font-bold uppercase tracking-widest hover:text-white transition-colors">Back to Green</button>
+                <button onclick="commitHole()" class="w-full bg-[#00E5FF] hover:bg-[#33EEFF] text-[#000000] font-bold py-4 rounded-xl transition-transform active:scale-95 shadow-[0_0_15px_rgba(0,229,255,0.2)] uppercase tracking-widest">Commit Hole Data</button>
+                <button onclick="backToGreen()" class="w-full mt-3 bg-transparent text-[#9CA3AF] text-xs font-bold uppercase tracking-widest hover:text-white transition-colors">Back to Green</button>
             </div>
         `;
     }
 
     return `
     <div class="flex flex-col h-full bg-[#0D0D1E]">
-        <div class="bg-[#1A1A3A] p-4 rounded-b-2xl border-b border-white/10 shadow-lg shrink-0">
+        <div class="bg-[#1A1A3A] p-4 rounded-b-2xl border-b border-white/20 shadow-lg shrink-0">
             <div class="flex justify-between items-center mb-4">
-                <div><span class="text-[#2DCB8A] font-bold uppercase tracking-widest text-[10px]">Hole ${hole.number}</span><h2 class="text-2xl font-serif font-bold">Par ${hole.par}</h2></div>
-                <div class="text-right"><span class="text-[#8890A0] font-bold uppercase tracking-widest text-[10px]">Total Strokes</span><div class="text-3xl font-serif font-bold text-[#E8A930]">${currentTotalStrokes}</div></div>
+                <div><span class="text-[#00E5FF] font-bold uppercase tracking-widest text-[10px]">Hole ${hole.number}</span><h2 class="text-2xl font-serif font-bold text-white">Par ${hole.par}</h2></div>
+                <div class="text-right"><span class="text-[#D1D5DB] font-bold uppercase tracking-widest text-[10px]">Total Strokes</span><div class="text-3xl font-serif font-bold text-[#FFD700]">${currentTotalStrokes}</div></div>
             </div>
-            <div class="grid grid-cols-4 gap-2 text-center border-t border-white/5 pt-3">
-                <div><div class="text-[9px] uppercase font-bold text-[#404060] mb-1">To Par</div><div class="text-sm font-black ${scoreToPar > 0 ? 'text-[#E85030]' : 'text-[#2DCB8A]'}">${scoreToParStr}</div></div>
-                <div><div class="text-[9px] uppercase font-bold text-[#404060] mb-1">PPG</div><div class="text-sm font-black text-white">${ppg}</div></div>
-                <div><div class="text-[9px] uppercase font-bold text-[#404060] mb-1">GIR %</div><div class="text-sm font-black text-[#2DCB8A]">${girPct}%</div></div>
-                <div><div class="text-[9px] uppercase font-bold text-[#404060] mb-1">Holes</div><div class="text-sm font-black text-white">${completedHoles}</div></div>
+            <div class="grid grid-cols-4 gap-2 text-center border-t border-white/20 pt-3">
+                <div><div class="text-[9px] uppercase font-bold text-[#9CA3AF] mb-1">To Par</div><div class="text-sm font-black ${scoreToPar > 0 ? 'text-[#FF4444]' : 'text-[#00E5FF]'}">${scoreToParStr}</div></div>
+                <div><div class="text-[9px] uppercase font-bold text-[#9CA3AF] mb-1">PPG</div><div class="text-sm font-black text-white">${ppg}</div></div>
+                <div><div class="text-[9px] uppercase font-bold text-[#9CA3AF] mb-1">GIR %</div><div class="text-sm font-black text-[#00E5FF]">${girPct}%</div></div>
+                <div><div class="text-[9px] uppercase font-bold text-[#9CA3AF] mb-1">Holes</div><div class="text-sm font-black text-white">${completedHoles}</div></div>
             </div>
         </div>
         <div class="p-4 flex-1 flex flex-col hide-scrollbar overflow-y-auto pb-4">
             ${interactions}
             ${round.holeState === 'fairway' && round.currentHoleShots.length > 0 ? `
                 <div class="mt-4 text-center">
-                    <button onclick="undoLastShot()" class="text-[#8890A0] text-[10px] font-bold uppercase tracking-widest hover:text-white transition-colors">
+                    <button onclick="undoLastShot()" class="text-[#9CA3AF] text-[10px] font-bold uppercase tracking-widest hover:text-white transition-colors">
                         <svg class="inline w-3 h-3 mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 00-9-9 9 9 0 00-6 2.3L3 13"/></svg> Undo Last Shot
                     </button>
                 </div>
@@ -976,30 +936,30 @@ function renderCoachCorner() {
     return `
     <div class="flex flex-col h-full p-6 animate-fade-in bg-[#0D0D1E]">
         <div class="text-center mt-6 mb-8">
-            <div class="w-16 h-16 rounded-full bg-[#1D7A5A] flex items-center justify-center text-3xl mx-auto mb-4 border-2 border-[#2DCB8A] shadow-[0_0_20px_rgba(45,203,138,0.2)]">🥊</div>
-            <h1 class="text-3xl font-serif font-bold uppercase tracking-tighter text-[#F4F4F0]">Corner Man</h1>
-            <p class="text-[#8890A0] text-sm mt-1 uppercase tracking-widest font-bold">Mid-Round Strategy</p>
+            <div class="w-16 h-16 rounded-full bg-[#00E5FF]/20 flex items-center justify-center text-3xl mx-auto mb-4 border-2 border-[#00E5FF] shadow-[0_0_20px_rgba(0,229,255,0.2)]">🥊</div>
+            <h1 class="text-3xl font-serif font-bold uppercase tracking-tighter text-white">Corner Man</h1>
+            <p class="text-[#D1D5DB] text-sm mt-1 uppercase tracking-widest font-bold">Mid-Round Strategy</p>
         </div>
-        <div class="flex-1 bg-[#1A1A3A] border border-white/10 rounded-2xl p-6 overflow-y-auto hide-scrollbar mb-8">
+        <div class="flex-1 bg-[#1A1A3A] border border-white/30 rounded-2xl p-6 overflow-y-auto hide-scrollbar mb-8">
             ${round.isCoachTyping ? `
-                <div class="flex gap-2 items-center text-[#8890A0]">
-                    <div class="w-2 h-2 bg-[#2DCB8A] rounded-full animate-bounce"></div>
-                    <div class="w-2 h-2 bg-[#2DCB8A] rounded-full animate-bounce" style="animation-delay:0.2s"></div>
-                    <div class="w-2 h-2 bg-[#2DCB8A] rounded-full animate-bounce" style="animation-delay:0.4s"></div>
-                    <span class="text-xs ml-2 font-bold uppercase tracking-widest">Analyzing your game...</span>
+                <div class="flex gap-2 items-center text-[#D1D5DB]">
+                    <div class="w-2 h-2 bg-[#00E5FF] rounded-full animate-bounce"></div>
+                    <div class="w-2 h-2 bg-[#00E5FF] rounded-full animate-bounce" style="animation-delay:0.2s"></div>
+                    <div class="w-2 h-2 bg-[#00E5FF] rounded-full animate-bounce" style="animation-delay:0.4s"></div>
+                    <span class="text-xs ml-2 font-bold uppercase tracking-widest text-[#D1D5DB]">Analyzing your game...</span>
                 </div>
             ` : `
-                <div class="text-[#F4F4F0] leading-relaxed text-sm font-medium space-y-3">
+                <div class="text-white leading-relaxed text-sm font-medium space-y-3">
                     ${round.cornerMessages[round.cornerMessages.length - 1]?.text || 'Looking at your data...'}
                 </div>
             `}
         </div>
         <div class="space-y-3 shrink-0">
             <div class="flex gap-2">
-                <input id="corner-chat-input" type="text" placeholder="Questions for Coach?" onkeydown="if(event.key==='Enter') sendCornerMessage()" class="flex-1 bg-[#1A1A3A] border border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-[#2DCB8A] text-[#F4F4F0]">
-                <button onclick="sendCornerMessage()" class="w-12 rounded-xl bg-[#1A1A3A] border border-white/10 hover:border-[#2DCB8A] flex items-center justify-center text-[#2DCB8A] transition-colors"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></button>
+                <input id="corner-chat-input" type="text" placeholder="Questions for Coach?" onkeydown="if(event.key==='Enter') sendCornerMessage()" class="flex-1 bg-[#1A1A3A] border border-white/30 rounded-xl px-4 py-3 text-sm outline-none focus:border-[#00E5FF] text-white">
+                <button onclick="sendCornerMessage()" class="w-12 rounded-xl bg-[#1A1A3A] border border-white/30 hover:border-[#00E5FF] flex items-center justify-center text-[#00E5FF] transition-colors"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></button>
             </div>
-            <button onclick="returnToTee()" class="w-full bg-[#2DCB8A] text-[#0D1A12] font-bold py-5 rounded-xl uppercase tracking-widest shadow-lg active:scale-95 transition-transform">Back to the Tee &rarr;</button>
+            <button onclick="returnToTee()" class="w-full bg-[#00E5FF] hover:bg-[#33EEFF] text-[#000000] font-bold py-5 rounded-xl uppercase tracking-widest shadow-lg active:scale-95 transition-transform">Back to the Tee &rarr;</button>
         </div>
     </div>`;
 }
@@ -1031,12 +991,12 @@ function renderPostRound() {
 
     const renderCategory = (title, items) => `
         <div class="mb-3">
-            <div class="text-[9px] font-black text-[#8890A0] uppercase tracking-widest mb-1.5">${title}</div>
+            <div class="text-[9px] font-black text-[#D1D5DB] uppercase tracking-widest mb-1.5">${title}</div>
             <div class="flex gap-2">
                 ${items.map(item => `
-                    <div class="flex-1 bg-[#0D0D1E] border border-white/5 rounded-lg p-2 text-center">
+                    <div class="flex-1 bg-[#0D0D1E] border border-white/20 rounded-lg p-2 text-center">
                         <div class="text-lg font-black" style="color: ${item.color}">${item.pct}%</div>
-                        <div class="text-[8px] uppercase font-bold text-[#404060] mt-0.5">${item.label}</div>
+                        <div class="text-[8px] uppercase font-bold text-[#9CA3AF] mt-0.5">${item.label}</div>
                     </div>
                 `).join('')}
             </div>
@@ -1049,25 +1009,25 @@ function renderPostRound() {
     if (r.newLearn?.length > 0 || r.newPractice?.length > 0) {
         suggestionsHTML = `
             <div class="mb-10 animate-fade-in">
-                <h3 class="text-xs font-black uppercase tracking-widest text-[#8890A0] mb-4">Coach Plan Updates</h3>
+                <h3 class="text-xs font-black uppercase tracking-widest text-[#D1D5DB] mb-4">Coach Plan Updates</h3>
                 <div class="space-y-3">
                     ${r.newLearn.map((item, idx) => `
-                        <div class="bg-[#1A1A3A] p-4 rounded-xl border border-[#2DCB8A]/30 shadow-lg">
-                            <span class="text-[10px] uppercase font-black text-[#2DCB8A] mb-2 block tracking-widest">New to Learn</span>
+                        <div class="bg-[#1A1A3A] p-4 rounded-xl border border-[#00E5FF]/30 shadow-lg">
+                            <span class="text-[10px] uppercase font-black text-[#00E5FF] mb-2 block tracking-widest">New to Learn</span>
                             <p class="text-sm text-white mb-4 leading-relaxed">${item}</p>
                             <div class="flex gap-2">
-                                <button onclick="handlePlanAction('learn', ${idx}, 'add')" class="flex-1 bg-[#2DCB8A]/20 hover:bg-[#2DCB8A] text-[#2DCB8A] hover:text-[#0D1A12] text-xs font-bold py-2.5 rounded-lg transition-colors">Add to Hub</button>
-                                <button onclick="handlePlanAction('learn', ${idx}, 'ignore')" class="flex-1 bg-white/5 hover:bg-white/10 text-[#8890A0] hover:text-white text-xs font-bold py-2.5 rounded-lg transition-colors">Ignore</button>
+                                <button onclick="handlePlanAction('learn', ${idx}, 'add')" class="flex-1 bg-[#00E5FF]/20 hover:bg-[#00E5FF] text-[#00E5FF] hover:text-[#000000] text-xs font-bold py-2.5 rounded-lg transition-colors">Add to Hub</button>
+                                <button onclick="handlePlanAction('learn', ${idx}, 'ignore')" class="flex-1 bg-white/10 hover:bg-white/20 text-[#D1D5DB] hover:text-white text-xs font-bold py-2.5 rounded-lg transition-colors">Ignore</button>
                             </div>
                         </div>
                     `).join('')}
                     ${r.newPractice.map((item, idx) => `
-                        <div class="bg-[#1A1A3A] p-4 rounded-xl border border-[#2DCB8A]/30 shadow-lg">
-                            <span class="text-[10px] uppercase font-black text-[#2DCB8A] mb-2 block tracking-widest">New to Practice</span>
+                        <div class="bg-[#1A1A3A] p-4 rounded-xl border border-[#00E5FF]/30 shadow-lg">
+                            <span class="text-[10px] uppercase font-black text-[#00E5FF] mb-2 block tracking-widest">New to Practice</span>
                             <p class="text-sm text-white mb-4 leading-relaxed">${item}</p>
                             <div class="flex gap-2">
-                                <button onclick="handlePlanAction('practice', ${idx}, 'add')" class="flex-1 bg-[#2DCB8A]/20 hover:bg-[#2DCB8A] text-[#2DCB8A] hover:text-[#0D1A12] text-xs font-bold py-2.5 rounded-lg transition-colors">Add to Hub</button>
-                                <button onclick="handlePlanAction('practice', ${idx}, 'ignore')" class="flex-1 bg-white/5 hover:bg-white/10 text-[#8890A0] hover:text-white text-xs font-bold py-2.5 rounded-lg transition-colors">Ignore</button>
+                                <button onclick="handlePlanAction('practice', ${idx}, 'add')" class="flex-1 bg-[#00E5FF]/20 hover:bg-[#00E5FF] text-[#00E5FF] hover:text-[#000000] text-xs font-bold py-2.5 rounded-lg transition-colors">Add to Hub</button>
+                                <button onclick="handlePlanAction('practice', ${idx}, 'ignore')" class="flex-1 bg-white/10 hover:bg-white/20 text-[#D1D5DB] hover:text-white text-xs font-bold py-2.5 rounded-lg transition-colors">Ignore</button>
                             </div>
                         </div>
                     `).join('')}
@@ -1079,9 +1039,9 @@ function renderPostRound() {
     let pithyAdviceHTML = '';
     if (r.pithyAdvice) {
         pithyAdviceHTML = `
-            <div class="bg-[#1D7A5A]/20 p-6 rounded-2xl border border-[#2DCB8A]/40 mb-10 shadow-[0_0_15px_rgba(45,203,138,0.1)] text-center animate-fade-in">
+            <div class="bg-[#FFD700]/10 p-6 rounded-2xl border border-[#FFD700]/40 mb-10 shadow-[0_0_15px_rgba(255,215,0,0.1)] text-center animate-fade-in">
                 <div class="text-3xl mb-3">💡</div>
-                <p class="text-[#F4F4F0] font-medium leading-relaxed italic text-lg">
+                <p class="text-white font-medium leading-relaxed italic text-lg">
                     "${r.pithyAdvice}"
                 </p>
             </div>
@@ -1091,14 +1051,14 @@ function renderPostRound() {
     let aiErrorBannerHTML = '';
     if (r.aiFailed) {
         aiErrorBannerHTML = `
-            <div class="bg-[#E85030]/10 p-4 rounded-xl border border-[#E85030]/30 mb-8 shadow-sm flex items-start gap-3 animate-fade-in">
-                <div class="text-[#E85030] text-xl mt-0.5">⚠️</div>
+            <div class="bg-[#FF4444]/10 p-4 rounded-xl border border-[#FF4444]/30 mb-8 shadow-sm flex items-start gap-3 animate-fade-in">
+                <div class="text-[#FF4444] text-xl mt-0.5">⚠️</div>
                 <div class="w-full">
-                    <div class="text-[#E85030] text-xs font-bold uppercase tracking-widest mb-1">AI Connection Failed</div>
-                    <p class="text-[#E85030]/80 text-xs leading-relaxed mb-3">
+                    <div class="text-[#FF4444] text-xs font-bold uppercase tracking-widest mb-1">AI Connection Failed</div>
+                    <p class="text-[#FF4444]/80 text-xs leading-relaxed mb-3">
                         Coach couldn't reach the analysis servers. Your data is saved safely, but we've generated baseline default drills and scores for this round.
                     </p>
-                    <div class="bg-[#0D0D1E] p-3 rounded-lg border border-[#E85030]/20 text-[10px] text-[#E85030] font-mono break-words w-full">
+                    <div class="bg-[#0D0D1E] p-3 rounded-lg border border-[#FF4444]/20 text-[10px] text-[#FF4444] font-mono break-words w-full">
                         <strong>Technical Details:</strong><br/>
                         ${r.aiErrorMessage || 'Unknown API Error'}
                     </div>
@@ -1110,20 +1070,20 @@ function renderPostRound() {
     return `
     <div class="flex flex-col h-full bg-[#0D0D1E] animate-fade-in p-6 pb-24 overflow-y-auto hide-scrollbar">
         <div class="text-center mt-4 mb-8">
-            <h1 class="text-sm font-black uppercase tracking-[0.2em] text-[#2DCB8A] mb-2">Round Summary</h1>
+            <h1 class="text-sm font-black uppercase tracking-[0.2em] text-[#00E5FF] mb-2">Round Summary</h1>
             <div class="flex justify-center items-baseline gap-4">
                 <span class="text-7xl font-black text-white">${totalStrokes}</span>
-                <span class="text-2xl font-bold ${toPar > 0 ? 'text-[#E85030]' : 'text-[#2DCB8A]'}">${toParStr}</span>
+                <span class="text-2xl font-bold ${toPar > 0 ? 'text-[#FF4444]' : 'text-[#00E5FF]'}">${toParStr}</span>
             </div>
         </div>
 
         <div class="grid grid-cols-2 gap-3 mb-8">
-            <div class="bg-[#1A1A3A] p-5 rounded-2xl border border-white/5 text-center">
-                <div class="text-[10px] font-black text-[#404060] uppercase mb-1">Fairways Hit</div>
+            <div class="bg-[#1A1A3A] p-5 rounded-2xl border border-white/20 text-center">
+                <div class="text-[10px] font-black text-[#9CA3AF] uppercase mb-1">Fairways Hit</div>
                 <div class="text-3xl font-black text-white">${fairwayPct}%</div>
             </div>
-            <div class="bg-[#1A1A3A] p-5 rounded-2xl border border-white/5 text-center">
-                <div class="text-[10px] font-black text-[#404060] uppercase mb-1">Putts Per Green</div>
+            <div class="bg-[#1A1A3A] p-5 rounded-2xl border border-white/20 text-center">
+                <div class="text-[10px] font-black text-[#9CA3AF] uppercase mb-1">Putts Per Green</div>
                 <div class="text-3xl font-black text-white">${ppg}</div>
             </div>
         </div>
@@ -1132,16 +1092,16 @@ function renderPostRound() {
 
         <!-- AI Core Proficiency Scoring -->
         <div class="mb-10">
-            <h3 class="text-xs font-black uppercase tracking-widest text-[#8890A0] mb-4">Round Proficiency (AI Score)</h3>
-            <div class="bg-[#1A1A3A] p-6 rounded-2xl border border-[#2DCB8A]/20 space-y-4">
+            <h3 class="text-xs font-black uppercase tracking-widest text-[#D1D5DB] mb-4">Round Proficiency (AI Score)</h3>
+            <div class="bg-[#1A1A3A] p-6 rounded-2xl border border-[#00E5FF]/30 space-y-4">
                 ${r.roundProficiency ? Object.keys(STATE.player.coreAreas).map(area => {
                     const rawScore = r.roundProficiency[area];
                     const score = (typeof rawScore === 'number' && !isNaN(rawScore)) ? Math.max(1, Math.min(5, rawScore)) : 3;
                     return `
                     <div>
                         <div class="flex justify-between text-[10px] font-bold uppercase mb-1.5">
-                            <span class="text-[#8890A0]">${CORE_AREA_INFO[area] ? area.replace(/([A-Z])/g, ' $1').trim() : area}</span>
-                            <span class="text-[#2DCB8A]">${score}/5</span>
+                            <span class="text-[#D1D5DB]">${CORE_AREA_INFO[area] ? area.replace(/([A-Z])/g, ' $1').trim() : area}</span>
+                            <span class="text-[#00E5FF]">${score}/5</span>
                         </div>
                         <div class="prof-bar-bg">
                             <div class="prof-bar-fill" style="width: ${(score / 5) * 100}%"></div>
@@ -1149,8 +1109,8 @@ function renderPostRound() {
                     </div>
                     `
                 }).join('') : `
-                    <div class="flex gap-2 items-center text-[#8890A0] py-4">
-                        <div class="w-2 h-2 bg-[#2DCB8A] rounded-full animate-pulse"></div>
+                    <div class="flex gap-2 items-center text-[#D1D5DB] py-4">
+                        <div class="w-2 h-2 bg-[#00E5FF] rounded-full animate-pulse"></div>
                         <span class="text-[10px] uppercase font-bold tracking-widest">Generating Proficiency Scores...</span>
                     </div>
                 `}
@@ -1159,46 +1119,46 @@ function renderPostRound() {
 
         <div class="mb-8">
             <div class="flex justify-between items-center mb-4">
-                <h3 class="text-xs font-black uppercase tracking-widest text-[#8890A0]">Shot Distribution</h3>
-                <select onchange="updateSummaryFilter(this.value)" class="bg-[#1A1A3A] text-white text-[10px] font-bold uppercase p-2 px-3 rounded-lg border border-white/10 outline-none">
+                <h3 class="text-xs font-black uppercase tracking-widest text-[#D1D5DB]">Shot Distribution</h3>
+                <select onchange="updateSummaryFilter(this.value)" class="bg-[#1A1A3A] text-white text-[10px] font-bold uppercase p-2 px-3 rounded-lg border border-white/30 outline-none focus:border-[#00E5FF]">
                     <option value="All">All Clubs</option>
                     ${clubsInBag.map(c => `<option value="${c}" ${filteredClub === c ? 'selected' : ''}>${c}</option>`).join('')}
                 </select>
             </div>
 
             ${isPutter ? `
-                <div class="bg-[#1A1A3A] p-8 rounded-2xl border border-white/10 text-center">
-                    <div class="text-[10px] font-black text-[#404060] uppercase mb-2">Total Putts</div>
+                <div class="bg-[#1A1A3A] p-8 rounded-2xl border border-white/20 text-center">
+                    <div class="text-[10px] font-black text-[#9CA3AF] uppercase mb-2">Total Putts</div>
                     <div class="text-6xl font-black text-white mb-6">${totalPutts}</div>
-                    <div class="h-px bg-white/5 w-full mb-6"></div>
-                    <div class="text-3xl font-black text-[#2DCB8A]">${ppg} PPG</div>
+                    <div class="h-px bg-white/20 w-full mb-6"></div>
+                    <div class="text-3xl font-black text-[#00E5FF]">${ppg} PPG</div>
                 </div>
             ` : `
-                <div class="bg-[#1A1A3A] p-4 rounded-xl border border-white/5 space-y-4">
-                    ${allShots.length === 0 ? `<div class="text-center text-xs text-[#8890A0] py-4">No shots recorded for this selection.</div>` : `
+                <div class="bg-[#1A1A3A] p-4 rounded-xl border border-white/20 space-y-4">
+                    ${allShots.length === 0 ? `<div class="text-center text-xs text-[#9CA3AF] py-4">No shots recorded for this selection.</div>` : `
                         ${renderCategory('Direction', [
                             {label: 'Left', pct: getPct(s => s.direction === 'Left'), color: 'white'},
-                            {label: 'Straight', pct: getPct(s => s.direction === 'Straight'), color: '#2DCB8A'},
+                            {label: 'Straight', pct: getPct(s => s.direction === 'Straight'), color: '#00E5FF'},
                             {label: 'Right', pct: getPct(s => s.direction === 'Right'), color: 'white'}
                         ])}
                         ${renderCategory('Distance', [
                             {label: 'Short', pct: getPct(s => s.distOut === 'Short'), color: 'white'},
-                            {label: 'At Dist', pct: getPct(s => s.distOut === 'At Dist'), color: '#2DCB8A'},
+                            {label: 'At Dist', pct: getPct(s => s.distOut === 'At Dist'), color: '#00E5FF'},
                             {label: 'Long', pct: getPct(s => s.distOut === 'Long'), color: 'white'}
                         ])}
                         ${renderCategory('Contact', [
-                            {label: 'Miss-hit', pct: getPct(s => s.contact === 'Miss-hit'), color: '#E85030'},
-                            {label: 'Good', pct: getPct(s => s.contact === 'Good Strike'), color: '#2DCB8A'},
-                            {label: 'Dreamy', pct: getPct(s => s.contact === 'Dreamy'), color: '#2DCB8A'}
+                            {label: 'Miss-hit', pct: getPct(s => s.contact === 'Miss-hit'), color: '#FF4444'},
+                            {label: 'Good', pct: getPct(s => s.contact === 'Good Strike'), color: '#00E5FF'},
+                            {label: 'Dreamy', pct: getPct(s => s.contact === 'Dreamy'), color: '#00E5FF'}
                         ])}
                         ${renderCategory('Resulting Lie', [
-                            {label: 'Rough', pct: getPct(s => s.lie === 'Rough'), color: '#E8A930'},
-                            {label: 'Fairway', pct: getPct(s => s.lie === 'Fairway'), color: '#2DCB8A'},
-                            {label: 'Green', pct: getPct(s => s.lie === 'Green'), color: '#2DCB8A'}
+                            {label: 'Rough', pct: getPct(s => s.lie === 'Rough'), color: '#FFD700'},
+                            {label: 'Fairway', pct: getPct(s => s.lie === 'Fairway'), color: '#00E5FF'},
+                            {label: 'Green', pct: getPct(s => s.lie === 'Green'), color: '#00E5FF'}
                         ])}
-                        <div class="flex justify-between items-center pt-2 border-t border-white/5">
-                            <span class="text-[10px] font-black text-[#404060] uppercase tracking-widest">OB Hits</span>
-                            <span class="text-sm font-black text-[#E85030]">${allShots.filter(s => s.ob).length} (${getPct(s => s.ob)}%)</span>
+                        <div class="flex justify-between items-center pt-2 border-t border-white/20">
+                            <span class="text-[10px] font-black text-[#9CA3AF] uppercase tracking-widest">OB Hits</span>
+                            <span class="text-sm font-black text-[#FF4444]">${allShots.filter(s => s.ob).length} (${getPct(s => s.ob)}%)</span>
                         </div>
                     `}
                 </div>
@@ -1206,15 +1166,15 @@ function renderPostRound() {
         </div>
 
         <div class="mb-10">
-            <h3 class="text-xs font-black uppercase tracking-widest text-[#8890A0] mb-4">Hole Performance</h3>
+            <h3 class="text-xs font-black uppercase tracking-widest text-[#D1D5DB] mb-4">Hole Performance</h3>
             <div class="space-y-2">
                 ${[3,4,5].map(p => {
                     const avg = parStats[p].c > 0 ? (parStats[p].s / parStats[p].c).toFixed(1) : '0.0';
                     const diff = (parseFloat(avg) - p).toFixed(1);
                     return `
-                    <div class="bg-[#1A1A3A] p-4 rounded-xl flex justify-between items-center border border-white/5">
-                        <div><span class="text-[10px] font-black text-[#404060] uppercase block mb-1">Par ${p} Avg</span><span class="text-lg font-black text-white">${avg}</span></div>
-                        <div class="text-right"><span class="text-[10px] font-black text-[#404060] uppercase block mb-1">Vs Par</span><span class="text-lg font-black ${diff > 0 ? 'text-[#E85030]' : 'text-[#2DCB8A]'}">${diff > 0 ? '+' + diff : diff === '0.0' ? 'E' : diff}</span></div>
+                    <div class="bg-[#1A1A3A] p-4 rounded-xl flex justify-between items-center border border-white/20">
+                        <div><span class="text-[10px] font-black text-[#9CA3AF] uppercase block mb-1">Par ${p} Avg</span><span class="text-lg font-black text-white">${avg}</span></div>
+                        <div class="text-right"><span class="text-[10px] font-black text-[#9CA3AF] uppercase block mb-1">Vs Par</span><span class="text-lg font-black ${diff > 0 ? 'text-[#FF4444]' : 'text-[#00E5FF]'}">${diff > 0 ? '+' + diff : diff === '0.0' ? 'E' : diff}</span></div>
                     </div>`;
                 }).join('')}
             </div>
@@ -1224,7 +1184,7 @@ function renderPostRound() {
 
         ${suggestionsHTML}
 
-        <button onclick="finalizeRound()" class="w-full bg-[#1A1A3A] border border-white/10 text-white font-bold py-5 rounded-2xl uppercase tracking-widest shadow-lg transition-transform active:scale-95">Finalize & Sync</button>
+        <button onclick="finalizeRound()" class="w-full bg-[#1A1A3A] border border-white/30 text-white font-bold py-5 rounded-2xl uppercase tracking-widest shadow-lg transition-transform active:scale-95 hover:border-white">Finalize & Sync</button>
     </div>`;
 }
 
@@ -1246,7 +1206,7 @@ function renderProgress() {
     statsArr.sort((a, b) => a.value - b.value);
     
     // Auto-assign heat map colors based on rank inside the sorted array
-    const rankColors = ['#E85030', '#E8A930', '#B8C830', '#2DCB8A'];
+    const rankColors = ['#FF4444', '#FFD700', '#B066FF', '#00E5FF'];
     statsArr.forEach((s, i) => s.color = rankColors[i]);
 
     // Calculate maximum absolute loss to scale widths proportionally
@@ -1254,41 +1214,41 @@ function renderProgress() {
 
     return `
     <div class="flex flex-col h-full p-6 animate-fade-in">
-        <h1 class="text-2xl font-serif font-bold mb-6">Progress</h1>
+        <h1 class="text-2xl font-serif font-bold mb-6 text-white">Progress</h1>
         ${STATE.player.roundCount === 0 ? `
-            <div class="bg-[#E8A930]/10 p-4 rounded-xl border border-[#E8A930]/30 mb-6 shadow-sm">
-                <p class="text-[#E8A930] text-sm leading-relaxed">
+            <div class="bg-[#FFD700]/10 p-4 rounded-xl border border-[#FFD700]/30 mb-6 shadow-sm">
+                <p class="text-[#FFD700] text-sm leading-relaxed">
                     <strong>Welcome to Progress!</strong> Since you haven't logged a round yet, your Learn and Practice plans are based purely on your initial self-assessment. Play a round to start unlocking data-driven insights!
                 </p>
             </div>
         ` : ''}
-        <div class="bg-[#1A1A3A] border border-white/10 rounded-xl p-5 mb-4">
-            <h3 class="text-[10px] font-bold uppercase tracking-widest text-[#8890A0] mb-1">Estimated SG (vs Scratch)</h3>
-            <p class="text-xs text-[#8890A0] mb-6">Where you're losing strokes per round</p>
+        <div class="bg-[#1A1A3A] border border-white/20 rounded-xl p-5 mb-4">
+            <h3 class="text-[10px] font-bold uppercase tracking-widest text-[#D1D5DB] mb-1">Estimated SG (vs Scratch)</h3>
+            <p class="text-xs text-[#9CA3AF] mb-6">Where you're losing strokes per round</p>
             <div class="space-y-4">
                 ${statsArr.map(stat => `
                     <div class="flex items-center gap-3">
-                        <span class="w-20 text-xs font-bold text-[#F4F4F0]">${stat.label}</span>
-                        <div class="flex-1 h-2 bg-[#404060] rounded-full relative"><div class="absolute top-0 left-0 h-full rounded-full transition-all duration-1000" style="width: ${STATE.player.roundCount > 0 ? (Math.min(100, Math.abs(stat.value / maxAbsVal) * 100)) + '%' : '0%'}; background-color: ${stat.color}"></div></div>
+                        <span class="w-20 text-xs font-bold text-white">${stat.label}</span>
+                        <div class="flex-1 h-2 bg-[#1A1A3A] border border-white/20 rounded-full relative overflow-hidden"><div class="absolute top-0 left-0 h-full transition-all duration-1000" style="width: ${STATE.player.roundCount > 0 ? (Math.min(100, Math.abs(stat.value / maxAbsVal) * 100)) + '%' : '0%'}; background-color: ${stat.color}"></div></div>
                         <span class="w-10 text-right text-xs font-bold" style="color: ${stat.color}">${STATE.player.roundCount > 0 ? (stat.value > 0 ? '+' : '') + stat.value.toFixed(1) : '0.0'}</span>
                     </div>
                 `).join('')}
             </div>
         </div>
         <div class="grid grid-cols-2 gap-3 mb-6">
-            <div class="bg-[#1A1A3A] border border-white/10 p-4 rounded-xl"><div class="text-3xl font-bold text-[#F4F4F0]">${STATE.player.roundCount}</div><div class="text-[10px] text-[#8890A0] uppercase tracking-wider mt-1">Rounds Logged</div></div>
-            <div class="bg-[#1A1A3A] border border-white/10 p-4 rounded-xl"><div class="text-3xl font-bold text-[#F4F4F0]">${STATE.player.sessionsCount}</div><div class="text-[10px] text-[#8890A0] uppercase tracking-wider mt-1">Total Sessions</div></div>
-            <div class="bg-[#1A1A3A] border border-white/10 p-4 rounded-xl"><div class="text-3xl font-bold text-[#2DCB8A]">${STATE.player.drillsPassed}</div><div class="text-[10px] text-[#2DCB8A] uppercase tracking-wider mt-1">Drills Passed</div></div>
-            <div class="bg-[#1A1A3A] border border-white/10 p-4 rounded-xl"><div class="text-3xl font-bold text-[#E8A930]">${STATE.player.achievements.length}</div><div class="text-[10px] text-[#E8A930] uppercase tracking-wider mt-1">Achievements</div></div>
+            <div class="bg-[#1A1A3A] border border-white/20 p-4 rounded-xl"><div class="text-3xl font-bold text-white">${STATE.player.roundCount}</div><div class="text-[10px] text-[#9CA3AF] uppercase tracking-wider mt-1">Rounds Logged</div></div>
+            <div class="bg-[#1A1A3A] border border-white/20 p-4 rounded-xl"><div class="text-3xl font-bold text-white">${STATE.player.sessionsCount}</div><div class="text-[10px] text-[#9CA3AF] uppercase tracking-wider mt-1">Total Sessions</div></div>
+            <div class="bg-[#1A1A3A] border border-white/20 p-4 rounded-xl"><div class="text-3xl font-bold text-[#00E5FF]">${STATE.player.drillsPassed}</div><div class="text-[10px] text-[#00E5FF] uppercase tracking-wider mt-1">Drills Passed</div></div>
+            <div class="bg-[#1A1A3A] border border-white/20 p-4 rounded-xl"><div class="text-3xl font-bold text-[#FFD700]">${STATE.player.achievements.length}</div><div class="text-[10px] text-[#FFD700] uppercase tracking-wider mt-1">Achievements</div></div>
         </div>
         ${STATE.player.achievements.length > 0 ? `
-            <div class="bg-[#1A1A3A] border border-white/10 rounded-xl p-5 mb-8">
-                <h3 class="text-[10px] font-bold uppercase tracking-widest text-[#8890A0] mb-4">Trophy Room</h3>
+            <div class="bg-[#1A1A3A] border border-white/20 rounded-xl p-5 mb-8">
+                <h3 class="text-[10px] font-bold uppercase tracking-widest text-[#D1D5DB] mb-4">Trophy Room</h3>
                 <div class="space-y-3">
                     ${STATE.player.achievements.map(a => `
-                        <div class="flex items-center gap-3 bg-[#0D0D1E] p-3 rounded-lg border border-white/5">
+                        <div class="flex items-center gap-3 bg-[#0D0D1E] p-3 rounded-lg border border-white/20">
                             <div class="text-2xl">${a.icon}</div>
-                            <div class="font-bold text-sm text-[#F4F4F0]">${a.title}</div>
+                            <div class="font-bold text-sm text-white">${a.title}</div>
                         </div>
                     `).join('')}
                 </div>
@@ -1299,43 +1259,43 @@ function renderProgress() {
 
 function renderCoach() {
     const modes = [
-        { id: 'accountability', icon: '💪', color: 'text-[#2DCB8A]', bg: 'bg-[#2DCB8A]/10 border-[#2DCB8A]/20', border: 'border-[#2DCB8A]', pillBg: 'bg-[#2DCB8A]/15' },
-        { id: 'technical', icon: '🎯', color: 'text-[#7060C0]', bg: 'bg-[#7060C0]/10 border-[#7060C0]/20', border: 'border-[#7060C0]', pillBg: 'bg-[#7060C0]/15' },
-        { id: 'mental', icon: '🧠', color: 'text-[#E8A930]', bg: 'bg-[#E8A930]/10 border-[#E8A930]/20', border: 'border-[#E8A930]', pillBg: 'bg-[#E8A930]/15' }
+        { id: 'accountability', icon: '💪', color: 'text-[#00E5FF]', bg: 'bg-[#00E5FF]/10 border-[#00E5FF]/30', border: 'border-[#00E5FF]', pillBg: 'bg-[#00E5FF]/20' },
+        { id: 'technical', icon: '🎯', color: 'text-[#B066FF]', bg: 'bg-[#B066FF]/10 border-[#B066FF]/30', border: 'border-[#B066FF]', pillBg: 'bg-[#B066FF]/20' },
+        { id: 'mental', icon: '🧠', color: 'text-[#FFD700]', bg: 'bg-[#FFD700]/10 border-[#FFD700]/30', border: 'border-[#FFD700]', pillBg: 'bg-[#FFD700]/20' }
     ];
     const curMode = modes.find(m => m.id === STATE.coachMode);
 
     return `
     <div class="flex flex-col h-full p-6 animate-fade-in pb-0">
         <div class="rounded-xl p-4 mb-4 flex items-center gap-3 border transition-colors ${curMode.bg} shrink-0">
-            <div class="w-10 h-10 rounded-full bg-[#1D7A5A] flex items-center justify-center text-xl shadow-lg border-2 border-[#2DCB8A]">🤖</div>
-            <div><h2 class="font-serif font-bold">Descent Coach</h2><div class="text-xs text-[#8890A0] capitalize">${curMode.id} Mode</div></div>
+            <div class="w-10 h-10 rounded-full bg-[#0D0D1E] flex items-center justify-center text-xl shadow-lg border-2 ${curMode.border}">🤖</div>
+            <div><h2 class="font-serif font-bold text-white">Descent Coach</h2><div class="text-xs text-[#D1D5DB] capitalize">${curMode.id} Mode</div></div>
         </div>
         <div class="flex gap-2 mb-4 shrink-0">
             ${modes.map(m => `
-                <button onclick="setCoachMode('${m.id}')" class="flex-1 py-1.5 rounded-lg border text-xs font-bold capitalize transition-colors ${STATE.coachMode === m.id ? `${m.pillBg} ${m.border} ${m.color}` : 'bg-[#1A1A3A] border-white/10 text-[#8890A0] hover:border-[#8890A0]'}">${m.id}</button>
+                <button onclick="setCoachMode('${m.id}')" class="flex-1 py-1.5 rounded-lg border text-xs font-bold capitalize transition-colors ${STATE.coachMode === m.id ? `${m.pillBg} ${m.border} ${m.color}` : 'bg-[#1A1A3A] border-white/30 text-[#D1D5DB] hover:border-white'}">${m.id}</button>
             `).join('')}
         </div>
-        <div class="flex-1 bg-[#1A1A3A] border border-white/10 rounded-xl p-4 flex flex-col overflow-hidden mb-[10px]">
+        <div class="flex-1 bg-[#1A1A3A] border border-white/20 rounded-xl p-4 flex flex-col overflow-hidden mb-[10px]">
             <div id="chat-scroll-area" class="flex-1 overflow-y-auto hide-scrollbar space-y-4 mb-4 flex flex-col">
                 ${STATE.chatMessages.map(msg => `
                     <div class="flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}">
-                        <div class="max-w-[90%] p-3 rounded-xl text-sm leading-relaxed ${msg.role === 'user' ? 'bg-[#2DCB8A] text-[#0D1A12] rounded-br-sm font-semibold' : 'bg-[#0D0D1E] border border-white/10 text-[#F4F4F0] rounded-bl-sm font-medium'}">${msg.text}</div>
+                        <div class="max-w-[90%] p-3 rounded-xl text-sm leading-relaxed ${msg.role === 'user' ? 'bg-[#00E5FF] text-[#000000] rounded-br-sm font-bold' : 'bg-[#0D0D1E] border border-white/30 text-white rounded-bl-sm font-medium'}">${msg.text}</div>
                     </div>
                 `).join('')}
                 ${STATE.isTyping ? `
                     <div class="flex justify-start">
-                        <div class="bg-[#0D0D1E] border border-white/10 rounded-xl rounded-bl-sm p-4 flex gap-1 items-center">
-                            <div class="w-1.5 h-1.5 bg-[#8890A0] rounded-full typing-dot"></div>
-                            <div class="w-1.5 h-1.5 bg-[#8890A0] rounded-full typing-dot"></div>
-                            <div class="w-1.5 h-1.5 bg-[#8890A0] rounded-full typing-dot"></div>
+                        <div class="bg-[#0D0D1E] border border-white/30 rounded-xl rounded-bl-sm p-4 flex gap-1 items-center">
+                            <div class="w-1.5 h-1.5 rounded-full typing-dot"></div>
+                            <div class="w-1.5 h-1.5 rounded-full typing-dot"></div>
+                            <div class="w-1.5 h-1.5 rounded-full typing-dot"></div>
                         </div>
                     </div>
                 ` : ''}
             </div>
             <div class="flex gap-2 shrink-0">
-                <input id="chat-input" type="text" placeholder="Ask your coach..." value="${STATE.chatInput || ''}" oninput="STATE.chatInput=this.value" onkeydown="if(event.key==='Enter') sendChatMessage()" class="flex-1 bg-[#0D0D1E] border border-white/10 rounded-full px-4 py-2 text-sm outline-none focus:border-[#2DCB8A] text-white">
-                <button onclick="sendChatMessage()" class="w-10 h-10 rounded-full bg-[#2DCB8A] hover:bg-[#34e09a] flex items-center justify-center text-[#0D1A12] shrink-0"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></button>
+                <input id="chat-input" type="text" placeholder="Ask your coach..." value="${STATE.chatInput || ''}" oninput="STATE.chatInput=this.value" onkeydown="if(event.key==='Enter') sendChatMessage()" class="flex-1 bg-[#0D0D1E] border border-white/30 rounded-full px-4 py-2 text-sm outline-none focus:border-[#00E5FF] text-white">
+                <button onclick="sendChatMessage()" class="w-10 h-10 rounded-full bg-[#00E5FF] hover:bg-[#33EEFF] flex items-center justify-center text-[#000000] shrink-0"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></button>
             </div>
         </div>
     </div>`;
@@ -1350,11 +1310,11 @@ function renderCheckIn() {
         historySection = `
             <section>
                 <div class="flex justify-between items-end mb-4">
-                    <h2 class="text-lg font-bold">Past Rounds</h2>
-                    <span class="text-[10px] uppercase tracking-wider text-[#404060]">Review summaries</span>
+                    <h2 class="text-lg font-bold text-white">Past Rounds</h2>
+                    <span class="text-[10px] uppercase tracking-wider text-[#9CA3AF]">Review summaries</span>
                 </div>
-                <div class="bg-[#1A1A3A] rounded-xl border border-white/10 p-4">
-                    <select onchange="window.selectHistoryRound(this.value)" class="w-full bg-[#0D0D1E] border border-white/10 rounded-lg p-2.5 text-xs text-[#F4F4F0] font-semibold outline-none focus:border-[#2DCB8A] mb-4">
+                <div class="bg-[#1A1A3A] rounded-xl border border-white/20 p-4">
+                    <select onchange="window.selectHistoryRound(this.value)" class="w-full bg-[#0D0D1E] border border-white/30 rounded-lg p-2.5 text-xs text-white font-semibold outline-none focus:border-[#00E5FF] mb-4">
                         ${history.map((h, i) => {
                             const d = new Date(h.date);
                             const dateStr = d.toLocaleDateString(undefined, {month:'short', day:'numeric'});
@@ -1364,10 +1324,10 @@ function renderCheckIn() {
                     </select>
                     ${activeHist ? `
                     <div class="grid grid-cols-4 gap-2 text-center">
-                        <div><div class="text-[9px] uppercase font-bold text-[#404060] mb-1">Score</div><div class="text-lg font-black text-white">${activeHist.score}</div></div>
-                        <div><div class="text-[9px] uppercase font-bold text-[#404060] mb-1">To Par</div><div class="text-lg font-black ${activeHist.toPar > 0 ? 'text-[#E85030]' : 'text-[#2DCB8A]'}">${activeHist.toPar > 0 ? '+' + activeHist.toPar : activeHist.toPar === 0 ? 'E' : activeHist.toPar}</div></div>
-                        <div><div class="text-[9px] uppercase font-bold text-[#404060] mb-1">PPG</div><div class="text-lg font-black text-white">${activeHist.ppg}</div></div>
-                        <div><div class="text-[9px] uppercase font-bold text-[#404060] mb-1">Fwy %</div><div class="text-lg font-black text-[#2DCB8A]">${activeHist.fairwayPct}%</div></div>
+                        <div><div class="text-[9px] uppercase font-bold text-[#9CA3AF] mb-1">Score</div><div class="text-lg font-black text-white">${activeHist.score}</div></div>
+                        <div><div class="text-[9px] uppercase font-bold text-[#9CA3AF] mb-1">To Par</div><div class="text-lg font-black ${activeHist.toPar > 0 ? 'text-[#FF4444]' : 'text-[#00E5FF]'}">${activeHist.toPar > 0 ? '+' + activeHist.toPar : activeHist.toPar === 0 ? 'E' : activeHist.toPar}</div></div>
+                        <div><div class="text-[9px] uppercase font-bold text-[#9CA3AF] mb-1">PPG</div><div class="text-lg font-black text-white">${activeHist.ppg}</div></div>
+                        <div><div class="text-[9px] uppercase font-bold text-[#9CA3AF] mb-1">Fwy %</div><div class="text-lg font-black text-[#00E5FF]">${activeHist.fairwayPct}%</div></div>
                     </div>
                     ` : ''}
                 </div>
@@ -1378,10 +1338,10 @@ function renderCheckIn() {
     return `
     <div class="flex flex-col h-full p-6 animate-fade-in">
         <header class="mb-6">
-            <h1 class="text-2xl font-serif font-bold text-[#F4F4F0] flex items-center gap-2 tracking-widest">
-                <svg class="text-[#2DCB8A] w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg> CHECK-IN
+            <h1 class="text-2xl font-serif font-bold text-white flex items-center gap-2 tracking-widest">
+                <svg class="text-[#00E5FF] w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg> CHECK-IN
             </h1>
-            <p class="text-[#8890A0] text-sm mt-1">Update your skills and bag map as you improve.</p>
+            <p class="text-[#D1D5DB] text-sm mt-1">Update your skills and bag map as you improve.</p>
         </header>
 
         <div class="flex-1 overflow-y-auto hide-scrollbar space-y-8 pb-8">
@@ -1389,13 +1349,13 @@ function renderCheckIn() {
             
             <section>
                 <div class="flex justify-between items-end mb-4">
-                    <h2 class="text-lg font-bold">Current Handicap</h2>
-                    <span class="text-[10px] uppercase tracking-wider text-[#404060]">Slide to update</span>
+                    <h2 class="text-lg font-bold text-white">Current Handicap</h2>
+                    <span class="text-[10px] uppercase tracking-wider text-[#9CA3AF]">Slide to update</span>
                 </div>
-                <div class="bg-[#1A1A3A] p-4 rounded-xl border border-white/10">
+                <div class="bg-[#1A1A3A] p-4 rounded-xl border border-white/20">
                     <div class="flex justify-between items-center mb-4">
-                        <span class="text-xs font-semibold text-[#8890A0] uppercase tracking-widest">Index</span>
-                        <span id="ci-hdcp-val" class="text-3xl font-serif font-bold text-[#E8A930]">${STATE.player.currentHandicap.toFixed(1)}</span>
+                        <span class="text-xs font-semibold text-[#D1D5DB] uppercase tracking-widest">Index</span>
+                        <span id="ci-hdcp-val" class="text-3xl font-serif font-bold text-[#FFD700]">${STATE.player.currentHandicap.toFixed(1)}</span>
                     </div>
                     <input type="range" min="0" max="36" step="0.1" value="${STATE.player.currentHandicap}" oninput="STATE.player.currentHandicap = parseFloat(this.value); document.getElementById('ci-hdcp-val').innerText = parseFloat(this.value).toFixed(1);" onchange="syncProfileToFirebase()" class="w-full">
                 </div>
@@ -1403,18 +1363,18 @@ function renderCheckIn() {
 
             <section>
                 <div class="flex justify-between items-end mb-4">
-                    <h2 class="text-lg font-bold">Core Proficiency</h2>
-                    <span class="text-[10px] uppercase tracking-wider text-[#404060]">Tap to update</span>
+                    <h2 class="text-lg font-bold text-white">Core Proficiency</h2>
+                    <span class="text-[10px] uppercase tracking-wider text-[#9CA3AF]">Tap to update</span>
                 </div>
                 <div class="grid grid-cols-2 gap-3">
                     ${Object.keys(STATE.player.coreAreas).map(area => `
-                        <div class="bg-[#1A1A3A] p-3 rounded-xl border border-white/10">
-                            <div class="text-xs font-semibold text-[#8890A0] capitalize mb-2">${area.replace(/([A-Z])/g, ' $1').trim()}</div>
+                        <div class="bg-[#1A1A3A] p-3 rounded-xl border border-white/20">
+                            <div class="text-xs font-semibold text-[#D1D5DB] capitalize mb-2">${area.replace(/([A-Z])/g, ' $1').trim()}</div>
                             <div class="flex justify-between items-center mb-1">
-                                <input type="range" min="1" max="5" value="${STATE.player.coreAreas[area]}" oninput="STATE.player.coreAreas['${area}'] = parseInt(this.value); document.getElementById('ci-val-${area}').innerText = this.value; document.getElementById('ci-lbl-${area}').innerText = getRatingLabel(this.value, STATE.player.currentHandicap);" onchange="syncProfileToFirebase()" class="w-2/3 accent-[#2DCB8A]">
-                                <span id="ci-val-${area}" class="text-[#2DCB8A] font-bold bg-[#0D0D1E] px-2 py-1 rounded-md text-sm border border-white/5">${STATE.player.coreAreas[area]}</span>
+                                <input type="range" min="1" max="5" value="${STATE.player.coreAreas[area]}" oninput="STATE.player.coreAreas['${area}'] = parseInt(this.value); document.getElementById('ci-val-${area}').innerText = this.value; document.getElementById('ci-lbl-${area}').innerText = getRatingLabel(this.value, STATE.player.currentHandicap);" onchange="syncProfileToFirebase()" class="w-2/3 accent-[#00E5FF]">
+                                <span id="ci-val-${area}" class="text-[#00E5FF] font-bold bg-[#0D0D1E] px-2 py-1 rounded-md text-sm border border-white/30">${STATE.player.coreAreas[area]}</span>
                             </div>
-                            <div id="ci-lbl-${area}" class="text-[9px] text-[#8890A0] text-center uppercase tracking-wider font-semibold mt-2 leading-tight">
+                            <div id="ci-lbl-${area}" class="text-[9px] text-[#D1D5DB] text-center uppercase tracking-wider font-semibold mt-2 leading-tight">
                                 ${getRatingLabel(STATE.player.coreAreas[area], STATE.player.currentHandicap)}
                             </div>
                         </div>
@@ -1424,36 +1384,174 @@ function renderCheckIn() {
 
             <section>
                 <div class="flex justify-between items-end mb-4">
-                    <h2 class="text-lg font-bold">Bag Map</h2>
-                    <span class="text-[10px] uppercase tracking-wider text-[#404060]">Yards</span>
+                    <h2 class="text-lg font-bold text-white">Bag Map</h2>
+                    <span class="text-[10px] uppercase tracking-wider text-[#9CA3AF]">Yards</span>
                 </div>
-                <div class="bg-[#1A1A3A] rounded-xl border border-white/10 p-2 space-y-1">
+                <div class="bg-[#1A1A3A] rounded-xl border border-white/20 p-2 space-y-1">
                     ${STATE.player.bag.map((club) => `
                         <div class="flex flex-col gap-1 hover:bg-[#14142E] p-2 rounded-lg transition-colors border border-transparent">
                             <div class="flex items-center gap-4">
-                                <span class="flex-1 text-sm font-semibold text-[#8890A0]">${club.name}</span>
-                                <input type="number" id="bag-club-${club.name}" value="${club.distance}" onchange="window.updateBagDistance('${club.name}', parseInt(this.value) || 0);" class="w-16 bg-[#0D0D1E] border border-white/10 rounded p-1 text-center text-[#2DCB8A] font-bold outline-none focus:border-[#2DCB8A]">
-                                <button onclick="window.removeBagClub('${club.name}')" class="text-[#E85030] hover:text-red-400 opacity-80 hover:opacity-100 p-1 shrink-0">
+                                <span class="flex-1 text-sm font-semibold text-[#D1D5DB]">${club.name}</span>
+                                <input type="number" id="bag-club-${club.name}" value="${club.distance}" onchange="window.updateBagDistance('${club.name}', parseInt(this.value) || 0);" class="w-16 bg-[#0D0D1E] border border-white/30 rounded p-1 text-center text-[#00E5FF] font-bold outline-none focus:border-[#00E5FF]">
+                                <button onclick="window.removeBagClub('${club.name}')" class="text-[#FF4444] hover:text-red-400 opacity-80 hover:opacity-100 p-1 shrink-0">
                                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                                 </button>
                             </div>
                         </div>
                     `).join('')}
-                    <div class="flex items-center gap-2 p-2 mt-2 border-t border-white/5 pt-3">
-                        <input type="text" id="ci-new-club-name" placeholder="New Club" class="flex-1 bg-[#0D0D1E] border border-white/10 rounded p-1.5 text-xs text-[#F4F4F0] outline-none">
-                        <input type="number" id="ci-new-club-dist" placeholder="Yds" class="w-16 bg-[#0D0D1E] border border-white/10 rounded p-1.5 text-xs text-center text-[#2DCB8A] outline-none">
-                        <button onclick="window.addNewBagClub('ci')" class="bg-[#2DCB8A] text-[#0D1A12] px-2 py-1.5 rounded font-bold text-xs uppercase">Add</button>
+                    <div class="flex items-center gap-2 p-2 mt-2 border-t border-white/20 pt-3">
+                        <input type="text" id="ci-new-club-name" placeholder="New Club" class="flex-1 bg-[#0D0D1E] border border-white/30 rounded p-1.5 text-xs text-white outline-none focus:border-[#00E5FF]">
+                        <input type="number" id="ci-new-club-dist" placeholder="Yds" class="w-16 bg-[#0D0D1E] border border-white/30 rounded p-1.5 text-xs text-center text-[#00E5FF] outline-none focus:border-[#00E5FF]">
+                        <button onclick="window.addNewBagClub('ci')" class="bg-[#00E5FF] hover:bg-[#33EEFF] text-[#000000] px-2 py-1.5 rounded font-bold text-xs uppercase transition-colors">Add</button>
                     </div>
                 </div>
             </section>
 
-            <section class="mt-8 pt-6 border-t border-white/10">
-                <button onclick="logout()" class="w-full bg-[#1A1A3A] hover:bg-[#2a1a2a] text-[#E85030] font-bold py-4 rounded-xl border border-[#E85030]/20 transition-colors">
+            <section class="mt-8 pt-6 border-t border-white/20">
+                <div class="flex justify-between items-end mb-4">
+                    <h2 class="text-lg font-bold text-white">Garmin R10 Import</h2>
+                    <span class="text-[10px] uppercase tracking-wider text-[#9CA3AF]">Upload CSV</span>
+                </div>
+                <div class="bg-[#1A1A3A] p-4 rounded-xl border border-white/20">
+                    <input type="file" id="garmin-upload" accept=".csv" class="hidden" onchange="window.handleGarminUpload(event)">
+                    <button onclick="document.getElementById('garmin-upload').click()" class="w-full bg-[#0D0D1E] border border-white/30 text-white font-bold py-3 rounded-lg uppercase tracking-widest text-xs hover:border-[#00E5FF] transition-colors mb-2">
+                        <svg class="inline w-4 h-4 mr-2 -mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg> Select Session Data
+                    </button>
+                    ${renderGarminSection()}
+                </div>
+            </section>
+
+            <section class="mt-8 pt-6 border-t border-white/20">
+                <div class="flex justify-between items-end mb-4">
+                    <h2 class="text-lg font-bold text-white">AI Swing Analysis</h2>
+                    <span class="text-[10px] uppercase tracking-wider text-[#9CA3AF]">Upload Videos</span>
+                </div>
+                <div class="bg-[#1A1A3A] p-4 rounded-xl border border-white/20">
+                    <div class="grid grid-cols-2 gap-2 mb-3">
+                        <div>
+                            <label class="block text-[9px] font-bold uppercase tracking-widest text-[#D1D5DB] mb-1">Down The Line</label>
+                            <input type="file" id="dtl-video" accept="video/*" class="w-full text-[10px] text-[#9CA3AF] file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-[10px] file:font-bold file:bg-[#0D0D1E] file:text-white hover:file:bg-[#2a2a4a]">
+                        </div>
+                        <div>
+                            <label class="block text-[9px] font-bold uppercase tracking-widest text-[#D1D5DB] mb-1">Face On</label>
+                            <input type="file" id="face-on-video" accept="video/*" class="w-full text-[10px] text-[#9CA3AF] file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-[10px] file:font-bold file:bg-[#0D0D1E] file:text-white hover:file:bg-[#2a2a4a]">
+                        </div>
+                    </div>
+                    <button onclick="window.handleSwingAnalysis()" class="w-full bg-[#0D0D1E] border border-white/30 text-white font-bold py-3 rounded-lg uppercase tracking-widest text-xs hover:border-[#00E5FF] transition-colors mb-2">
+                        Analyze Swing
+                    </button>
+                    ${renderVideoSection()}
+                </div>
+            </section>
+
+            <section class="mt-8 pt-6 border-t border-white/20">
+                <button onclick="logout()" class="w-full bg-[#1A1A3A] hover:bg-[#2a1a2a] text-[#FF4444] font-bold py-4 rounded-xl border border-[#FF4444]/30 transition-colors">
                     Log Out / Forget Me
                 </button>
             </section>
         </div>
     </div>`;
+}
+
+function renderGarminSection() {
+    if (STATE.garminLoading) return `<div class="mt-4 text-center text-[#00E5FF] text-[10px] font-bold uppercase tracking-widest animate-pulse">Parsing CSV Data...</div>`;
+    
+    let html = '';
+    if (STATE.garminError) html += `<div class="mt-4 text-[#FF4444] text-xs font-semibold text-center border border-[#FF4444]/30 bg-[#FF4444]/10 p-2 rounded-lg">${STATE.garminError}</div>`;
+
+    if (STATE.garminAverages && STATE.garminAverages.length > 0) {
+        html += `
+        <div class="mt-4 bg-[#0D0D1E] border border-[#00E5FF]/30 p-4 rounded-xl animate-fade-in shadow-lg">
+            <h3 class="text-[10px] font-black uppercase tracking-widest text-[#00E5FF] mb-3">Session Averages</h3>
+            <div class="space-y-2 mb-4 max-h-48 overflow-y-auto hide-scrollbar">
+                ${STATE.garminAverages.map(a => `
+                    <div class="flex justify-between items-center text-xs text-white border-b border-white/10 pb-1 last:border-0">
+                        <span><span class="font-bold">${a.club}</span> <span class="text-[#9CA3AF] text-[9px]">(${a.count} shots)</span></span>
+                        <div class="text-right">
+                            <span class="font-black text-[#00E5FF]">${a.avgDist}y</span>
+                            ${a.avgSmash !== 'N/A' ? `<span class="block text-[8px] text-[#D1D5DB]">Smash: ${a.avgSmash}</span>` : ''}
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+            <button onclick="window.applyGarminDistances()" class="w-full bg-[#00E5FF]/20 hover:bg-[#00E5FF] text-[#00E5FF] hover:text-[#000000] text-xs uppercase tracking-widest font-bold py-3 rounded-lg transition-colors border border-[#00E5FF]/50">
+                Sync to Bag Map
+            </button>
+        </div>`;
+    }
+
+    if (STATE.garminAILoading) {
+        html += `<div class="mt-6 text-center text-[#D1D5DB] text-[10px] font-bold uppercase tracking-widest animate-pulse">Coach is analyzing your launch data...</div>`;
+    } else if (STATE.garminSummary) {
+        html += `
+        <div class="mt-6 bg-[#0D0D1E] border border-white/20 p-4 rounded-xl animate-fade-in shadow-lg">
+            <h3 class="text-[10px] font-black uppercase tracking-widest text-[#D1D5DB] mb-2 flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-[#00E5FF]"></div> Launch Monitor Analysis</h3>
+            <p class="text-xs text-white leading-relaxed mb-4 italic">"${STATE.garminSummary}"</p>
+            
+            ${(STATE.garminLearn || []).map((item, idx) => `
+                <div class="bg-[#1A1A3A] p-3 rounded-lg border border-[#00E5FF]/30 mb-3 shadow-sm">
+                    <span class="text-[9px] uppercase font-black text-[#00E5FF] block mb-1 tracking-widest">Suggested Reading</span>
+                    <p class="text-xs text-white mb-2 leading-relaxed">${item}</p>
+                    <div class="flex gap-2">
+                        <button onclick="window.handleGarminPlanAction('learn', ${idx}, 'add')" class="flex-1 bg-[#00E5FF]/20 hover:bg-[#00E5FF] text-[#00E5FF] hover:text-[#000000] text-[10px] font-bold py-2 rounded transition-colors uppercase tracking-wider">Add</button>
+                        <button onclick="window.handleGarminPlanAction('learn', ${idx}, 'ignore')" class="flex-1 bg-white/10 hover:bg-white/20 text-[#D1D5DB] text-[10px] font-bold py-2 rounded transition-colors uppercase tracking-wider">Ignore</button>
+                    </div>
+                </div>
+            `).join('')}
+
+            ${(STATE.garminPractice || []).map((item, idx) => `
+                <div class="bg-[#1A1A3A] p-3 rounded-lg border border-[#00E5FF]/30 mb-2 shadow-sm">
+                    <span class="text-[9px] uppercase font-black text-[#00E5FF] block mb-1 tracking-widest">Suggested Drill</span>
+                    <p class="text-xs text-white mb-2 leading-relaxed">${item}</p>
+                    <div class="flex gap-2">
+                        <button onclick="window.handleGarminPlanAction('practice', ${idx}, 'add')" class="flex-1 bg-[#00E5FF]/20 hover:bg-[#00E5FF] text-[#00E5FF] hover:text-[#000000] text-[10px] font-bold py-2 rounded transition-colors uppercase tracking-wider">Add</button>
+                        <button onclick="window.handleGarminPlanAction('practice', ${idx}, 'ignore')" class="flex-1 bg-white/10 hover:bg-white/20 text-[#D1D5DB] text-[10px] font-bold py-2 rounded transition-colors uppercase tracking-wider">Ignore</button>
+                    </div>
+                </div>
+            `).join('')}
+        </div>`;
+    }
+
+    return html;
+}
+
+function renderVideoSection() {
+    if (STATE.videoAnalysisLoading) return `<div class="mt-4 text-center text-[#00E5FF] text-[10px] font-bold uppercase tracking-widest animate-pulse">${STATE.videoAnalysisStatus}</div>`;
+    
+    let html = '';
+    if (STATE.videoAnalysisError) html += `<div class="mt-4 text-[#FF4444] text-xs font-semibold text-center border border-[#FF4444]/30 bg-[#FF4444]/10 p-2 rounded-lg">${STATE.videoAnalysisError}</div>`;
+
+    if (STATE.videoSummary) {
+        html += `
+        <div class="mt-6 bg-[#0D0D1E] border border-white/20 p-4 rounded-xl animate-fade-in shadow-lg">
+            <h3 class="text-[10px] font-black uppercase tracking-widest text-[#D1D5DB] mb-2 flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-[#00E5FF]"></div> Swing Analysis</h3>
+            <p class="text-xs text-white leading-relaxed mb-4 italic">"${STATE.videoSummary}"</p>
+            
+            ${(STATE.videoLearn || []).map((item, idx) => `
+                <div class="bg-[#1A1A3A] p-3 rounded-lg border border-[#00E5FF]/30 mb-3 shadow-sm">
+                    <span class="text-[9px] uppercase font-black text-[#00E5FF] block mb-1 tracking-widest">Suggested Reading</span>
+                    <p class="text-xs text-white mb-2 leading-relaxed">${item}</p>
+                    <div class="flex gap-2">
+                        <button onclick="window.handleVideoPlanAction('learn', ${idx}, 'add')" class="flex-1 bg-[#00E5FF]/20 hover:bg-[#00E5FF] text-[#00E5FF] hover:text-[#000000] text-[10px] font-bold py-2 rounded transition-colors uppercase tracking-wider">Add</button>
+                        <button onclick="window.handleVideoPlanAction('learn', ${idx}, 'ignore')" class="flex-1 bg-white/10 hover:bg-white/20 text-[#D1D5DB] text-[10px] font-bold py-2 rounded transition-colors uppercase tracking-wider">Ignore</button>
+                    </div>
+                </div>
+            `).join('')}
+
+            ${(STATE.videoPractice || []).map((item, idx) => `
+                <div class="bg-[#1A1A3A] p-3 rounded-lg border border-[#00E5FF]/30 mb-2 shadow-sm">
+                    <span class="text-[9px] uppercase font-black text-[#00E5FF] block mb-1 tracking-widest">Suggested Drill</span>
+                    <p class="text-xs text-white mb-2 leading-relaxed">${item}</p>
+                    <div class="flex gap-2">
+                        <button onclick="window.handleVideoPlanAction('practice', ${idx}, 'add')" class="flex-1 bg-[#00E5FF]/20 hover:bg-[#00E5FF] text-[#00E5FF] hover:text-[#000000] text-[10px] font-bold py-2 rounded transition-colors uppercase tracking-wider">Add</button>
+                        <button onclick="window.handleVideoPlanAction('practice', ${idx}, 'ignore')" class="flex-1 bg-white/10 hover:bg-white/20 text-[#D1D5DB] text-[10px] font-bold py-2 rounded transition-colors uppercase tracking-wider">Ignore</button>
+                    </div>
+                </div>
+            `).join('')}
+        </div>`;
+    }
+
+    return html;
 }
 
 // ============================================================================
@@ -2039,7 +2137,7 @@ async function performFinalAnalysis(roundSG) {
     1. Analyze the round's Strokes Gained AND shotTendencies data. 
     2. Determine round proficiency (1-5) for core areas (1=Terrible, 5=Excellent). CRITICAL: If Putts are >36, putting score MUST be low. If contact/direction is poor, adjust driving/irons accordingly.
     3. Generate 1 to 2 specific NEW things to learn and 1 to 2 NEW things to practice. Base these explicitly on their primary shot tendencies (e.g., if high "Miss-hit" %, suggest contact drills; if mostly "Right", suggest face control). 
-    CRITICAL HYPERLINK INSTRUCTION: You MUST include real, clickable HTML links in your suggestions (e.g., <a href="https://www.youtube.com/results?search_query=fix+golf+slice+drill" target="_blank" class="text-[#2DCB8A] underline">Watch on YouTube</a>). Do NOT guess specific YouTube video IDs (they will 404). Always use YouTube search query URLs or link to real, well-known root domains like golfdigest.com or golf.com.
+    CRITICAL HYPERLINK INSTRUCTION: You MUST include real, clickable HTML links in your suggestions (e.g., <a href="https://www.youtube.com/results?search_query=fix+golf+slice+drill" target="_blank" class="text-[#00E5FF] underline">Watch on YouTube</a>). Do NOT guess specific YouTube video IDs (they will 404). Always use YouTube search query URLs or link to real, well-known root domains like golfdigest.com or golf.com.
     4. Provide a single, pithy summarizing thought for the next round.
     
     Return ONLY a valid JSON object using exactly this format:
@@ -2086,6 +2184,250 @@ async function performFinalAnalysis(roundSG) {
         r.aiErrorMessage = e.message || String(e); // Capture technical error for the UI
         render();
     }
+}
+
+// --- GARMIN UPLOAD & AI LOGIC ---
+window.handleGarminUpload = function(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    STATE.garminLoading = true;
+    STATE.garminError = null;
+    STATE.garminAverages = null;
+    STATE.garminSummary = null;
+    STATE.garminLearn = [];
+    STATE.garminPractice = [];
+    render();
+
+    const reader = new FileReader();
+    reader.onload = async function(e) {
+        const text = e.target.result;
+        const lines = text.split('\n').filter(l => l.trim() !== '');
+        if (lines.length < 2) {
+            STATE.garminError = 'The CSV appears to be empty or malformed.';
+            STATE.garminLoading = false;
+            render();
+            return;
+        }
+
+        const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, '').toLowerCase());
+        const clubIdx = headers.findIndex(h => h.includes('club'));
+        // Try 'total' distance first, fallback to 'carry' distance
+        let distIdx = headers.findIndex(h => h.includes('total') || h.includes('distance'));
+        if (distIdx === -1) distIdx = headers.findIndex(h => h.includes('carry'));
+        const smashIdx = headers.findIndex(h => h.includes('smash'));
+
+        if (clubIdx === -1 || distIdx === -1) {
+            STATE.garminError = "Could not find 'Club' and 'Distance' columns in the CSV.";
+            STATE.garminLoading = false;
+            render();
+            return;
+        }
+
+        let clubData = {};
+        for (let i = 1; i < lines.length; i++) {
+            const cols = lines[i].split(',').map(c => c.trim().replace(/"/g, ''));
+            if (cols.length > Math.max(clubIdx, distIdx)) {
+                const clubName = cols[clubIdx];
+                const dist = parseFloat(cols[distIdx]);
+                const smash = smashIdx > -1 ? parseFloat(cols[smashIdx]) : null;
+
+                if (clubName && !isNaN(dist) && dist > 0) {
+                    if (!clubData[clubName]) clubData[clubName] = { distSum: 0, count: 0, smashSum: 0, smashCount: 0 };
+                    clubData[clubName].distSum += dist;
+                    clubData[clubName].count += 1;
+                    if (smash && !isNaN(smash)) {
+                        clubData[clubName].smashSum += smash;
+                        clubData[clubName].smashCount += 1;
+                    }
+                }
+            }
+        }
+
+        let averages = [];
+        for (let club in clubData) {
+            let avgDist = Math.round(clubData[club].distSum / clubData[club].count);
+            let avgSmash = clubData[club].smashCount > 0 ? (clubData[club].smashSum / clubData[club].smashCount).toFixed(2) : 'N/A';
+            averages.push({ club, avgDist, avgSmash, count: clubData[club].count });
+        }
+
+        // Sort averages descending by distance
+        averages.sort((a, b) => b.avgDist - a.avgDist);
+
+        STATE.garminAverages = averages;
+        STATE.garminLoading = false;
+        STATE.garminAILoading = true;
+        render();
+
+        // Pass aggregated data to Vertex AI
+        const prompt = `PLAYER BAG MAP: ${STATE.player.bag.map(c=>`${c.name} (${c.distance}y)`).join(', ')}.
+        NEW LAUNCH MONITOR AVERAGES (Garmin R10):
+        ${averages.map(a => `${a.club}: ${a.avgDist}y (Smash Factor: ${a.avgSmash}, Shots: ${a.count})`).join('\n')}
+        
+        INSTRUCTION: Act as a biomechanical golf coach. Analyze this launch monitor session.
+        Look for specific issues: e.g., poor gapping between clubs, low smash factor indicating poor ball striking with certain clubs, or inconsistencies.
+        Provide 2-3 new learning topics and 2-3 practice drills directly targeted at fixing the flaws shown in the data.
+        You MUST include HTML links in your suggestions (e.g., <a href="https://www.youtube.com/results?search_query=golf+smash+factor+drill" target="_blank" class="text-[#00E5FF] underline">Watch on YouTube</a>).
+        
+        Return ONLY valid JSON:
+        {
+            "summary": "2-3 sentences summarizing the technical flaws and strengths seen in their launch monitor data.",
+            "newLearn": ["Specific topic with link"],
+            "newPractice": ["Specific drill with link"]
+        }`;
+
+        try {
+            let responseText = await getAIAdvice(prompt, true);
+            responseText = responseText.replace(/```json/gi, '').replace(/```/g, '').trim();
+            const analysis = JSON.parse(responseText);
+            STATE.garminLearn = analysis.newLearn || [];
+            STATE.garminPractice = analysis.newPractice || [];
+            STATE.garminSummary = analysis.summary || "Garmin data analyzed successfully. See updates below.";
+        } catch(err) {
+            console.error("Garmin AI Error", err);
+            STATE.garminSummary = "The data was parsed successfully, but the AI Coach is offline or failed to analyze the results.";
+            STATE.garminLearn = [];
+            STATE.garminPractice = [];
+        }
+
+        STATE.garminAILoading = false;
+        render();
+    };
+    reader.readAsText(file);
+}
+
+window.applyGarminDistances = function() {
+    if (!STATE.garminAverages) return;
+    let updated = 0;
+    
+    STATE.garminAverages.forEach(ga => {
+        // Smart matching to handle "8 Iron" vs "8I" vs "8-Iron"
+        const gName = ga.club.toLowerCase().replace(/[^a-z0-9]/g, '');
+        const bagClub = STATE.player.bag.find(c => {
+            const bName = c.name.toLowerCase().replace(/[^a-z0-9]/g, '');
+            const bId = c.id.toLowerCase().replace(/[^a-z0-9]/g, '');
+            return bName === gName || bId === gName || bName.includes(gName) || gName.includes(bId);
+        });
+        
+        if (bagClub) {
+            bagClub.distance = ga.avgDist;
+            updated++;
+        }
+    });
+    
+    if (updated > 0) {
+        STATE.player.bag.sort((a, b) => b.distance - a.distance);
+        syncProfileToFirebase();
+        STATE.garminAverages = null; // Clear the averages UI after applying
+        STATE.garminSummary = `Successfully synced ${updated} updated club distances into your Bag Map!`;
+        render();
+    }
+}
+
+window.handleGarminPlanAction = function(type, index, action) {
+    const item = type === 'learn' ? STATE.garminLearn[index] : STATE.garminPractice[index];
+    if (action === 'add') {
+        STATE.player.customPlan[type].push(item);
+        const nextIdx = STATE.player.customPlan[type].length - 1;
+        STATE.player.completedTasksSet[`${type}_${nextIdx}`] = false;
+    }
+    if (type === 'learn') STATE.garminLearn.splice(index, 1);
+    else STATE.garminPractice.splice(index, 1);
+    
+    syncProfileToFirebase();
+    render();
+}
+
+// --- VIDEO SWING ANALYSIS LOGIC ---
+window.handleSwingAnalysis = async function() {
+    const dtlFile = document.getElementById('dtl-video').files[0];
+    const faceOnFile = document.getElementById('face-on-video').files[0];
+
+    if (!dtlFile || !faceOnFile) {
+        STATE.videoAnalysisError = "Please select both Down-The-Line and Face-On videos.";
+        render();
+        return;
+    }
+
+    if (!storage) {
+        STATE.videoAnalysisError = "Cloud Storage is currently offline.";
+        render();
+        return;
+    }
+
+    STATE.videoAnalysisStatus = "Uploading videos...";
+    STATE.videoAnalysisLoading = true;
+    STATE.videoAnalysisError = null;
+    render();
+
+    try {
+        const dtlPath = `swings/${STATE.player.phone}/dtl_${Date.now()}.mp4`;
+        const faceOnPath = `swings/${STATE.player.phone}/faceon_${Date.now()}.mp4`;
+
+        const dtlRef = storageRef(storage, dtlPath);
+        const faceOnRef = storageRef(storage, faceOnPath);
+
+        // Upload both files in parallel
+        await Promise.all([
+            uploadBytes(dtlRef, dtlFile),
+            uploadBytes(faceOnRef, faceOnFile)
+        ]);
+
+        const dtlUri = `gs://thisis50-e2aa3.firebasestorage.app/${dtlPath}`;
+        const faceOnUri = `gs://thisis50-e2aa3.firebasestorage.app/${faceOnPath}`;
+
+        STATE.videoAnalysisStatus = "Analyzing swing biomechanics... (This takes 15-30s)";
+        render();
+
+        const prompt = `Act as a master biomechanical golf instructor. Analyze these two videos of a player's golf swing. 
+        Video 1 (File 1) is Down-The-Line. Video 2 (File 2) is Face-On. 
+        Provide a brief 2-3 sentence summary of their mechanical flaws and strengths. 
+        Then, provide 1-3 specific Learning topics and 1-3 specific Practice drills to fix these flaws. 
+        You MUST include HTML links in your suggestions (e.g., <a href="https://www.youtube.com/results?search_query=golf+tempo+drill" target="_blank" class="text-[#00E5FF] underline">Watch on YouTube</a>). 
+        Return ONLY valid JSON: { "summary": "...", "newLearn": ["..."], "newPractice": ["..."] }`;
+
+        const model = getGenerativeModel(vertexAI, { 
+            model: "gemini-2.5-flash",
+            systemInstruction: "You are a professional golf data analyst. Return ONLY valid JSON. Strictly adhere to the requested schema. No prose.",
+            generationConfig: { responseMimeType: "application/json" }
+        });
+
+        const result = await model.generateContent([
+            { fileData: { mimeType: dtlFile.type || "video/mp4", fileUri: dtlUri } },
+            { fileData: { mimeType: faceOnFile.type || "video/mp4", fileUri: faceOnUri } },
+            { text: prompt }
+        ]);
+
+        let responseText = result.response.text();
+        responseText = responseText.replace(/```json/gi, '').replace(/```/g, '').trim();
+        const analysis = JSON.parse(responseText);
+
+        STATE.videoSummary = analysis.summary;
+        STATE.videoLearn = analysis.newLearn || [];
+        STATE.videoPractice = analysis.newPractice || [];
+        STATE.videoAnalysisLoading = false;
+        render();
+
+    } catch (err) {
+        console.error("Video Analysis Error:", err);
+        STATE.videoAnalysisError = "Failed to analyze videos: " + (err.message || "Network error");
+        STATE.videoAnalysisLoading = false;
+        render();
+    }
+}
+
+window.handleVideoPlanAction = function(type, index, action) {
+    const item = type === 'learn' ? STATE.videoLearn[index] : STATE.videoPractice[index];
+    if (action === 'add') {
+        STATE.player.customPlan[type].push(item);
+        const nextIdx = STATE.player.customPlan[type].length - 1;
+        STATE.player.completedTasksSet[`${type}_${nextIdx}`] = false;
+    }
+    if (type === 'learn') STATE.videoLearn.splice(index, 1);
+    else STATE.videoPractice.splice(index, 1);
+    
+    syncProfileToFirebase();
+    render();
 }
 
 window.logout = () => { 
