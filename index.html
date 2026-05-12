@@ -89,7 +89,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
 import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 import { getFirestore, doc, setDoc, getDoc, collection, addDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-import { getStorage, ref as storageRef, uploadBytes } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
+import { getStorage, ref as storageRef, uploadBytesResumable, deleteObject } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
 import { getVertexAI, getGenerativeModel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-vertexai.js";
 import { initializeAppCheck, ReCaptchaEnterpriseProvider } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app-check.js";
 
@@ -2388,28 +2388,39 @@ window.handleSwingAnalysis = async function() {
         return;
     }
 
-    STATE.videoAnalysisStatus = "Uploading videos...";
+    STATE.videoAnalysisStatus = "Preparing upload...";
     STATE.videoAnalysisLoading = true;
     STATE.videoAnalysisError = null;
     render();
 
     try {
-        const dtlPath = `swings/${STATE.player.phone}/dtl_${Date.now()}.mp4`;
-        const faceOnPath = `swings/${STATE.player.phone}/faceon_${Date.now()}.mp4`;
+        // Helper function to track upload progress in the UI
+        const uploadVideoWithProgress = (file, label) => {
+            return new Promise((resolve, reject) => {
+                const path = `temp_swings/${STATE.player.phone}/${label}_${Date.now()}.mp4`;
+                const fileRef = storageRef(storage, path);
+                const uploadTask = uploadBytesResumable(fileRef, file);
 
-        const dtlRef = storageRef(storage, dtlPath);
-        const faceOnRef = storageRef(storage, faceOnPath);
+                uploadTask.on('state_changed', 
+                    (snapshot) => {
+                        const progress = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
+                        STATE.videoAnalysisStatus = `Step 1: Uploading ${label} Video... ${progress}%`;
+                        render();
+                    }, 
+                    (error) => reject(error), 
+                    () => resolve(path)
+                );
+            });
+        };
 
-        // Upload both files in parallel
-        await Promise.all([
-            uploadBytes(dtlRef, dtlFile),
-            uploadBytes(faceOnRef, faceOnFile)
-        ]);
+        // Upload sequentially to preserve bandwidth and show clean progress
+        const dtlPath = await uploadVideoWithProgress(dtlFile, 'Down-The-Line');
+        const faceOnPath = await uploadVideoWithProgress(faceOnFile, 'Face-On');
 
         const dtlUri = `gs://thisis50-e2aa3.firebasestorage.app/${dtlPath}`;
         const faceOnUri = `gs://thisis50-e2aa3.firebasestorage.app/${faceOnPath}`;
 
-        STATE.videoAnalysisStatus = "Analyzing swing biomechanics... (This takes 15-30s)";
+        STATE.videoAnalysisStatus = "Step 2: AI Analyzing Biomechanics (15-30s)...";
         render();
 
         const prompt = `Act as a master biomechanical golf instructor. Analyze these two videos of a player's golf swing. 
@@ -2429,6 +2440,15 @@ window.handleSwingAnalysis = async function() {
             { fileData: { mimeType: dtlFile.type || "video/mp4", fileUri: dtlUri } },
             { fileData: { mimeType: faceOnFile.type || "video/mp4", fileUri: faceOnUri } },
             { text: prompt }
+        ]);
+
+        STATE.videoAnalysisStatus = "Step 3: Cleaning up temporary files...";
+        render();
+
+        // Delete files immediately from Firebase Storage to ensure privacy
+        await Promise.all([
+            deleteObject(storageRef(storage, dtlPath)).catch(e => console.warn("Failed to delete temporary DTL video", e)),
+            deleteObject(storageRef(storage, faceOnPath)).catch(e => console.warn("Failed to delete temporary Face-On video", e))
         ]);
 
         let responseText = result.response.text();
