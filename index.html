@@ -79,7 +79,6 @@ import { getAuth, signInAnonymously, onAuthStateChanged, RecaptchaVerifier, sign
 import { getFirestore, doc, setDoc, getDoc, collection, addDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 import { getStorage, ref as storageRef, uploadBytesResumable, deleteObject } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
 import { getVertexAI, getGenerativeModel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-vertexai.js";
-import { initializeAppCheck, ReCaptchaEnterpriseProvider } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app-check.js";
 
 let app = null;
 let db = null;
@@ -102,19 +101,6 @@ async function initFirebase() {
         };
         
         app = initializeApp(firebaseConfig);
-        
-        // NOTE: This debug flag is commented out for GitHub Pages Production
-        // Uncomment it if testing locally on a non-whitelisted domain
-        // self.FIREBASE_APPCHECK_DEBUG_TOKEN = true; 
-        try {
-            initializeAppCheck(app, {
-                provider: new ReCaptchaEnterpriseProvider('6LfpHNMsAAAAANOgLk1nGJ-Ir9fpG5mD2xG7tl3X'), 
-                isTokenAutoRefreshEnabled: true
-            });
-            console.log("App Check active.");
-        } catch (e) {
-            console.warn("App Check Init Error:", e);
-        }
 
         auth = getAuth(app);
         db = getFirestore(app);
