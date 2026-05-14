@@ -14,10 +14,9 @@
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         
         .animate-fade-in { animation: fadeIn 0.4s ease-out forwards; }
-        .animate-fade-out { animation: fadeOut 0.4s ease-in forwards; pointer-events: none; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* Custom Large Range Slider - Light Theme */
+        /* Custom Range Slider */
         input[type="range"] { -webkit-appearance: none; background: #e2e8f0; height: 12px; border-radius: 6px; outline: none; border: 1px solid #cbd5e1; }
         input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 32px; height: 32px; border-radius: 50%; background: #06b6d4; cursor: pointer; box-shadow: 0 0 10px rgba(6, 182, 212, 0.3); border: 2px solid white; }
         
@@ -104,11 +103,10 @@ async function initFirebase() {
         
         app = initializeApp(firebaseConfig);
         
-        // --- FIREBASE APP CHECK ---
-        // Re-enabled with your reCAPTCHA Enterprise key to secure Phone Auth.
-        // The DEBUG flag allows you to test safely in preview environments. Delete for production.
+        // NOTE: This debug flag is commented out for GitHub Pages Production
+        // Uncomment it if testing locally on a non-whitelisted domain
+        // self.FIREBASE_APPCHECK_DEBUG_TOKEN = true; 
         try {
-            self.FIREBASE_APPCHECK_DEBUG_TOKEN = true; 
             initializeAppCheck(app, {
                 provider: new ReCaptchaEnterpriseProvider('6LfpHNMsAAAAANOgLk1nGJ-Ir9fpG5mD2xG7tl3X'), 
                 isTokenAutoRefreshEnabled: true
@@ -223,7 +221,7 @@ async function getAIAdvice(promptText, requiresJson = false) {
     }
     
     const instruction = requiresJson 
-        ? "You are a professional golf data analyst. Return ONLY valid JSON. Strictly adhere to the requested schema. No prose."
+        ? "You are a professional golf data analyst. Return ONLY valid JSON. Strictly adhere to the requested schema. No prose. Be extremely concise."
         : "You are a professional golf 'Corner Man'. Give SALIENT, CRISP coaching advice. Format your response using basic HTML (like <strong> and <br>) for beautiful readability in a web app. Use emojis for bullet points instead of <ul>/<li>.";
 
     const modelConfig = { 
@@ -358,13 +356,12 @@ function resetPlayerState() {
 }
 
 window.STATE = {
-    currentView: 'welcome', onboardingStep: 1, welcomeStep: 'phone', // welcome views: 'phone', 'otp', 'name'
+    currentView: 'welcome', onboardingStep: 1, welcomeStep: 'phone', 
     pendingPhone: '',
     activeInfo: null, player: resetPlayerState(), activeRound: null,
     coachMode: 'accountability', isTyping: false, checkinSelectedRoundIdx: 0,
     chatMessages: [{ role: 'coach', text: "Welcome to Descent. Let's get to work." }],
-    // Checkin UI Accordion state tracking
-    checkinUI: { handicap: false, core: false, bag: false, garmin: true, video: true, history: false },
+    checkinUI: { handicap: false, core: false, bag: false, garmin: false, video: false, history: false },
     garminLoading: false, garminAILoading: false, garminError: null,
     garminAverages: null, garminSummary: null, garminLearn: [], garminPractice: [],
     videoAnalysisLoading: false, videoAnalysisStatus: '', videoAnalysisError: null,
@@ -411,12 +408,21 @@ window.calculateRoundSG = function(holes) {
     };
 }
 
-const rootEl = document.getElementById('app-root');
-const navEl = document.getElementById('bottom-nav');
-
 window.switchView = function(viewName) {
     STATE.currentView = viewName;
+    
+    // Capture scroll position for smooth re-renders within long views
+    const container = document.getElementById('app-root');
+    const scrollPos = container ? container.scrollTop : 0;
+    
     render();
+    
+    const rootEl = document.getElementById('app-root');
+    const navEl = document.getElementById('bottom-nav');
+    
+    if (viewName === 'checkin' || viewName === 'post_round' || viewName === 'practice' || viewName === 'learn') {
+        if (rootEl) rootEl.scrollTop = scrollPos;
+    }
     
     const hiddenViews = ['welcome', 'onboarding', 'welcome_sequence', 'play_active', 'post_round', 'coach_corner'];
     if (hiddenViews.includes(viewName)) {
@@ -443,8 +449,8 @@ window.switchView = function(viewName) {
 }
 
 window.render = function() {
-    const container = document.getElementById('app-root');
-    const currentScroll = container ? container.scrollTop : 0;
+    const rootEl = document.getElementById('app-root');
+    if (!rootEl) return;
     
     let html = '';
     switch(STATE.currentView) {
@@ -462,14 +468,7 @@ window.render = function() {
         case 'coach': html = renderCoach(); break;
     }
     
-    if (rootEl) {
-        rootEl.innerHTML = html;
-        // Scroll lock restoration
-        const newContainer = document.getElementById('app-root');
-        if (newContainer && (STATE.currentView === 'checkin' || STATE.currentView === 'post_round' || STATE.currentView === 'progress' || STATE.currentView === 'practice' || STATE.currentView === 'learn')) {
-            newContainer.scrollTop = currentScroll;
-        }
-    }
+    rootEl.innerHTML = html;
 }
 
 function renderWelcome() {
@@ -500,7 +499,7 @@ function renderWelcome() {
 
     return `
     <div class="flex flex-col items-center justify-center h-full p-8 text-center animate-fade-in bg-slate-50">
-        <div class="absolute top-4 left-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Build 1.0.2</div>
+        <div class="absolute top-4 left-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Build 1.0.3</div>
         <div class="text-cyan-500 mb-6 animate-pulse-slow">
             <svg width="72" height="72" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <polyline points="22 17 13.5 8.5 8.5 13.5 2 7" /><polyline points="16 17 22 17 22 11" />
@@ -742,7 +741,7 @@ function renderCheckIn() {
         const activeHist = history[selectedIdx];
         historySection = `
             <details class="group bg-white rounded-xl border border-slate-200 mb-4 shadow-sm" ${STATE.checkinUI.history ? 'open' : ''} ontoggle="STATE.checkinUI.history = this.open">
-                <summary class="p-4 flex justify-between items-center cursor-pointer font-bold text-slate-800 uppercase text-xs tracking-widest outline-none">
+                <summary class="p-4 flex justify-between items-center cursor-pointer font-bold text-slate-800 uppercase text-xs tracking-widest outline-none list-none">
                     Past Rounds <span class="group-open:rotate-180 transition-transform text-cyan-500">▼</span>
                 </summary>
                 <div class="p-4 pt-0 border-t border-slate-100 mt-2">
@@ -769,7 +768,7 @@ function renderCheckIn() {
 
     return `
     <div class="flex flex-col h-full p-6 animate-fade-in bg-slate-50">
-        <header class="mb-6">
+        <header class="mb-6 shrink-0">
             <h1 class="text-2xl font-serif font-bold text-slate-900 flex items-center gap-2 tracking-widest">
                 <svg class="text-cyan-500 w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg> CHECK-IN
             </h1>
@@ -780,7 +779,7 @@ function renderCheckIn() {
             ${historySection}
             
             <details class="group bg-white rounded-xl border border-slate-200 mb-4 shadow-sm" ${STATE.checkinUI.handicap ? 'open' : ''} ontoggle="STATE.checkinUI.handicap = this.open">
-                <summary class="p-4 flex justify-between items-center cursor-pointer font-bold text-slate-800 uppercase text-xs tracking-widest outline-none">
+                <summary class="p-4 flex justify-between items-center cursor-pointer font-bold text-slate-800 uppercase text-xs tracking-widest outline-none list-none">
                     Current Handicap <span class="group-open:rotate-180 transition-transform text-cyan-500">▼</span>
                 </summary>
                 <div class="p-4 pt-0 border-t border-slate-100 mt-2">
@@ -793,7 +792,7 @@ function renderCheckIn() {
             </details>
 
             <details class="group bg-white rounded-xl border border-slate-200 mb-4 shadow-sm" ${STATE.checkinUI.core ? 'open' : ''} ontoggle="STATE.checkinUI.core = this.open">
-                <summary class="p-4 flex justify-between items-center cursor-pointer font-bold text-slate-800 uppercase text-xs tracking-widest outline-none">
+                <summary class="p-4 flex justify-between items-center cursor-pointer font-bold text-slate-800 uppercase text-xs tracking-widest outline-none list-none">
                     Core Proficiency <span class="group-open:rotate-180 transition-transform text-cyan-500">▼</span>
                 </summary>
                 <div class="p-4 pt-0 border-t border-slate-100 mt-2">
@@ -815,7 +814,7 @@ function renderCheckIn() {
             </details>
 
             <details class="group bg-white rounded-xl border border-slate-200 mb-4 shadow-sm" ${STATE.checkinUI.bag ? 'open' : ''} ontoggle="STATE.checkinUI.bag = this.open">
-                <summary class="p-4 flex justify-between items-center cursor-pointer font-bold text-slate-800 uppercase text-xs tracking-widest outline-none">
+                <summary class="p-4 flex justify-between items-center cursor-pointer font-bold text-slate-800 uppercase text-xs tracking-widest outline-none list-none">
                     Bag Map (Yards) <span class="group-open:rotate-180 transition-transform text-cyan-500">▼</span>
                 </summary>
                 <div class="p-2 pt-0 border-t border-slate-100 mt-2">
@@ -839,7 +838,7 @@ function renderCheckIn() {
             </details>
 
             <details class="group bg-white rounded-xl border border-slate-200 mb-4 shadow-sm" ${STATE.checkinUI.garmin ? 'open' : ''} ontoggle="STATE.checkinUI.garmin = this.open">
-                <summary class="p-4 flex justify-between items-center cursor-pointer font-bold text-slate-800 uppercase text-xs tracking-widest outline-none">
+                <summary class="p-4 flex justify-between items-center cursor-pointer font-bold text-slate-800 uppercase text-xs tracking-widest outline-none list-none">
                     Garmin R10 Import <span class="group-open:rotate-180 transition-transform text-cyan-500">▼</span>
                 </summary>
                 <div class="p-4 pt-0 border-t border-slate-100 mt-2">
@@ -852,7 +851,7 @@ function renderCheckIn() {
             </details>
 
             <details class="group bg-white rounded-xl border border-slate-200 mb-4 shadow-sm" ${STATE.checkinUI.video ? 'open' : ''} ontoggle="STATE.checkinUI.video = this.open">
-                <summary class="p-4 flex justify-between items-center cursor-pointer font-bold text-slate-800 uppercase text-xs tracking-widest outline-none">
+                <summary class="p-4 flex justify-between items-center cursor-pointer font-bold text-slate-800 uppercase text-xs tracking-widest outline-none list-none">
                     AI Swing Analysis <span class="group-open:rotate-180 transition-transform text-cyan-500">▼</span>
                 </summary>
                 <div class="p-4 pt-0 border-t border-slate-100 mt-2">
@@ -1296,7 +1295,6 @@ function renderPostRound() {
 
         ${aiErrorBannerHTML}
 
-        <!-- AI Core Proficiency Scoring -->
         <div class="mb-10">
             <h3 class="text-xs font-black uppercase tracking-widest text-slate-500 mb-4">Round Proficiency (AI Score)</h3>
             <div class="bg-white p-6 rounded-2xl border border-cyan-100 space-y-4 shadow-sm">
@@ -1533,7 +1531,7 @@ window.sendSMS = async function() {
         
         if (errorEl) {
             if (error.code === 'auth/firebase-app-check-token-is-invalid') {
-                errorEl.innerHTML = "App Check is blocking login.<br>Go to <b>Firebase Console &rarr; App Check &rarr; APIs &rarr; Authentication</b> and click <b>Unenforce</b>.";
+                errorEl.innerHTML = "App Check is blocking login.<br>Go to <b>Google Cloud &rarr; reCAPTCHA Enterprise &rarr; Web Domains</b> and add your current URL.";
             } else if (error.code === 'auth/unauthorized-domain') {
                 errorEl.innerHTML = "Domain not authorized.<br>Go to <b>Firebase Console &rarr; Authentication &rarr; Settings &rarr; Authorized Domains</b> and add this URL.";
             } else {
@@ -2018,7 +2016,12 @@ async function performFinalAnalysis(roundSG) {
         r.newPractice = Array.isArray(analysis.newPractice) ? analysis.newPractice : [];
         r.pithyAdvice = analysis.pithyAdvice || "Here's one thing to think about for the next round: Trust your swing and stick to the process.";
         r.aiFailed = false; r.aiErrorMessage = null;
+        
+        const scrollContainer = document.getElementById('app-root');
+        const currentScroll = scrollContainer ? scrollContainer.scrollTop : 0;
         render();
+        const postContainer = document.getElementById('app-root');
+        if (postContainer) postContainer.scrollTop = currentScroll;
     } catch(e) {
         console.error("Proficiency Analysis Error Details:", e);
         r.roundProficiency = { driving: 3, longIrons: 3, approach: 3, aroundGreen: 3, putting: 3, recovery: 3 };
@@ -2026,7 +2029,12 @@ async function performFinalAnalysis(roundSG) {
         r.newPractice = ["Hit 20 balls focusing purely on tempo."];
         r.pithyAdvice = "Here's one thing to think about for the next round: Focus on tempo and balance.";
         r.aiFailed = true; r.aiErrorMessage = e.message || String(e);
+        
+        const scrollContainer = document.getElementById('app-root');
+        const currentScroll = scrollContainer ? scrollContainer.scrollTop : 0;
         render();
+        const postContainer = document.getElementById('app-root');
+        if (postContainer) postContainer.scrollTop = currentScroll;
     }
 }
 
@@ -2038,13 +2046,24 @@ window.handleGarminUpload = function(event) {
 
     STATE.garminLoading = true; STATE.garminError = null; STATE.garminAverages = null;
     STATE.garminSummary = null; STATE.garminLearn = []; STATE.garminPractice = [];
+    
+    const scrollContainer = document.getElementById('app-root');
+    const currentScroll = scrollContainer ? scrollContainer.scrollTop : 0;
     render();
+    const postContainer = document.getElementById('app-root');
+    if (postContainer) postContainer.scrollTop = currentScroll;
 
     const reader = new FileReader();
     reader.onload = async function(e) {
         const text = e.target.result;
         const lines = text.split('\n').filter(l => l.trim() !== '');
-        if (lines.length < 2) { STATE.garminError = 'The CSV appears to be empty or malformed.'; STATE.garminLoading = false; render(); return; }
+        if (lines.length < 2) { 
+            STATE.garminError = 'The CSV appears to be empty or malformed.'; STATE.garminLoading = false; 
+            const sc = document.getElementById('app-root'); const cs = sc ? sc.scrollTop : 0;
+            render(); 
+            const pc = document.getElementById('app-root'); if (pc) pc.scrollTop = cs;
+            return; 
+        }
 
         const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, '').toLowerCase());
         const clubIdx = headers.findIndex(h => h.includes('club'));
@@ -2052,7 +2071,13 @@ window.handleGarminUpload = function(event) {
         if (distIdx === -1) distIdx = headers.findIndex(h => h.includes('carry'));
         const smashIdx = headers.findIndex(h => h.includes('smash'));
 
-        if (clubIdx === -1 || distIdx === -1) { STATE.garminError = "Could not find 'Club' and 'Distance' columns in the CSV."; STATE.garminLoading = false; render(); return; }
+        if (clubIdx === -1 || distIdx === -1) { 
+            STATE.garminError = "Could not find 'Club' and 'Distance' columns in the CSV."; STATE.garminLoading = false; 
+            const sc = document.getElementById('app-root'); const cs = sc ? sc.scrollTop : 0;
+            render(); 
+            const pc = document.getElementById('app-root'); if (pc) pc.scrollTop = cs;
+            return; 
+        }
 
         let clubData = {};
         let startIdx = 1;
@@ -2082,7 +2107,10 @@ window.handleGarminUpload = function(event) {
         averages.sort((a, b) => b.avgDist - a.avgDist);
 
         STATE.garminAverages = averages; STATE.garminLoading = false; STATE.garminAILoading = true;
+        
+        const sc2 = document.getElementById('app-root'); const cs2 = sc2 ? sc2.scrollTop : 0;
         render();
+        const pc2 = document.getElementById('app-root'); if (pc2) pc2.scrollTop = cs2;
 
         let csvPayload = text;
         if (lines.length > 150) csvPayload = lines.slice(0, 2).join('\n') + '\n' + lines.slice(-148).join('\n');
@@ -2092,7 +2120,7 @@ File Structure: Row 1 = metrics. Row 2 = units (e.g., [mph]). Missing data is Na
 Task: 
 1. Identify Club and Ball Flight (Path vs Face).
 2. Assess Smash Factor & Efficiency.
-3. Provide exactly 1-2 learning topics and 1-2 practice drills. Focus exclusively on the most damaging ball-flight tendency. Use HTML links for YouTube searches (e.g. <a href="https://www.youtube.com/results?search_query=smash+factor+drill" class="text-cyan-600 underline" target="_blank">Watch Here</a>).
+3. Provide exactly 1-2 learning topics and 1-2 practice drills. Focus exclusively on the most damaging ball-flight tendency found in the data (e.g., high spin-axis or low smash factor). Use HTML links for YouTube searches (e.g. <a href="https://www.youtube.com/results?search_query=smash+factor+drill" class="text-cyan-600 underline" target="_blank">Watch Here</a>). Do not exceed 2 total suggestions per category.
 RAW CSV DATA:
 ${csvPayload}
 Return ONLY valid JSON in this exact format:
@@ -2113,7 +2141,11 @@ Return ONLY valid JSON in this exact format:
             STATE.garminSummary = "The data was parsed successfully, but the AI Coach failed to analyze the results.";
             STATE.garminLearn = []; STATE.garminPractice = [];
         }
-        STATE.garminAILoading = false; render();
+        STATE.garminAILoading = false; 
+        
+        const sc3 = document.getElementById('app-root'); const cs3 = sc3 ? sc3.scrollTop : 0;
+        render();
+        const pc3 = document.getElementById('app-root'); if (pc3) pc3.scrollTop = cs3;
     };
     reader.readAsText(file);
 }
@@ -2135,7 +2167,10 @@ window.applyGarminDistances = function() {
         syncProfileToFirebase();
         STATE.garminAverages = null; 
         STATE.garminSummary = `Successfully synced ${updated} updated club distances into your Bag Map!`;
+        
+        const sc = document.getElementById('app-root'); const cs = sc ? sc.scrollTop : 0;
         render();
+        const pc = document.getElementById('app-root'); if (pc) pc.scrollTop = cs;
     }
 }
 
@@ -2147,22 +2182,46 @@ window.handleGarminPlanAction = function(type, index, action) {
         STATE.player.completedTasksSet[`${type}_${nextIdx}`] = false;
     }
     if (type === 'learn') STATE.garminLearn.splice(index, 1); else STATE.garminPractice.splice(index, 1);
-    syncProfileToFirebase(); render();
+    syncProfileToFirebase(); 
+    
+    const sc = document.getElementById('app-root'); const cs = sc ? sc.scrollTop : 0;
+    render();
+    const pc = document.getElementById('app-root'); if (pc) pc.scrollTop = cs;
 }
 
 window.handleSwingAnalysis = async function() {
     const dtlFile = document.getElementById('dtl-video').files[0];
     const faceOnFile = document.getElementById('face-on-video').files[0];
 
-    if (!dtlFile || !faceOnFile) { STATE.videoAnalysisError = "Please select both Down-The-Line and Face-On videos."; render(); return; }
-    if (dtlFile.size > 15 * 1024 * 1024 || faceOnFile.size > 15 * 1024 * 1024) { STATE.videoAnalysisError = "Videos are too large. Please trim to just the swing."; render(); return; }
+    if (!dtlFile || !faceOnFile) { 
+        STATE.videoAnalysisError = "Please select both Down-The-Line and Face-On videos."; 
+        const sc = document.getElementById('app-root'); const cs = sc ? sc.scrollTop : 0;
+        render(); 
+        const pc = document.getElementById('app-root'); if (pc) pc.scrollTop = cs;
+        return; 
+    }
+    
+    if (dtlFile.size > 15 * 1024 * 1024 || faceOnFile.size > 15 * 1024 * 1024) { 
+        STATE.videoAnalysisError = "Videos are too large. Please trim to just the swing."; 
+        const sc = document.getElementById('app-root'); const cs = sc ? sc.scrollTop : 0;
+        render(); 
+        const pc = document.getElementById('app-root'); if (pc) pc.scrollTop = cs;
+        return; 
+    }
 
-    STATE.videoAnalysisStatus = "Preparing videos..."; STATE.videoAnalysisLoading = true; STATE.videoAnalysisError = null; render();
+    STATE.videoAnalysisStatus = "Preparing videos..."; STATE.videoAnalysisLoading = true; STATE.videoAnalysisError = null; 
+    const sc = document.getElementById('app-root'); const cs = sc ? sc.scrollTop : 0;
+    render();
+    const pc = document.getElementById('app-root'); if (pc) pc.scrollTop = cs;
 
     try {
         const fileToBase64 = (file, label) => {
             return new Promise((resolve, reject) => {
-                STATE.videoAnalysisStatus = `Encoding ${label}...`; render();
+                STATE.videoAnalysisStatus = `Encoding ${label}...`; 
+                const sc2 = document.getElementById('app-root'); const cs2 = sc2 ? sc2.scrollTop : 0;
+                render();
+                const pc2 = document.getElementById('app-root'); if (pc2) pc2.scrollTop = cs2;
+                
                 const reader = new FileReader(); reader.readAsDataURL(file);
                 reader.onload = () => resolve(reader.result.split(',')[1]);
                 reader.onerror = (error) => reject(error);
@@ -2172,12 +2231,15 @@ window.handleSwingAnalysis = async function() {
         const dtlBase64 = await fileToBase64(dtlFile, 'Down-The-Line');
         const faceOnBase64 = await fileToBase64(faceOnFile, 'Face-On');
 
-        STATE.videoAnalysisStatus = "AI Analyzing Biomechanics (15-30s)..."; render();
+        STATE.videoAnalysisStatus = "AI Analyzing Biomechanics (15-30s)..."; 
+        const sc3 = document.getElementById('app-root'); const cs3 = sc3 ? sc3.scrollTop : 0;
+        render();
+        const pc3 = document.getElementById('app-root'); if (pc3) pc3.scrollTop = cs3;
 
         const prompt = `Act as a master biomechanical golf instructor. Analyze these two videos of a player's golf swing. 
         Video 1 (File 1) is Down-The-Line. Video 2 (File 2) is Face-On. 
         Identify the single biggest mechanical 'power leak' or 'accuracy killer'. 
-        Provide exactly 1-2 learning pieces and 1-2 drills. You MUST include HTML links for YouTube searches (e.g., <a href="https://www.youtube.com/results?search_query=golf+tempo+drill" target="_blank" class="text-cyan-600 underline">Watch on YouTube</a>). 
+        Provide exactly 1-2 learning pieces and 1-2 drills. Do not exceed 2 total items per array. You MUST include HTML links for YouTube searches (e.g., <a href="https://www.youtube.com/results?search_query=golf+tempo+drill" target="_blank" class="text-cyan-600 underline">Watch on YouTube</a>). 
         Return ONLY valid JSON: { "summary": "...", "newLearn": ["..."], "newPractice": ["..."] }`;
 
         const model = getGenerativeModel(vertexAI, { 
@@ -2199,12 +2261,19 @@ window.handleSwingAnalysis = async function() {
         STATE.videoSummary = analysis.summary;
         STATE.videoLearn = analysis.newLearn || [];
         STATE.videoPractice = analysis.newPractice || [];
-        STATE.videoAnalysisLoading = false; render();
+        STATE.videoAnalysisLoading = false; 
+        
+        const sc4 = document.getElementById('app-root'); const cs4 = sc4 ? sc4.scrollTop : 0;
+        render();
+        const pc4 = document.getElementById('app-root'); if (pc4) pc4.scrollTop = cs4;
 
     } catch (err) {
         console.error("Video Analysis Error:", err);
         STATE.videoAnalysisError = "Failed to analyze videos: " + (err.message || "Network error");
-        STATE.videoAnalysisLoading = false; render();
+        STATE.videoAnalysisLoading = false; 
+        const sc5 = document.getElementById('app-root'); const cs5 = sc5 ? sc5.scrollTop : 0;
+        render();
+        const pc5 = document.getElementById('app-root'); if (pc5) pc5.scrollTop = cs5;
     }
 }
 
@@ -2216,7 +2285,10 @@ window.handleVideoPlanAction = function(type, index, action) {
         STATE.player.completedTasksSet[`${type}_${nextIdx}`] = false;
     }
     if (type === 'learn') STATE.videoLearn.splice(index, 1); else STATE.videoPractice.splice(index, 1);
-    syncProfileToFirebase(); render();
+    syncProfileToFirebase(); 
+    const sc = document.getElementById('app-root'); const cs = sc ? sc.scrollTop : 0;
+    render();
+    const pc = document.getElementById('app-root'); if (pc) pc.scrollTop = cs;
 }
 
 window.logout = () => { 
