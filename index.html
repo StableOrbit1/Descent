@@ -105,10 +105,15 @@ async function initFirebase() {
         app = initializeApp(firebaseConfig);
         
         // --- FIREBASE APP CHECK ---
+        // DISABLED FOR PHONE AUTH TESTING: 
+        // App Check (reCAPTCHA Enterprise) heavily conflicts with Phone Auth's 
+        // Invisible reCAPTCHA in development environments, causing silent network hangs.
+        /*
         initializeAppCheck(app, {
             provider: new ReCaptchaEnterpriseProvider('6LfpHNMsAAAAANOgLk1nGJ-Ir9fpG5mD2xG7tl3X'), 
             isTokenAutoRefreshEnabled: true
         });
+        */
 
         auth = getAuth(app);
         db = getFirestore(app);
@@ -470,6 +475,7 @@ function renderWelcome() {
         <div class="w-full max-w-xs space-y-3 mb-8 text-left animate-fade-in mx-auto">
             <input type="tel" id="welcome-phone" placeholder="Phone Number (e.g. 555-555-5555)" class="w-full bg-white border border-slate-300 rounded-xl p-4 text-slate-900 font-semibold outline-none focus:border-cyan-500 shadow-sm">
             <button id="welcome-next-btn" onclick="sendSMS()" class="w-full bg-cyan-400 hover:bg-cyan-500 text-white font-bold py-4 rounded-xl shadow-md transition-colors">Send Code &rarr;</button>
+            <p id="auth-error" class="text-[10px] text-red-500 text-center font-bold hidden px-2"></p>
         </div>`;
     } else if (STATE.welcomeStep === 'otp') {
         authForm = `
@@ -477,6 +483,7 @@ function renderWelcome() {
             <p class="text-xs text-slate-500 text-center mb-2">Code sent to ${STATE.pendingPhone}</p>
             <input type="number" id="welcome-code" placeholder="6-Digit SMS Code" class="w-full bg-white border border-slate-300 rounded-xl p-4 text-slate-900 font-semibold outline-none focus:border-cyan-500 shadow-sm text-center tracking-widest text-lg">
             <button id="welcome-verify-btn" onclick="verifySMS()" class="w-full bg-cyan-400 hover:bg-cyan-500 text-white font-bold py-4 rounded-xl shadow-md transition-colors">Verify &rarr;</button>
+            <p id="auth-error" class="text-[10px] text-red-500 text-center font-bold hidden px-2"></p>
         </div>`;
     } else if (STATE.welcomeStep === 'name') {
         authForm = `
@@ -1488,32 +1495,60 @@ function renderVideoSection() {
 
 window.sendSMS = async function() {
     const phone = document.getElementById('welcome-phone').value.trim();
+    const errorEl = document.getElementById('auth-error');
+    if (errorEl) errorEl.classList.add('hidden');
+    
     if (!phone) return;
     
     const btn = document.getElementById('welcome-next-btn');
     btn.innerText = "Sending..."; btn.disabled = true;
 
     try {
-        if (!window.recaptchaVerifier) {
-            window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', { size: 'invisible' });
+        // Clear old verifier if it exists to prevent detached DOM issues
+        if (window.recaptchaVerifier) {
+            try { window.recaptchaVerifier.clear(); } catch(e) {}
+            window.recaptchaVerifier = null;
         }
+        
+        // Ensure the container is explicitly empty before binding
+        const rcContainer = document.getElementById('recaptcha-container');
+        if(rcContainer) rcContainer.innerHTML = '';
+
+        window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', { 
+            size: 'invisible' 
+        });
         
         // Basic US/Canada prepending logic if not formatted. 
         const formattedPhone = phone.startsWith('+') ? phone : '+1' + phone.replace(/\D/g, '');
         
+        // Force reCAPTCHA to render first to catch configuration errors immediately, rather than hanging
+        await window.recaptchaVerifier.render();
+
         window.confirmationResult = await signInWithPhoneNumber(auth, formattedPhone, window.recaptchaVerifier);
         STATE.pendingPhone = formattedPhone;
         STATE.welcomeStep = 'otp';
         render();
     } catch (error) {
         console.error("SMS Error:", error);
-        btn.innerText = "Error. Try Again."; btn.disabled = false;
-        // Do not use alert(), handled inline.
+        btn.innerText = "Send Code →"; btn.disabled = false;
+        
+        if (errorEl) {
+            errorEl.innerText = "Error: " + (error.message || "Failed to send SMS. Check console.");
+            errorEl.classList.remove('hidden');
+        }
+        
+        if (window.recaptchaVerifier) {
+            try { window.recaptchaVerifier.clear(); } catch(e) {}
+            window.recaptchaVerifier = null;
+        }
     }
 }
 
 window.verifySMS = async function() {
     const code = document.getElementById('welcome-code').value.trim();
+    const errorEl = document.getElementById('auth-error');
+    if (errorEl) errorEl.classList.add('hidden');
+    
     if (!code) return;
     
     const btn = document.getElementById('welcome-verify-btn');
@@ -1548,7 +1583,11 @@ window.verifySMS = async function() {
         }
     } catch (error) {
         console.error("OTP Error:", error);
-        btn.innerText = "Invalid Code. Try Again."; btn.disabled = false;
+        btn.innerText = "Verify →"; btn.disabled = false;
+        if (errorEl) {
+            errorEl.innerText = "Invalid code. Please try again.";
+            errorEl.classList.remove('hidden');
+        }
     }
 }
 
